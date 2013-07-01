@@ -42,9 +42,7 @@ class Receipt():
         if element.attrib['success'].UpperCase() == 'TRUE':
             self.success = True
         
-    def __str__(self):
-        print("test")
-        
+    def __str__(self):        
         return "ID : %s(%s) | Time : %s\n\
 SRC : %s(%d)\n\
 DST : %s(%d)\n\
@@ -71,6 +69,7 @@ def download(id_str,src,dst=None,overwrite=False):
     
     r.id = id_str
     r.src_path  =   src
+    r.dst_path = dst
     
     
         
@@ -168,8 +167,6 @@ def load_http_file(url):
     domain_name = url[7:i]
     file_path = url[i:]
 
-    print domain_name
-    print file_path
     conn = httplib.HTTPConnection(domain_name)
     conn.request("GET", file_path)
 

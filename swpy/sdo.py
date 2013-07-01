@@ -87,7 +87,7 @@ def hmi_jp2_path_local(datetime_t,image_string):
     
     fsec,sec = modf(second)
     local_path = '/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
-    %(image_string,year,year,month,day,year,month,day,hour,miniute,sec,round(fsec,4)*1e3,image_string)
+    %(year,year,month,day,year,month,day,hour,miniute,sec,round(fsec,4)*1e3,image_string)
     
     
     return local_path 

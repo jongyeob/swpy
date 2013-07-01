@@ -119,8 +119,8 @@ USAGE
         if config_root == None:
             config_root = sx.create_xml('configs', config_path)
         # init config    
-        config_elem = config_root.find('./config[id="%s"]'%(args.config))
-        if config_elem is None:
+        config_elem = config_root.xpath('./config[id="%s"]'%(args.config))
+        if len(config_elem) == 0:
             config_elem = sx.Element('config')
             config_elem.attrib['id'] = args.config
             config_elem.attrib['src'] = args.source

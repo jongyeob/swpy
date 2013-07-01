@@ -65,21 +65,27 @@ def callback(blocks_read,block_size,total_size):
         sys.stderr.write('Read %d blocks, or %d/%d\n' %(blocks_read, amount_read, total_size))
 
 
-def download(id_str,src,dst=None):
+def download(id_str,src,dst=None,overwrite=False):
     
     r = Receipt(id_str)
     
     r.id = id_str
     r.src_path  =   src
     
+    
+        
     if dst is not None:
+            
         dst_dirname, _ = path.split(dst)
         
         if path.exists(dst_dirname) == False:
             makedirs(dst_dirname)
-            
+        
+    try:   
+        if path.exists(path) == True:
+            raise IOError("Already exist")
        
-    try:
+    
         result = urlretrieve(src,dst,callback)
         
         r.dst_path = result[0]        

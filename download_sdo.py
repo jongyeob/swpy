@@ -145,7 +145,7 @@ USAGE
                 start_datetime_t = dt.str_to_datetime(config_elem.attrib['start_datetime'],"%Y-%m-%dT%H:%M:%S")
                 if config_elem.attrib['continue'] == 'True' or config_elem.attrib['realtime'] == 'True':
                     start_datetime_t = dt.str_to_datetime(config_elem.attrib['last_datetime'],"%Y-%m-%dT%H:%M:%S")
-                    print("continue mode : "+str(start_datetime_t))
+                    print("Continue mode : "+str(start_datetime_t))
                     
                 
                 end_datetime_t = dt.str_to_datetime(config_elem.attrib['end_datetime'],"%Y-%m-%dT%H:%M:%S")
@@ -170,7 +170,7 @@ USAGE
                         
                         r = dl.download(config_elem.attrib['id'], f,dst_filepath)
                          
-                        sys.stdout.write(str(r))
+                        sys.stdout.write(str(r)+'\n')
                         
                         if r.success is True:
                             _,filename = os.path.split(f)
@@ -181,7 +181,7 @@ USAGE
                             sx.write_xml(config_elem, config_path)
                          
                        
-            sleep(10.0)
+            sleep(60.0)
                     
     
         

@@ -86,8 +86,8 @@ def hmi_jp2_path_local(datetime_t,image_string):
     year,month,day,hour,miniute,second = dt.datetime_tuple(datetime_t) 
     
     fsec,sec = modf(second)
-    local_path = '/sdo/hmi/%s/%04d/%04d%02d/%04d%02d%02d/sdo_hmi_%s_%4d_%02d_%02d_%02d_%02d_%02d_%03d.jp2'\
-    %(image_string,year,year,month,year,month,day,image_string,year,month,day,hour,miniute,sec,round(fsec,4)*1e3)
+    local_path = '/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
+    %(image_string,year,year,month,day,year,month,day,hour,miniute,sec,round(fsec,4)*1e3,image_string)
     
     
     return local_path 

@@ -42,7 +42,7 @@ class CLIError(Exception):
     '''Generic exception to raise and log different fatal errors.'''
     def __init__(self, msg):
         super(CLIError).__init__(type(self))
-        self.msg = "E: %s" % msg
+        self.ms = "E: %s" % msg
     def __str__(self):
         return self.msg
     def __unicode__(self):
@@ -80,7 +80,7 @@ def main(argv=None): # IGNORE:C0111
 USAGE
 ''' % (program_shortdesc, str(__date__))
 
-    now = time.localtime()
+    now = time.gmtime()
     
     image_types = ['aia_fits','aia_jp2','hmi_fits','hmi_jp2','hmi_gif']
     source_locations = ['kasi','jsoc','lmsal'] 
@@ -101,8 +101,8 @@ USAGE
         
         parser.add_argument('--start',dest='start_time',help='start time',default=time.strftime("%Y-%m-%dT%H:%M:%S",now))
         parser.add_argument('--end',dest='end_time',help='end time',default=time.strftime("%Y-%m-%dT%H:%M:%S",now))
-        parser.add_argument('--continue',dest='mode_continue',help='download files from last success',default=False)
-        parser.add_argument('--realtime',dest='mode_realtime',help='download new files periodically',default=False)
+        parser.add_argument('--continue',action='store_true',dest='mode_continue',help='download files from last success',default=False)
+        parser.add_argument('--realtime',action='store_true',dest='mode_realtime',help='download new files periodically',default=False)
         parser.add_argument('--config',dest='config',help='id for program configuration',default='default')
         
         
@@ -196,7 +196,7 @@ USAGE
             raise(e)
         indent = len(program_name) * " "
         sys.stderr.write(program_name + ": " + repr(e) + "\n")
-        sys.stderr.write(indent + "  for help use --help")
+        sys.stderr.write(indent + "  for help use --help\n")
         return 2
 
 if __name__ == "__main__":

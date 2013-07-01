@@ -5,7 +5,6 @@ import time
 import string
 from swxml import Element,et
 
-import _download
 import sys
 
 class Receipt():

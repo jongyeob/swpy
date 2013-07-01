@@ -143,7 +143,7 @@ USAGE
             if(args.data == 'hmi_jp2' and args.source == 'lmsal'):
                 
                 start_datetime_t = dt.str_to_datetime(config_elem.attrib['start_datetime'],"%Y-%m-%dT%H:%M:%S")
-                if config_elem.attrib['continue'] == 'True':
+                if config_elem.attrib['continue'] == 'True' or config_elem.attrib['realtime'] == 'True':
                     start_datetime_t = dt.str_to_datetime(config_elem.attrib['last_datetime'],"%Y-%m-%dT%H:%M:%S")
                     print("continue mode : "+str(start_datetime_t))
                     
@@ -181,7 +181,6 @@ USAGE
                             sx.write_xml(config_elem, config_path)
                          
                        
-            
             sleep(10.0)
                     
     

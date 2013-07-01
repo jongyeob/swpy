@@ -168,7 +168,7 @@ USAGE
                         dst_filepath = config_elem.attrib['dst_dir'] +'/nasa/sdo/jp2/hmi/'+ config_elem.attrib['image'] +\
                         hmi_jp2_path_local(f_datetime_t,config_elem.attrib['image'])
                         
-                        r = dl.download(config_elem.attrib['config'], f,dst_filepath)
+                        r = dl.download(config_elem.attrib['id'], f,dst_filepath)
                          
                         sys.stdout.write(str(r))
                         
@@ -182,7 +182,7 @@ USAGE
                          
                        
             
-            sleep(1.0)
+            sleep(10.0)
                     
     
         

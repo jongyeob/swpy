@@ -167,18 +167,21 @@ USAGE
                         f_datetime_t = datetime_from_filename_lmsal(f)
                         dst_filepath = config_elem.attrib['dst_dir'] +'/nasa/sdo/jp2/hmi/'+ config_elem.attrib['image'] +\
                         hmi_jp2_path_local(f_datetime_t,config_elem.attrib['image'])
+                    
                         
                         r = dl.download(config_elem.attrib['id'], f,dst_filepath)
-                         
+                     
                         sys.stdout.write(str(r)+'\n')
-                        
-                        if r.success is True:
+                    
+                        if r.success == True:
                             _,filename = os.path.split(f)
                             last_datetime_t = datetime_from_filename_lmsal(filename)
                             config_elem.attrib['last_datetime'] = dt.datetime.strftime(last_datetime_t,"%Y-%m-%dT%H:%M:%S")
                              
                             # save config
                             sx.write_xml(config_elem, config_path)
+                    
+                        
                          
                        
             sleep(60.0)

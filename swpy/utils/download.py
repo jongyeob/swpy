@@ -96,12 +96,11 @@ def download(id_str,src,dst=None,overwrite=False):
             r.dst_size = int(f.tell())
             
         r.success   =   True 
+    
        
-    except IOError as err:
-        r.error_msg = str(err)
         
-    except:
-        r.error_msg = 'Unknown Error!'
+    except Exception as err:
+        r.error_msg = str(err)
                 
         
     return r

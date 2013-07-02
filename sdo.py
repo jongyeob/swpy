@@ -99,11 +99,14 @@ def hmi_jp2_list_lmsal(start_datetime_t,end_datetime_t,image_string):
     
         
         contents = dl.load_http_file(dir_str + '/')
+        if contents is None:
+            return ret_list
+    
         list_files = dl.get_list_from_html(contents,'jp2')
         for f in list_files:
             if start_datetime_t < datetime_from_filename_lmsal(f) <= end_datetime_t:
                 ret_list.append(dir_str+'/'+f)
-    
+        
     return ret_list
     
 

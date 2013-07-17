@@ -80,7 +80,7 @@ def main(argv=None): # IGNORE:C0111
 USAGE
 ''' % (program_shortdesc, str(__date__))
 
-    now = time.gmtime()
+    now = dt.datetime.utcnow()
     
     image_types = ['aia_fits','aia_jp2','hmi_fits','hmi_jp2','hmi_gif']
     source_locations = ['kasi','jsoc','lmsal'] 
@@ -98,7 +98,7 @@ USAGE
         parser.add_argument('--image',dest='image',help='continuum, magnetogram')
         parser.add_argument('--src',dest='source',help='kasi, jsoc, lmsal [default : kasi]',default='kasi')
         parser.add_argument('--dest',dest='destination',help='path [default : %(default)s]',default=dest_path)
-        parser.add_argument('--start',dest='start_time',help='start time',default=time.strftime("%Y-%m-%dT%H:%M:%S",now))
+        parser.add_argument('--start',dest='start_time',help='start time',default=dt.datetime.strftime(now,"%Y-%m-%dT%H:%M:%S"))
         parser.add_argument('--end',dest='end_time',help='end time')
         parser.add_argument('--continue',action='store_true',dest='mode_continue',help='download files from last success',default=False)
         parser.add_argument('--realtime',action='store_true',dest='mode_realtime',help='download new files periodically',default=False)
@@ -124,7 +124,8 @@ USAGE
         config_elem.attrib['image'] = args.image
         config_elem.attrib['dst_dir'] = args.destination
         config_elem.attrib['start_datetime'] = args.start_time
-        config_elem.attrib['end_datetime'] =  time.strftime("%Y-%m-%dT%H:%M:%S",now+dt.timedelta(seconds=1))
+        end_datetime_t = dt.datetime.strptime(args.start_time,"%Y-%m-%dT%H:%M:%S") + dt.timedelta(seconds=1)
+        config_elem.attrib['end_datetime'] =  dt.datetime.strftime(end_datetime_t,"%Y-%m-%dT%H:%M:%S")
         if args.end_time != None:
             config_elem.attrib['end_datetime'] = args.end_time
         config_elem.attrib['last_datetime'] = args.start_time

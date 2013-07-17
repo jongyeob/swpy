@@ -81,7 +81,7 @@ def download(id_str,src,dst=None,overwrite=False):
             makedirs(dst_dirname)
         
     try:   
-        if path.exists(dst) == True:
+        if path.exists(dst) == True and overwrite == False:
             raise IOError("Already exist")
        
     

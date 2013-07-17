@@ -124,7 +124,7 @@ USAGE
         config_elem.attrib['image'] = args.image
         config_elem.attrib['dst_dir'] = args.destination
         config_elem.attrib['start_datetime'] = args.start_time
-        config_elem.attrib['end_datetime'] = args.start_time 
+        config_elem.attrib['end_datetime'] =  time.strftime("%Y-%m-%dT%H:%M:%S",now+dt.timedelta(seconds=1))
         if args.end_time != None:
             config_elem.attrib['end_datetime'] = args.end_time
         config_elem.attrib['last_datetime'] = args.start_time

@@ -124,7 +124,7 @@ USAGE
         config_elem.attrib['image'] = args.image
         config_elem.attrib['dst_dir'] = args.destination
         config_elem.attrib['start_datetime'] = args.start_time
-        config_elem.attrib['end_datetime'] = args.start_time
+        config_elem.attrib['end_datetime'] = args.start_time 
         if args.end_time != None:
             config_elem.attrib['end_datetime'] = args.end_time
         config_elem.attrib['last_datetime'] = args.start_time
@@ -184,12 +184,11 @@ USAGE
                             last_datetime_t = datetime_from_filename_lmsal(filename)
                             config_elem.attrib['last_datetime'] = dt.datetime.strftime(last_datetime_t,"%Y-%m-%dT%H:%M:%S")
                              
-                            # save config
-                            sx.write_xml(config_elem, config_path)
+                       
                     
                         
-                       
-            sleep(60.0)
+            if args.mode_realtime == True:           
+                sleep(60.0)
         
         
 ### save config

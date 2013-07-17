@@ -98,12 +98,13 @@ USAGE
         parser.add_argument('--image',dest='image',help='continuum, magnetogram')
         parser.add_argument('--src',dest='source',help='kasi, jsoc, lmsal [default : kasi]',default='kasi')
         parser.add_argument('--dest',dest='destination',help='path [default : %(default)s]',default=dest_path)
-        
         parser.add_argument('--start',dest='start_time',help='start time',default=time.strftime("%Y-%m-%dT%H:%M:%S",now))
-        parser.add_argument('--end',dest='end_time',help='end time',default=time.strftime("%Y-%m-%dT%H:%M:%S",now))
+        parser.add_argument('--end',dest='end_time',help='end time')
         parser.add_argument('--continue',action='store_true',dest='mode_continue',help='download files from last success',default=False)
         parser.add_argument('--realtime',action='store_true',dest='mode_realtime',help='download new files periodically',default=False)
-        parser.add_argument('--config',dest='config',help='id for program configuration',default='default')
+        parser.add_argument('--overwrite',action='store_true',dest='mode_overwrite',help='overwrite new files',default=False)
+        parser.add_argument('--config',dest='config',help='id for program configurations')
+        
         
         
         parser.add_argument('-V', '--version', action='version', version=program_version_message)
@@ -112,44 +113,49 @@ USAGE
               
         # Process arguments 
         args = parser.parse_args(argv[1:])
-        print args
-        
-        # load config
-        config_root = sx.open_xml(config_path)
-        if config_root == None:
-            config_root = sx.create_xml('configs', config_path)
-        # init config    
-        config_elem = config_root.xpath('./config[id="%s"]'%(args.config))
-        if len(config_elem) == 0:
-            config_elem = sx.Element('config')
-            config_elem.attrib['id'] = args.config
-            config_elem.attrib['src'] = args.source
-            config_elem.attrib['data'] = args.data
-            config_elem.attrib['image'] = args.image
-            config_elem.attrib['dst_dir'] = args.destination
-            config_elem.attrib['start_datetime'] = args.start_time
+
+### Init config
+#
+#
+        config_elem = sx.Element('config')
+        config_elem.attrib['id'] = str(args.config)
+        config_elem.attrib['src'] = args.source
+        config_elem.attrib['data'] = args.data
+        config_elem.attrib['image'] = args.image
+        config_elem.attrib['dst_dir'] = args.destination
+        config_elem.attrib['start_datetime'] = args.start_time
+        config_elem.attrib['end_datetime'] = args.start_time
+        if args.end_time != None:
             config_elem.attrib['end_datetime'] = args.end_time
-            config_elem.attrib['last_datetime'] = args.start_time
-            config_elem.attrib['realtime'] = str(args.mode_realtime)
-            config_elem.attrib['continue'] = str(args.mode_continue)
-            config_root.append(config_elem)
-            sx.write_xml(config_root, config_path)
+        config_elem.attrib['last_datetime'] = args.start_time
+
+### Load config
+#
+#
+        if args.config != None:
+            config_root = sx.open_xml(config_path)
+            if config_root != None:
+                load_config_elem = config_root.xpath('./config[id="%s"][0]'%(args.config))
+                if load_config_elem != None:
+                    config_elem = load_config_elem
+    
+           
+        sys.stdout.write(sx.et.tostring(config_elem)+"\n")
         
-            
         first_run = False    
-        while config_elem.attrib['realtime'] == 'True' or first_run == False:
+        while args.mode_realtime == True or first_run == False:
             first_run = True
         
             if(args.data == 'hmi_jp2' and args.source == 'lmsal'):
                 
                 start_datetime_t = dt.str_to_datetime(config_elem.attrib['start_datetime'],"%Y-%m-%dT%H:%M:%S")
-                if config_elem.attrib['continue'] == 'True' or config_elem.attrib['realtime'] == 'True':
+                if args.mode_continue == True or args.mode_realtime == True:
                     start_datetime_t = dt.str_to_datetime(config_elem.attrib['last_datetime'],"%Y-%m-%dT%H:%M:%S")
                     print("Continue mode : "+str(start_datetime_t))
                     
                 
                 end_datetime_t = dt.str_to_datetime(config_elem.attrib['end_datetime'],"%Y-%m-%dT%H:%M:%S")
-                if config_elem.attrib['realtime'] == 'True':
+                if args.mode_realtime == True:
                     end_datetime_t = dt.datetime.utcnow()
                     print("Realtime mode : "+str(end_datetime_t))
                 
@@ -169,7 +175,7 @@ USAGE
                         hmi_jp2_path_local(f_datetime_t,config_elem.attrib['image'])
                     
                         
-                        r = dl.download(config_elem.attrib['id'], f,dst_filepath)
+                        r = dl.download(config_elem.attrib['id'], f,dst_filepath,args.mode_overwrite)
                      
                         sys.stdout.write(str(r)+'\n')
                     
@@ -182,10 +188,25 @@ USAGE
                             sx.write_xml(config_elem, config_path)
                     
                         
-                         
                        
             sleep(60.0)
-                    
+        
+        
+### save config
+#
+#
+        if args.config != None:
+            config_root = sx.open_xml(config_path)
+            if config_root == None:
+                config_root = sx.create_xml('configs', config_path)
+                
+            old_config_elem = config_root.xpath('./config[id="%s"][0]'%(args.config))
+            if old_config_elem == None:
+                config_root.append(config_elem)
+            else:
+                old_config_elem.replace(config_elem)
+    
+            sx.write_xml(config_root, config_path)            
     
         
                 

@@ -152,7 +152,7 @@ def get_list_from_html(contents, ext_list = None):
     return strList
 
 def load_http_file(url):
-    contents = ""
+    contents = None
     
     if (url.find("http://") != 0):
         print("The url is invalid, " + url + ".")
@@ -165,26 +165,28 @@ def load_http_file(url):
 
     domain_name = url[7:i]
     file_path = url[i:]
-
-    conn = httplib.HTTPConnection(domain_name)
-    conn.request("GET", file_path)
-
-
-    r = conn.getresponse()
-
-    #print (r.getheaders())
+    try:
+        conn = httplib.HTTPConnection(domain_name)
+        conn.request("GET", file_path)
     
-    if r.status == 301:
-        contents = r.read()
-    elif r.status != 200:
-        print(r.status, r.reason)
-        print("Can not download the file, " + url + ".")
+    
+        r = conn.getresponse()
+    
+        #print (r.getheaders())
+        
+        if r.status == 301:
+            contents = r.read()
+        elif r.status != 200:
+            print(r.status, r.reason)
+            print("Can not download the file, " + url + ".")
+            conn.close()
+            return None
+        else:
+            contents = r.read()
+    
         conn.close()
+    except:
         return None
-    else:
-        contents = r.read()
-
-    conn.close()
 
     return contents
 

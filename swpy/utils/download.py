@@ -6,6 +6,9 @@ import string
 from swxml import Element,et
 
 import sys
+import os
+
+g_callback_last_msg = ''
 
 class Receipt():
     id = ''
@@ -43,11 +46,8 @@ class Receipt():
             self.success = True
         
     def __str__(self):        
-        return "ID : %s(%s) | Time : %s\n\
-SRC : %s(%d)\n\
-DST : %s(%d)\n\
-Error : %s"\
-        %(self.id,self.success,self.time,\
+        return "%s %s %s  %s(%d) -> %s(%d) %s"\
+        %(self.time,self.id,self.success,\
           self.src_path,self.src_size,\
           self.dst_path,self.dst_size,\
           self.error_msg)
@@ -55,23 +55,25 @@ Error : %s"\
     
 
 def callback(blocks_read,block_size,total_size):
+    global g_callback_last_msg
     if total_size < 0:
     # Unknown size
-        sys.stderr.write('Read %d blocks (%d bytes)\n' % (blocks_read,blocks_read * block_size))
+        g_callback_last_msg = '\rRead %d blocks (%d bytes)' % (blocks_read,blocks_read * block_size)    
     else:
         amount_read = blocks_read * block_size
-        sys.stderr.write('Read %d blocks, or %d/%d\n' %(blocks_read, amount_read, total_size))
+        g_callback_last_msg = '\rRead %d blocks, or %d/%d' %(blocks_read, amount_read, total_size)
+    
+    sys.stderr.write(g_callback_last_msg)
+        
 
 
 def download(id_str,src,dst=None,overwrite=False):
     
     r = Receipt(id_str)
     
-    r.id = id_str
+    r.id        =   id_str
     r.src_path  =   src
-    r.dst_path = dst
-    
-    
+    r.dst_path  =   dst
         
     if dst is not None:
             
@@ -79,29 +81,49 @@ def download(id_str,src,dst=None,overwrite=False):
         
         if path.exists(dst_dirname) == False:
             makedirs(dst_dirname)
-        
-    try:   
-        if path.exists(dst) == True and overwrite == False:
-            raise IOError("Already exist")
-       
-    
-        result = urlretrieve(src,dst,callback)
-        
-        r.dst_path = result[0]        
-        r.src_size = int(result[1]['Content-Length'])
-        
-        
-        with open(result[0],'r') as f:
-            f.seek(0,2)
-            r.dst_size = int(f.tell())
             
-        r.success   =   True 
     
-       
-        
-    except Exception as err:
-        r.error_msg = str(err)
+    iter = 0
+    dst2 = dst
+    while iter < 3 and r.success == False:
+        iter = iter + 1            
+
+        try:
+            
+            if dst is not None:
+                if path.exists(dst) == True:
+                    if overwrite == True:
+                        os.remove(dst)
+                    else:
+                        raise IOError("Already exist")
                 
+                dst2  = dst + '.down'
+                           
+            
+            result = urlretrieve(src,dst2,callback)
+            
+            
+            sys.stderr.write('\n')
+            
+            r.dst_path = result[0]        
+            r.src_size = int(result[1]['Content-Length'])
+            
+            
+            with open(result[0],'r') as f:
+                f.seek(0,2)
+                r.dst_size = int(f.tell())
+             
+            
+            if dst is not None:
+                os.rename(dst2, dst)
+                
+            r.success   =   True
+   
+            
+        except Exception as err:
+            r.error_msg = str(err)
+            break
+        
         
     return r
 

@@ -5,8 +5,18 @@ Created on 2013. 5. 7.
 '''
 
 from datetime import datetime, timedelta
+from copy import deepcopy
+from swpy.utils import log
 
+def startdate(datetime_t):
+    return  datetime_t.replace(hour=0,minute=0,second=0,microsecond=0)
+def enddate(datetime_t):
+    return  datetime_t.replace(hour=23,minute=59,second=59,microsecond=999999)
+def time_t(datetime_t):
+    return datetime_t.replace(1,1,1)  
 def datetime_range(start_datetime_t,end_datetime_t,timedelta_t):
+    log.write('Start/End : %s/%s'%(start_datetime_t,end_datetime_t), log.DEBUG)
+    
     ret_list = []
     datetime_t = start_datetime_t
     while datetime_t <= end_datetime_t:
@@ -15,22 +25,20 @@ def datetime_range(start_datetime_t,end_datetime_t,timedelta_t):
 
         
     return ret_list 
-def datetime_t(year,month,day,hour,minute,second):
+def datetime_t(year,month=1,day=1,hour=0,minute=0,second=0.0):
     return datetime(year,month,day,hour,minute,int(second),int(round(second-int(second),6)*1e6))
-          
+
 def str_to_datetime(datetime_string,datetime_format):
     return datetime.strptime(datetime_string,datetime_format)
+def datetime_to_str(datetime_format,datetime_t):
+    return datetime.strftime(datetime_format,datetime_t)
+          
 def date_tuple(datetime_t):
     return (datetime_t.year,datetime_t.month,datetime_t.day)
 def time_tuple(datetime_t):
     return (datetime_t.hour,datetime_t.minute,datetime_t.second)
 def datetime_tuple(datetime_t):
     return (datetime_t.year,datetime_t.month,datetime_t.day,datetime_t.hour,datetime_t.minute,datetime_t.second+datetime_t.microsecond*1e-6)
-
-def total_seconds(datetime_string,datetime_format):
-    t = datetime.strptime(datetime_string,datetime_format)
-    t0 = datetime.strptime("","")
-    return (t-t0).total_seconds()
 
 def julian_date(datetime_string,datetime_format):
     t = datetime.strptime(datetime_string,datetime_format)

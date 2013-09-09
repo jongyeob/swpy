@@ -8,8 +8,11 @@ import utils.swdt as dt
 import utils.download as dl
 import re
 
+import utils as utl
 
 hmi_images = ['magnetogram','continuum']
+aia_images = ['94','131','171','193','211','304','335','1600','1700','4500'
+]
 def datetime_from_filename_lmsal(filename):
     filename_regex = "(\d+)_(\d+)_(\d+)__(\d+)_(\d+)_(\d+)_(\d+)__\S+"
     res = re.search(filename_regex, filename)
@@ -78,6 +81,14 @@ def hmi_jp2_path_lmsal(datetime_t,image_string):
 def hmi_jp2_path_kasi():
     pass
 
+def datetime_from_filename_local(filename):
+    filename_regex = '(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(\d{3})_\S+'
+    res = re.search(filename_regex, filename)
+    year,month,day,hour,minute,second,fsecond = [int(i) for i in res.groups()]
+    second = second + (fsecond*1.)/10**len(str(fsecond))
+    
+    return dt.datetime_t(year,month,day,hour,minute,second)
+
 def hmi_jp2_path_local(datetime_t,image_string):
 
     
@@ -104,11 +115,38 @@ def hmi_jp2_list_lmsal(start_datetime_t,end_datetime_t,image_string):
     
         list_files = dl.get_list_from_html(contents,'jp2')
         for f in list_files:
-            if start_datetime_t <= datetime_from_filename_lmsal(f) <= end_datetime_t:
+            if start_datetime_t <= datetime_from_filename_lmsal(f) < end_datetime_t:
                 ret_list.append(dir_str+'/'+f)
         
     return ret_list
+def hmi_jp2_list_local(start_datetime_t,end_datetime_t,image_string,base_dir='.'):
+    '''
+    @summary:     real filepaths from local
+    @param :     (swdt)start_datetime_t - start time
+                 (swdt)end_datetime_t - end time
+                 (str)image_string - ['continuum','magnetogram']                
+    @return :    (list)paths
+    @change:      2013-08-06 / Jongyeob Park(pjystar@gmail.com)
+                  New created
+    '''
+    ret_list = []
+    for datetime_t in dt.datetime_range(start_datetime_t, end_datetime_t, dt.timedelta(1)):
+        start_t = start_datetime_t
+        if(datetime_t != start_datetime_t):
+            start_t = dt.startdate(datetime_t)
+        
+        end_t = dt.enddate(datetime_t)
+        if(end_t > end_datetime_t):
+            end_t = end_datetime_t
+            
+        dir_str,_ = dl.path.split(hmi_jp2_path_local(datetime_t, image_string))
     
+        list_files = utl.get_files(base_dir + dir_str+'/*.jp2')
+        for f in list_files:
+            if start_t <= datetime_from_filename_local(f) <= end_t:
+                ret_list.append(f)
+        
+    return ret_list
 
 def hmi_jp2_list_kasi():
     

@@ -6,7 +6,7 @@ Created on 2013. 5. 7.
 
 from datetime import datetime, timedelta
 from copy import deepcopy
-from swpy.utils import log
+
 
 def startdate(datetime_t):
     return  datetime_t.replace(hour=0,minute=0,second=0,microsecond=0)
@@ -15,7 +15,7 @@ def enddate(datetime_t):
 def time_t(datetime_t):
     return datetime_t.replace(1,1,1)  
 def datetime_range(start_datetime_t,end_datetime_t,timedelta_t):
-    log.write('Start/End : %s/%s'%(start_datetime_t,end_datetime_t), log.DEBUG)
+    print('Start/End : %s/%s'%(start_datetime_t,end_datetime_t))
     
     ret_list = []
     datetime_t = start_datetime_t

@@ -95,8 +95,8 @@ def hmi_jp2_path_local(datetime_t,image_string):
     year,month,day,hour,miniute,second = dt.datetime_tuple(datetime_t) 
     
     fsec,sec = modf(second)
-    local_path = '/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
-    %(year,year,month,day,year,month,day,hour,miniute,sec,round(fsec,4)*1e3,image_string)
+    local_path = '/sdo/hmi/%s/%04d/%04d%02d%02d/jp2/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
+    %(image_string,year,year,month,day,year,month,day,hour,miniute,sec,round(fsec,4)*1e3,image_string)
     
     
     return local_path 
@@ -142,7 +142,7 @@ def hmi_jp2_list_local(start_datetime_t,end_datetime_t,image_string,base_dir='.'
         dir_str,_ = dl.path.split(hmi_jp2_path_local(datetime_t, image_string))
     
         list_files = utl.get_files(base_dir + dir_str+'/*.jp2')
-        for f in list_files:
+        for f in sorted(list_files):
             if start_t <= datetime_from_filename_local(f) <= end_t:
                 ret_list.append(f)
         

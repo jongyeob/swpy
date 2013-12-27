@@ -4,11 +4,13 @@ Created on 2013. 5. 7.
 @author: kasi
 '''
 
-from lxml import etree as et
-from lxml.etree import Element
-from swpy.utils import swdt 
 from os import path
 import os
+
+from lxml import etree as et
+from lxml.etree import Element
+
+from swpy.utils.time import swdt
 
 
 def create_xml(rootname,filepath=None):

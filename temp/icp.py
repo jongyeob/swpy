@@ -6,8 +6,8 @@ Created on 2013. 4. 16.
 
 import scipy.linalg
 
-#____________________  Support functions _______________________
 
+#____________________  Support functions _______________________
 # calculate Euclidean distance between two points p and q and
 # return the distance as a scalar:
 def _euclidean(p, q):

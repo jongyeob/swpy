@@ -1,58 +1,32 @@
+
 import httplib
-from urllib import urlretrieve
+import ftplib
 from os import path, makedirs
 import time
 import string
-from swxml import Element,et
+
 
 import sys
 import os
+import math
+
+import datetime
+import socket
+
+from utils import with_dirs,alert_message 
+from urllib2 import urlopen
+
 
 g_callback_last_msg = ''
 
-class Receipt():
-    id = ''
-    time = ''
-    src_path = ''
-    dst_path = ''
-    src_size = 0
-    dst_size = 0
-    error_msg = 'None'
-    success = False
-    def __init__(self,id_str): 
-        self.id = id_str
-        self.time = time.strftime('%Y-%m-%dT%H:%M:%S',time.localtime())
-    def to_element(self):
-        r = Element('Receipt')
-        r.attrib['id'] = self.id
-        r.attrib['time'] = self.time
-        r.attrib['src_path'] = self.src_path
-        r.attrib['src_size'] = str(self.src_size)
-        r.attrib['dst_path'] = self.dst_path
-        r.attrib['dst_size'] = str(self.dst_size)
-        r.attrib['error_msg'] = self.error_msg
-        r.attrib['success'] = str(self.success)
-        return r
-    def from_element(self,element):
-        self.id = element.attrib['id']
-        self.time = element.attrib['time']
-        self.src_path = element.attrib['src_path']
-        self.src_size = int(element.attrib['src_size']) 
-        self.dst_path = element.attrib['dst_path']
-        self.dst_size = int(element.attrib['dst_size']) 
-        self.error_msg = element.attrib['error_msg']
-        self.success = False
-        if element.attrib['success'].UpperCase() == 'TRUE':
-            self.success = True
-        
-    def __str__(self):        
-        return "%s %s %s  %s(%d) -> %s(%d) %s"\
-        %(self.time,self.id,self.success,\
-          self.src_path,self.src_size,\
-          self.dst_path,self.dst_size,\
-          self.error_msg)
-    
-    
+__author__ = "Seonghwan Choi"
+__copyright__ = "Copyright 2012, Korea Astronomy and Space Science"
+__credits__ = ["Seonghwan Choi","Jongyeob Park"]
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "Seonghwan Choi"
+__email__ = "shchoi@kasi.re.kr"
+__status__ = "Production"
 
 def callback(blocks_read,block_size,total_size):
     global g_callback_last_msg
@@ -64,68 +38,68 @@ def callback(blocks_read,block_size,total_size):
         g_callback_last_msg = '\rRead %d blocks, or %d/%d' %(blocks_read, amount_read, total_size)
     
     sys.stderr.write(g_callback_last_msg)
-        
 
-
-def download(id_str,src,dst=None,overwrite=False):
+def download_url_file(src,dst=None,post_args=None,overwrite=False):
+    '''
+    @summary:          Download a file on internet. return when a file saved to loacl is existed.
+    @param src:        (string) URL
+    @param dst:        (string) local path
+    @param id:         (string) ID for this event
+    @param overwrite:  (bool)   Overwrite when local file is already been
+    @return:           (string) downloaded path
+    '''
     
-    r = Receipt(id_str)
-    
-    r.id        =   id_str
-    r.src_path  =   src
-    r.dst_path  =   dst
-        
     if dst is not None:
-            
-        dst_dirname, _ = path.split(dst)
+        dst = os.path.normpath(dst)
+        if path.exists(dst) == True and overwrite == False:
+            return dst
+                   
+    try_num = 0
+    dst2 = None
+    if dst is not None:
+        dst2 = dst + '.down'
         
-        if path.exists(dst_dirname) == False:
-            makedirs(dst_dirname)
+    success = False
+    while try_num < 3 and success == False:
+        
+        try_num = try_num + 1
+                  
+        
+        try:                            
+            result = urlopen(src,data=post_args)
+                            
+            if result.code != 200:
+                print "Can not download"
+                continue
+               
+            if path.exists(dst) == True and overwrite == True:
+                os.remove(dst)
             
-    
-    iter = 0
-    dst2 = dst
-    while iter < 3 and r.success == False:
-        iter = iter + 1            
-
-        try:
+            contents = result.read()
             
-            if dst is not None:
-                if path.exists(dst) == True:
-                    if overwrite == True:
-                        os.remove(dst)
-                    else:
-                        raise IOError("Already exist")
-                
-                dst2  = dst + '.down'
-                           
+                    
+            with open(with_dirs(dst2),"wb") as fw:
+                fw.write(contents)
             
-            result = urlretrieve(src,dst2,callback)
+                 
+            os.rename(dst2, dst)
             
-            
-            sys.stderr.write('\n')
-            
-            r.dst_path = result[0]        
-            r.src_size = int(result[1]['Content-Length'])
-            
-            
-            with open(result[0],'r') as f:
-                f.seek(0,2)
-                r.dst_size = int(f.tell())
-             
-            
-            if dst is not None:
-                os.rename(dst2, dst)
-                
-            r.success   =   True
-   
+            result.close()
+        
+            success = True
+                            
             
         except Exception as err:
-            r.error_msg = str(err)
-            break
+            print err
+            print 'Waiting for 3 seconds...'
+            time.sleep(3)
+            continue
+            
+       
+    if success == False:
+        return None
         
-        
-    return r
+    return dst
 
 def get_list_from_html(contents, ext_list = None):
     strList = []
@@ -212,8 +186,105 @@ def load_http_file(url):
 
     return contents
 
+
+def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, id="", pw=""):
+    
+    
+    #if (os.path.isfile(dst_path) == True and overwrite == False):
+    #    print("The file already exists, %s"%dst_path)
+    #    return True
+
+    
+    if (src_url.find("ftp://") != 0):
+        print("src_url is invalid url, " + src_url + ".")
+        return False
+    
+    i = src_url.find("/", 6)
+    if (i < 8):
+        print("src_url is invalid url, " + src_url + ".")
+        return False
+
+    remote_domain_name = src_url[6:i]
+    remote_file_path = src_url[i:]
+
+    # print remote_domain_name
+    # print remote_file_path
+
+    try:
+
+        ftp = ftplib.FTP(remote_domain_name)
+        ftp.login(id, pw)
+        
+
+        # If the file exists and its file size is the same.
+        if (os.path.isfile(dst_path) == True):
+            rs = ftp.size(remote_file_path)
+            ls = os.path.getsize(dst_path)
+            
+            #print rs, ls
+
+            if (rs == ls and overwrite == False):
+                ftp.quit()
+                print "Already exist, %s."%(dst_path)
+                return True
+
+        # In the case,
+        # 1. The local file does not exist.
+        # 2. OVERWRITE = TRUE
+        # 3. The file sizes on a remote path and a local path are different.
+        file = open(with_dirs(dst_path), "wb")
+
+        ftp.retrbinary("RETR " + remote_file_path, file.write)
+
+        file.close()
+        ftp.quit()
+        print "Downloaded, %s."%(src_url)
+    except socket.error, e:
+        alert_message("Socket exception error, %s."%e)
+        return False
+
+
+    return True
+
+
+MODE_ALL = 0
+MODE_DIRECTORY = 1
+MODE_FILE = 2
+
+def get_list_from_ftp(ftp_domain, ftp_id, ftp_pw, ftp_dir, mode=MODE_ALL):
+
+    list = []
+
+    try:
+        ftp = ftplib.FTP(ftp_domain, ftp_id, ftp_pw)        
+        ftp.login(ftp_id, ftp_pw)
+        ftp.cwd(ftp_dir)
+        ftp.retrlines("LIST", list.append) #, list.append)
+        ftp.quit()
+    except ftplib.all_errors, e:
+        err_string = str(e).split(None, 1)
+        print err_string
+
+        return [], []
+    
+    #
+    file_names = []
+    file_size = []
+    for line in list:
+        if ((mode == MODE_DIRECTORY and line[0] != "d") or
+            (mode == MODE_FILE and line[0] == "d") ):
+            continue
+        
+        file_size.append(line.split()[4])
+        file_names.append(line.split()[-1])
+
+
+    return file_names, file_size
+
+
+
+
 # rval = download('asadfasdf','http://www.eveningbeer.com/lib/exe/fetch.php?media=study:computer_languages:c_reference_card_ansi_2.2.pdf')
 # print(rval)
 # print(et.tostring(rval.element()))
-
 

@@ -4,22 +4,22 @@ Created on 2013. 6. 19.
 @author: kasi
 '''
 from math import modf
-import utils.swdt as dt
-import utils.download as dl
 import re
 
 import utils as utl
+import utils.datetime as dt
+import utils.download as dl
+
 
 hmi_images = ['magnetogram','continuum']
-aia_images = ['94','131','171','193','211','304','335','1600','1700','4500'
-]
+aia_images = ['94','131','171','193','211','304','335','1600','1700','4500']
 def datetime_from_filename_lmsal(filename):
     filename_regex = "(\d+)_(\d+)_(\d+)__(\d+)_(\d+)_(\d+)_(\d+)__\S+"
     res = re.search(filename_regex, filename)
     year,month,day,hour,minute,second,fsecond = [int(i) for i in res.groups()]
     second = second + (fsecond*1.)/10**len(str(fsecond))
     
-    return dt.datetime_t(year,month,day,hour,minute,second)
+    return dt.datetime(year,month,day,hour,minute,second)
 
 def hmi_jp2_path_lmsal(datetime_t,image_string):
     #

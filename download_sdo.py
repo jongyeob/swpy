@@ -104,7 +104,7 @@ def main(argv=None):
                 if end_t > end_datetime_t :
                     end_t = end_datetime_t
                     
-                for f in sdo.hmi_jp2_list_lmsal(start_t, end_t,args.image ):
+                for f in sdo.hmi_jp2_list_lmsal(start_t, end_t,args.image ): # change generator
                 
                     #dir manipulation
                     
@@ -117,7 +117,7 @@ def main(argv=None):
                     hmi_jp2_path_local(f_datetime_t,config_elem.attrib['image'])
                 
                     
-                    r = dl.download(config_elem.attrib['id'], f,dst_filepath,args.mode_overwrite)
+                    r = dl.download_url_file(config_elem.attrib['id'], f,dst_filepath,args.mode_overwrite)
                  
                     sys.stdout.write(str(r)+'\n')
                 

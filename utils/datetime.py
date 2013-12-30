@@ -123,30 +123,31 @@ def next(current,period,start=None):
     
     
 
-def tuples(datetime_info,flag=None):
+def tuples(datetime_info,trim=None,fsecond=None):
     '''
     @summary: Convert datetime tuples
-    @param flags: ['date','time','datetimef']
+    @param trim: ['date','time']
+    @param second: None | integer 
     @return: tuples | None
     '''
     dt = parsing(datetime_info)
-    
-    if(isinstance(flag,str)):
-        flag = flag.lower()
-        
     if (dt == None):
         return None
-   
-    if flag == None:
-        return (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second,dt.microsecond)
-    elif flag == 'date':
-        return (dt.year,dt.month,dt.day)
-    elif flag == 'time':
-        return (dt.hour,dt.minute,dt.second)
-    elif flag == 'timef':
-        return (dt.hour,dt.minute,dt.second+dt.microsecond*1e-6)
-    elif flag == 'datetimef':
-        return (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second+dt.microsecond*1e-6)
+    
+    if(isinstance(trim,str)):
+        trim = trim.lower()
+       
+        
+    ret = (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.sec,dt.microsecond)
+    if fsecond != None:
+        ret = (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.sec+dt.microsecond*1e-6)
+     
+    if trim == 'date':
+        return ret[:3]
+    elif trim == 'time':
+        return ret[3:]
+    
+    return ret    
     
     
 def julian_day(datetime_info,reverse=False):

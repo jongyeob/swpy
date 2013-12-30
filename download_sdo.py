@@ -12,10 +12,9 @@ from argparse import RawDescriptionHelpFormatter
 
 from swpy import sdo
 from time import sleep
-from swpy.utils import swdt as dt
+from swpy.utils import datetime as dt
 from swpy.utils import download as dl
-from swpy.utils import swxml as sx
-from swpy.sdo import datetime_from_filename_lmsal, hmi_jp2_path_local
+from swpy.sdo import datetime_from_filename_nasa, hmi_jp2_path_local
 
 config_keys = ['id','src','data','image','dst_dir','start_datetime','end_datetime','last_datetime','realtime','continue']
 config_path = './config/download_sdo.conf'

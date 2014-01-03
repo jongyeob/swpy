@@ -8,12 +8,17 @@ from __future__ import absolute_import
 from calendar import monthrange
 from datetime import datetime, timedelta
 
+import logging
+
 
 MONTH_NUMBERS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
-DATETIME_FORMATS = [ "%Y-%m-%dT%H:%M:%S","%Y-%m-%dT%H:%M:%S.%f", 
-                     "%Y-%m-%d %H:%M:%S","%Y-%m-%d %H:%M:%S.%f",
-                     "%Y-%m-%d %H:%M","%Y-%m-%d %H","%Y-%m-%d","%Y-%m","%Y",
-                     "%Y%m%d_%H%M%S","%Y%m%d_%H%M","%Y%m%d_%H","%Y%m%d","%Y%m"]
+DATETIME_FORMATS = [ "%Y-%m-%dT%H:%M:%S.%f","%Y-%m-%dT%H:%M:%S","%Y-%m-%dT%H:%M","%Y-%m-%dT%H","%Y-%m-%d","%Y-%m","%Y",
+                     "%Y-%m-%d %H:%M:%S.%f","%Y-%m-%d %H:%M:%S","%Y-%m-%d %H:%M","%Y-%m-%d %H",
+                     "%Y%m%d_%H%M%S.%f","%Y%m%d_%H%M%S","%Y%m%d_%H%M","%Y%m%d_%H","%Y%m%d","%Y%m"]
+
+LOG = logging.getLogger("datetime")
+
+NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; NSECOND2 = 7
 
 def parse_string(datetime_string):
     '''
@@ -30,6 +35,45 @@ def parse_string(datetime_string):
     
     return parsed
     
+def trim(datetime_info,pos,init):
+    '''
+    @summary: Trim after number [year :1,month:2,day:3,hour:4,min:5,second:6,microsecond:7]
+    @param num: can not exceed microseconds
+    @parma init: can be string or iterable obj which is same number of num ['start','end']
+    '''
+    if pos < 1 :
+        return None
+    
+    dt = parsing(datetime_info)
+    if(dt == None):
+        return None
+    
+    if pos > 6:
+        return dt
+    
+    max_len = 7
+    start =[1,1,1,0,0,0,0]
+    end = [9999,12,31,23,59,59,999999]
+    
+        
+    if isinstance(init, str):
+        s = init.lower()
+        if s == 'start':
+            init = start[pos:max_len]
+        elif s == 'end':
+            init = end[pos:max_len]
+        else:
+            return dt
+        
+    
+    replaces = list(tuples(dt))
+    
+    for i in range(pos,max_len):
+        replaces[i] = init[i-pos]
+    
+    
+    return dt.replace(*replaces)
+
 def datetime_range(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
     '''
     @param - start_datetime
@@ -41,69 +85,77 @@ def datetime_range(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,h
     if(start_datetime == None or end_datetime == None):
         return []
     
-    print('Start/End : %s/%s'%(start_datetime,end_datetime))
+    LOG.debug('Start/End : %s/%s'%(start_datetime,end_datetime))
     
     ret_list = []
-    datetime = start_datetime
+    t = start_datetime
+
     if start_datetime > end_datetime:
-        datetime = end_datetime
+        t = end_datetime
+    
+    init_i = 0
+    for i,td in zip([NYEAR,NMONTH,NWEEK,NDAY,NHOUR,NSECOND],[years,months,weeks,days,hours,seconds]):
+        if td != 0: init_i = i
       
-    while datetime <= end_datetime :
-        ret_list.append(datetime) 
+    while trim(t,init_i,'start') <= end_datetime :
+        ret_list.append(t) 
         
-        datetime = datetime + timedelta(weeks=weeks,days=days,hours=hours,minutes=minutes,seconds=seconds,milliseconds=milliseconds,microseconds=microseconds)
-        m = datetime.month + months
+        t = t + timedelta(weeks=weeks,days=days,hours=hours,minutes=minutes,seconds=seconds,milliseconds=milliseconds,microseconds=microseconds)
+        m = t.month + months
         #print datetime_t.month,m,m%12
         m1,m2 = int(m/12),m%12
         m1,m2 = [(m1,m2),(m1-1,12)][m2==0]
-        print datetime.month,m1,m2
+        LOG.debug('Now(year):%d, Now(mon):%d, adj.(year):%d, Real(mon):%d)'%(t.year,t.month,m1,m2))
         
-        datetime = datetime.replace(year=datetime.year + years + m1, month=m2)
-        
-        print datetime
-               
+        t = t.replace(year=t.year + years + m1, month=m2)
+                      
        
     return ret_list 
 
-def parsing(datetime_info, *arg):
+def parsing(*args):
     '''
     @summary: Make datatime object with args
     @param args: Datetime string |
     @return: Datetime or None 
     '''
-    ret = None        
-    if(isinstance(datetime_info,datetime)):
-        ret = datetime_info
-
-           
-    elif(isinstance(datetime_info,str)):
-        ret = parse_string(datetime_info)
+    ret = None
+    num = len(args)
+    init = datetime(1,1,1)
     
-    elif(isinstance(datetime_info,tuple) or isinstance(datetime_info,list)):
-        num = len(datetime_info)
-        if(num == 6):
-            if(isinstance(datetime_info[num-1],float)):
-                second = datetime_info[num-1]
-                datetime_info.append(int(round(second-int(second),6)*1e6))
-                datetime_info[num-1] = int(second)
-                
-        try: 
-            ret = datetime.strptime(*datetime_info)
+    buf = []
+    
+    if num == 1:
+        if(isinstance(args[0],datetime)):
+            ret = args[0]
+        elif(isinstance(args[0],str)):
+            ret = parse_string(args[0])
+        elif(isinstance(args[0],tuple) or isinstance(args[0],list)):
+            buf.extend(args[0])
+        elif(isinstance(args[0],int)):
+            ret = init.replace(args[0])
+
+    elif num > 1:
+        
+        for a in args:
+            
+            na = int(a)
+            fa = float(a)
+            buf.append(na)
+            if(na-fa != 0 ):    
+                buf.append(int(round(fa-na,6)*1e6))
+                break
+        
+    if(ret == None and len(buf) > 0):    
+        try:
+            ret = init.replace(*buf)
         except Exception as err:
             print err
-    elif(isinstance(datetime_info,int)):
-        datetime_info = [ [datetime_info].append(t) for t in arg]
-        
-        try: 
-            ret = datetime(*datetime_info)
-        except Exception as err:
-            print err
-        
+    
 
     return ret
-def next(current,period,start=None):
+def move(current,period,start=None):
     '''
-    @summary: return next datetime from current with the period
+    @summary: return move datetime from current with the period
     @param current: current datetime
     @param period: timedelta
     @param start: start datetime
@@ -138,9 +190,9 @@ def tuples(datetime_info,trim=None,fsecond=None):
         trim = trim.lower()
        
         
-    ret = (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.sec,dt.microsecond)
+    ret = (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second,dt.microsecond)
     if fsecond != None:
-        ret = (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.sec+dt.microsecond*1e-6)
+        ret = (dt.year,dt.month,dt.day,dt.hour,dt.minute,dt.second+dt.microsecond*1e-6)
      
     if trim == 'date':
         return ret[:3]
@@ -221,44 +273,3 @@ def modified_julian_day(jd,reverse=False):
     return mjd
 
 
-def trim(datetime_info,pos,init):
-    '''
-    @summary: Trim after number [year :1,month:2,day:3,hour:4,min:5,second:6,microsecond:7]
-    @param num: can not exceed microseconds
-    @parma init: can be string or iterable obj which is same number of num ['start','end']
-    '''
-    if pos < 1 :
-        return None
-    
-    dt = parsing(datetime_info)
-    if(dt == None):
-        return None
-    
-    if pos > 6:
-        return dt
-    
-    max_len = 7
-    start =[1,1,1,0,0,0,0]
-    end = [9999,12,31,23,59,59,999999]
-    
-        
-    if isinstance(init, str):
-        s = init.lower()
-        if s == 'start':
-            init = start[pos:max_len]
-        elif s == 'end':
-            init = end[pos:max_len]
-        else:
-            return dt
-        
-    
-    replaces = list(tuples(dt))
-    
-    for i in range(pos,max_len):
-        replaces[i] = init[i-pos]
-    
-    
-    return dt.replace(*replaces)
-
-#print datetime_range(datetime(2000,01,01),datetime(2010,02,28),years=1)
-#print datetime_range(datetime(2000,01,01),datetime(2002,02,28),months=1)

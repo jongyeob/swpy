@@ -65,12 +65,8 @@ def load_ace_rt1h_period(start_date,instrument,end_date=None):
     end_dt = start_dt 
     if end_date is not None:
         end_dt = dt.parsing(end_date)
-    
-    start_dt, end_dt = dt.trim(start_dt,3,'start'), dt.trim(end_dt,3,'end')
-    
         
     data_total = empty_data(instrument)
-    
     
     for t in dt.datetime_range(start_dt, end_dt, months=1):
         localfile = data_dir + ace_rt1h_path_local(dt.tuples(t,'date'), instrument)

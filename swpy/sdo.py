@@ -22,24 +22,24 @@ def datetime_from_filename_nasa(filename):
     year,month,day,hour,minute,second,fsecond = [int(i) for i in res.groups()]
     second = second + (fsecond*1.)/10**len(str(fsecond))
     
-    return dt.datetime(year,month,day,hour,minute,second)
+    return dt.parsing(year,month,day,hour,minute,second)
 
-def hmi_jp2_path_nasa(datetime_t,image_string):
+def hmi_jp2_path_nasa(datetime,image_string):
     '''
     @summary: return hmi jp2 url from nasa data server
     @param datetime_t : datetime_info
     @param image_string : [continuum, magnetogram]
     @return: return string
     '''
+    t = dt.parsing(datetime)
     
-    
-    continuum_start_time = [dt.datetime(2010,12,6,6,53,41.305),dt.datetime(2012,5,29,11,51,40.30)]
-    magnetogram_start_time = [dt.datetime(2010,12,6,6,53,41.305),dt.datetime(2012,05,29,11,39,40.30)]
+    continuum_start_time = [dt.parsing(2010,12,6,6,53,41.305),dt.parsing(2012,5,29,11,51,40.30)]
+    magnetogram_start_time = [dt.parsing(2010,12,6,6,53,41.305),dt.parsing(2012,05,29,11,39,40.30)]
     
     #continuum_filename_changed_time = [dt.datetime_t(2010,12,7,16,44,41.00)]
     #magnetogram_filename_changed_time = [dt.datetime_t(2010,12,7,16,37,11.00)]
     
-    year,month,day,hour,miniute,second = dt.tuples(datetime_t,'datetimef')
+    year,month,day,hour,miniute,second = dt.tuples(t,fsecond=True)
     
     
     host = "http://helioviewer.nascom.nasa.gov"
@@ -47,38 +47,24 @@ def hmi_jp2_path_nasa(datetime_t,image_string):
     dirname = ''
 
     if image_string == 'continuum':
-        if continuum_start_time[0] <= datetime_t < continuum_start_time[1]:
+        if continuum_start_time[0] <= t < continuum_start_time[1]:
             dirname = '/jp2/HMI/continuum/%4d/%02d/%02d'%(year,month,day)
-        elif continuum_start_time[1] <= datetime_t:
+        elif continuum_start_time[1] <= t:
             dirname = '/jp2/HMI/%4d/%02d/%02d/continuum'%(year,month,day)
     elif image_string == 'magnetogram':
-        if magnetogram_start_time[0] <= datetime_t < magnetogram_start_time[1]:
+        if magnetogram_start_time[0] <= t < magnetogram_start_time[1]:
             dirname = '/jp2/HMI/magnetogram/%4d/%02d/%02d'%(year,month,day)
-        elif magnetogram_start_time[1] <= datetime_t:
+        elif magnetogram_start_time[1] <= t:
             dirname = '/jp2/HMI/%4d/%02d/%02d/magnetogram'%(year,month,day)
     else:
         return None
     
     filename = None
     fsec,sec = modf(second)
-    if (fsec*1e3)%10 == 0 :
-        filename = "%4d_%02d_%02d__%02d_%02d_%02d_%02d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,fsec*1e3,image_string)
+    if int(round(fsec*1e3))%10 == 0 :
+        filename = "%4d_%02d_%02d__%02d_%02d_%02d_%02d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,round(fsec*1e2),image_string)
     else:
-        filename = "%4d_%02d_%02d__%02d_%02d_%02d_%03d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,fsec*1e3,image_string)
-
-#    if image_string is 'continuum':
-#        if continuum_filename_changed_time[0] <= datetime_t:
-#            filename = "%4d_%02d_%02d__%02d_%02d_%02d_%02d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,fsec*1e3,image_string)
-#        else:
-#            filename = "%4d_%02d_%02d__%02d_%02d_%02d_%03d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,fsec*1e2,image_string)
-#    elif image_string is 'magnetogram':
-#        if magnetogram_filename_changed_time[0] <= datetime_t:
-#            filename = "%4d_%02d_%02d__%02d_%02d_%02d_%02d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,fsec*1e3,image_string)
-#        else:
-#            filename = "%4d_%02d_%02d__%02d_%02d_%02d_%03d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,fsec*1e2,image_string)
-#    else:
-#        return None
-    
+        filename = "%4d_%02d_%02d__%02d_%02d_%02d_%03d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,round(fsec*1e3),image_string)
     
     
     return host + dirname + '/' + filename
@@ -115,6 +101,9 @@ def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
     @summary: retrieve files from nasa data server (jp2).
     @return: generator return
     '''
+    start_datetime = dt.parsing(start_datetime)
+    end_datetime = dt.parsing(end_datetime)
+    
     for t in dt.datetime_range(start_datetime, end_datetime, days=1):
         dir_str,_ = dl.path.split(hmi_jp2_path_nasa(t, image_string))
     
@@ -124,7 +113,7 @@ def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
     
         list_files = dl.get_list_from_html(contents,'jp2')
         for f in list_files:
-            if start_datetime <= datetime_from_filename_nasa(f) < end_datetime:     
+            if start_datetime <= datetime_from_filename_nasa(f) <= end_datetime:     
                 yield dir_str+'/'+f
           
     return 

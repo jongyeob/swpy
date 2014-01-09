@@ -26,7 +26,7 @@ def datetime_from_filename_nasa(filename):
 
 def hmi_jp2_path_nasa(datetime,image_string):
     '''
-    @summary: return hmi jp2 url from nasa data server
+    return hmi jp2 url from nasa data server
     @param datetime_t : datetime_info
     @param image_string : [continuum, magnetogram]
     @return: return string
@@ -98,7 +98,8 @@ def hmi_jp2_path_local(datetime_t,image_string):
 
 def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
     '''
-    @summary: retrieve files from nasa data server (jp2).
+    summary: retrieve files from nasa data server (jp2).
+    
     @return: generator return
     '''
     start_datetime = dt.parsing(start_datetime)

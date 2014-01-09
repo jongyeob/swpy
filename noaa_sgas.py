@@ -22,7 +22,6 @@ def load_sgas(startdate):
     try:
         data = load_sgas_file(filepath)
              
-            
     except IOError as err:
         print err
         files = download_sgas(start_dt,start_dt)

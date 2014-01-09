@@ -9,6 +9,8 @@ from utils import with_dirs
 import utils.datetime as dt
 import utils.download as dl
 
+from swpy import temp_dir
+
 
 PROGRAM_PHOTOSPHERIC = 0
 PROGRAM_CLASSICSS   = 1
@@ -33,7 +35,8 @@ DATA_DIR = swpy.data_dir + '/wilcox/synoptic'
 
 def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM):
     '''
-    @summary: Download synoptic file from cgi get
+    Download synoptic file from cgi get
+    
     @param program: Program name [Photospheric:0,ClassicSS:1,Radial250:2,Radial325:3,Filled:4]
     @param projection: projection method [Sine_latitude:0, Latitude:1]
     @return: File path, if it failed, return None
@@ -47,9 +50,7 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
 
     input_dt = dt.parsing(datetime)
     
-    cgi = 'http://wso.stanford.edu/cgi-bin/wso_prsyn.pl'
-    
-     
+    cgi = 'http://wso.stanford.edu/cgi-bin/wso_prsyn.pl'   
 
     args = 'center=%s&Type=%s&ProgName=%s&Projection=%s'%(input_dt.strftime("%Y_%m_%d_%H"),datatype_name[datatype],program_name[program],projection_name[projection])
     print args
@@ -60,13 +61,11 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
     dstpath = DATA_DIR + dstfile
     print dstpath
     
-    temp_path = dl.download_url_file(cgi,dstpath,post_args=args,overwrite=True)
-    
-    print temp_path
+    temp_path = with_dirs(temp_dir + '/wso.txt')
+    temp_path = dl.download_url_file(cgi,temp_path,post_args=args,overwrite=True)
     if temp_path is None:
         return None
-    
-    
+        
     with open(temp_path) as f:
         contents = f.read()
         
@@ -78,13 +77,10 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
             return None
         
         if contents[i1:i2].find("30 data points") == -1:
-            return None
-                        
+            return None 
                     
         with open(with_dirs(dstpath), "w") as fw:
             fw.write(contents[i1:i2])
-        
-      
          
     return dstpath
 
@@ -93,8 +89,5 @@ def synoptic_path_local(datetime):
 def synoptic_path_wso(datetime):
     pass
 
-def test():
-    print(download_synoptic_file("2013-12-19"))
-    
 if __name__ == '__main__':
-    test()
+    pass

@@ -38,10 +38,10 @@ def download_template(suffix, begindate, enddate=""):
         txt_file = "/%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":now_dt.year,"mm":now_dt.month,"dd":now_dt.day}
         
         # check src
-        dst_path = dl.download_url_file(src+'/'+suffix+txt_file,utils.with_dirs(dst_dir + txt_file))
+        dst_path = dl.download_url_file(src+'/'+suffix+txt_file,utils.with_dirs(dst_dir + txt_file),overwrite=True)
 
         if dst_path == None:
-            tar_path = dl.download_url_file(src+tar_file,utils.with_dirs(tmp))
+            tar_path = dl.download_url_file(src+tar_file,utils.with_dirs(tmp),overwrite=True)
             if tar_path == None:
                 print "No tar..."
                 continue

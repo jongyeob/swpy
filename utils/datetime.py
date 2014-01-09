@@ -3,6 +3,7 @@ Created on 2013. 5. 7.
 
 @author: kasi
 '''
+
 from __future__ import absolute_import
 
 from calendar import monthrange
@@ -22,10 +23,12 @@ NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; 
 
 def parse_string(datetime_string):
     '''
-    @summary: parsing datetime string
-    @param datetime_string: string of datetime
-    @return : Datetime or None
+    parsing datetime string
+
+    :param str datetime_string: string of datetime
+    :return: Datetime|None
     '''
+    
     parsed = None
     for form in DATETIME_FORMATS:
         try:

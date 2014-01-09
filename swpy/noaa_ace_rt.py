@@ -54,7 +54,8 @@ def empty_data(instrument):
  
 def load_ace_rt1h_period(start_date,instrument,end_date=None):
     '''
-    @summary:                 Load files of instrument (mag,swepam) of ACE realtime, from start datetime to end datetime
+    Load files of instrument (mag,swepam) of ACE realtime, from start datetime to end datetime
+    
     @param start_date:    (String|Datetime) start date for searching
     @param end_date:      (String|datetime) end date for searching
     @param instrument:        (String) Instrument name [swepam,mag]
@@ -206,7 +207,7 @@ def download_ace_rt1h(date,inst,filepath=None):
     if filepath is None :
         filepath =  data_dir + ace_rt1h_path_local(date, inst)
         
-    dst_path = dl.download_url_file(f, filepath)
+    dst_path = dl.download_url_file(f, filepath,overwrite=True)
     
     return dst_path
     

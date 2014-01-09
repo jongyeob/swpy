@@ -39,6 +39,7 @@ nosetests.xml
 _*
 *_.*
 my*
-*_test*
 swpy/backup
+
+doc
 

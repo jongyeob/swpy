@@ -31,7 +31,8 @@ def make_dirs(dirpath):
 def with_dirs(filepath):
     filepath = normpath(filepath)
     dirname,_ = split(filepath)
-    make_dirs(dirname)
+    if len(dirname) > 0:
+        make_dirs(dirname) 
     return filepath
 
 def alert_message(message):

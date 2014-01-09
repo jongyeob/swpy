@@ -1,3 +1,13 @@
+'''
+__author__ = "Seonghwan Choi"
+__copyright__ = "Copyright 2012, Korea Astronomy and Space Science"
+__credits__ = ["Seonghwan Choi","Jongyeob Park"]
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "Seonghwan Choi"
+__email__ = "shchoi@kasi.re.kr"
+__status__ = "Production"
+'''
 
 import httplib
 import ftplib
@@ -14,19 +24,14 @@ import datetime
 import socket
 
 from utils import with_dirs,alert_message 
-from urllib2 import urlopen
+from urllib2 import urlopen, HTTPError
 
+import swpy
+from httplib import HTTPException
 
 g_callback_last_msg = ''
 
-__author__ = "Seonghwan Choi"
-__copyright__ = "Copyright 2012, Korea Astronomy and Space Science"
-__credits__ = ["Seonghwan Choi","Jongyeob Park"]
-__license__ = "GPL"
-__version__ = "1.0.1"
-__maintainer__ = "Seonghwan Choi"
-__email__ = "shchoi@kasi.re.kr"
-__status__ = "Production"
+
 
 def callback(blocks_read,block_size,total_size):
     global g_callback_last_msg
@@ -39,7 +44,7 @@ def callback(blocks_read,block_size,total_size):
     
     sys.stderr.write(g_callback_last_msg)
 
-def download_url_file(src,dst=None,post_args=None,overwrite=False):
+def download_url_file(src,dst,post_args=None,overwrite=False):
     '''
     @summary:          Download a file on internet. return when a file saved to loacl is existed.
     @param src:        (string) URL
@@ -48,52 +53,43 @@ def download_url_file(src,dst=None,post_args=None,overwrite=False):
     @param overwrite:  (bool)   Overwrite when local file is already been
     @return:           (string) downloaded path
     '''
-    
-    if dst is not None:
-        dst = os.path.normpath(dst)
-        if path.exists(dst) == True and overwrite == False:
-            return dst
+    dst = path.normpath(dst)
+    dst_exist = path.exists(dst) 
+    if  dst_exist == True and overwrite == False:
+        raise IOError("The file is already been at %s"%(dst))
                    
     try_num = 0
-    dst2 = None
-    if dst is not None:
-        dst2 = dst + '.down'
+    dst2 = dst + '.down'
         
     success = False
     while try_num < 3 and success == False:
         
         try_num = try_num + 1
-                  
         
         try:                            
             result = urlopen(src,data=post_args)
-                            
-            if result.code != 200:
-                print "Can not download"
-                continue
-               
-            if path.exists(dst) == True and overwrite == True:
-                os.remove(dst)
             
             contents = result.read()
-            
-                    
             with open(with_dirs(dst2),"wb") as fw:
                 fw.write(contents)
-            
-                 
+                        
+            if path.exists(dst) == True:
+                os.remove(dst) 
+                                 
             os.rename(dst2, dst)
             
             result.close()
         
             success = True
                             
-            
-        except Exception as err:
+        except HTTPError as err:
             print err
-            print 'Waiting for 3 seconds...'
-            time.sleep(3)
-            continue
+            if err.code == 404:
+                break
+        
+        except Exception as err:
+            print err   
+            break
             
        
     if success == False:

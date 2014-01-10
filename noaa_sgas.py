@@ -10,7 +10,7 @@ from utils.datetime import datetime_range, parsing
 from noaa import download_sgas
 
 
-SGAS_DIR = '/noaa/sgas'
+SGAS_DIR = '/noaa/SGAS'
 DAYLY_INDICES_KEYS = ['10cm','ssn','3h_K_Boulder','3h_K_Planetary']
 
 def loads(startdate):

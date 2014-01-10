@@ -219,7 +219,6 @@ def load_swepam(filepath):
                 swepam[key].append(data.group(i))
                 i = i + 1
                 
-            
     
     print swepam.keys()
     print zip(*swepam.values())[0]

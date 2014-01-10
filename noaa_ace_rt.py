@@ -73,7 +73,7 @@ def downloads(start_date,instrument,end_date=None):
         localfile = data_dir + path_local(dt.tuples(t,'date'), instrument)
         print "local file : %s"%(localfile)
         try:
-            afile = download_file(t, instrument, localfile)            
+            afile = download(t, instrument, localfile)            
         except Exception as err:
             print err
             return None
@@ -105,13 +105,13 @@ def loads(start_date,instrument,end_date=None):
         print "local file : %s"%(localfile)
         
         try:
-            data = load_file(localfile,instrument)
+            data = load(localfile,instrument)
             
                 
         except IOError as err:
             print err
             
-            if download_file(t, instrument, localfile) == None:
+            if download(t, instrument, localfile) == None:
                 return None
             
             data = load(localfile,instrument)

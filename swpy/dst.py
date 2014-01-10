@@ -103,6 +103,12 @@ def loads(begindate, enddate=""):
         now_dt = now_dt.replace(day=1)
         now_dt = now_dt + dt.timedelta(days=32)
         now_dt = now_dt.replace(day=1)
+        
+    print data.keys()
+    print zip(*data.values())[0]
+    print "..."
+    print zip(*data.values())[-1]
+    
     
     return data
 

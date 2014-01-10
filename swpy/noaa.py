@@ -38,7 +38,7 @@ def download_template(suffix, begindate, enddate=""):
         txt_file = "/%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":now_dt.year,"mm":now_dt.month,"dd":now_dt.day}
         
         # check src
-        dst_path = dl.download_url_file(src+'/'+suffix.upper()+txt_file,utils.with_dirs(dst_dir + txt_file),overwrite=True)
+        dst_path = dl.download_url_file(src+'/'+suffix+txt_file,utils.with_dirs(dst_dir + txt_file),overwrite=True)
 
         if dst_path == None:
             tar_path = dl.download_url_file(src+tar_file,utils.with_dirs(tmp),overwrite=True)
@@ -95,17 +95,17 @@ def download_se(begindate, enddate=""):
     download_template("events", begindate, enddate)
 
 def download_srs(begindate, enddate=""):
-    download_template("srs", begindate, enddate)
+    download_template("SRS", begindate, enddate)
 
 def download_sgas(begindate, enddate=""):
-    files = download_template("sgas", begindate, enddate)
+    files = download_template("SGAS", begindate, enddate)
     return files
 
 def download_rsga(begindate, enddate=""):
-    download_template("rsga", begindate, enddate)
+    download_template("RSGA", begindate, enddate)
 
 def download_geoa(begindate, enddate=""):
-    download_template("geoa", begindate, enddate)
+    download_template("GEOA", begindate, enddate)
 
 
 def download_index(begindate, enddate="", type=""):
@@ -147,13 +147,13 @@ def download_index(begindate, enddate="", type=""):
     return True
 
 def download_dsd(begindate, enddate=""):
-    return download_index(begindate, enddate, "dsd");
+    return download_index(begindate, enddate, "DSD");
 
 def download_dpd(begindate, enddate=""):
-    return download_index(begindate, enddate, "dpd");
+    return download_index(begindate, enddate, "DPD");
 
 def download_dgd(begindate, enddate=""):
-    return download_index(begindate, enddate, "dgd");
+    return download_index(begindate, enddate, "DGD");
 
 
 

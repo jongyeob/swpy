@@ -128,6 +128,12 @@ def loads(start_date,instrument,end_date=None):
             if start_dt <= dt.parsing(data['datetime'][i]) <= end_dt:
                 for key in data_total.keys():
                     data_total[key].append(data[key][i])
+                    
+    
+    print data_total.keys()
+    print zip(*data_total.values())[0]
+    print "..."
+    print zip(*data_total.values())[-1]
             
         
     return data_total

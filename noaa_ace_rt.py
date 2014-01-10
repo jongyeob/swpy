@@ -179,6 +179,8 @@ def load_mag(filepath):
             
     print mag.keys()
     print zip(*mag.values())[0]
+    print "..."
+    print zip(*mag.values())[-1]
         
     return mag
             
@@ -218,10 +220,11 @@ def load_swepam(filepath):
                 i = i + 1
                 
             
-            
     
     print swepam.keys()
     print zip(*swepam.values())[0]
+    print "..."
+    print zip(*swepam.values())[-1]
     
     return(swepam)
         

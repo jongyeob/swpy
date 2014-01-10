@@ -66,48 +66,40 @@ def downloads_cgi(begindate, enddate=None):
     return files
 
 def loads(begindate, enddate=""):
-    #
-    begin_dt, end_dt = dt.trim(begindate,3,'start'),dt.trim(enddate,3,'end')
     
-    #
+    begin_dt,end_dt = dt.parsing(begindate),dt.parsing(enddate)
     data = empty_data()
 
-    #
-    now_dt = begin_dt.replace(day=1)
-    while ( now_dt <= end_dt ):
+    for t in dt.datetime_range(begin_dt, end_dt, months=1):
 
         file_path = "%(dir)s%(y)04d/dst_%(y)04d%(m)02d.txt"%{
             "dir":DST_DIR,
-            "y":now_dt.year,
-            "m":now_dt.month}
+            "y":t.year,
+            "m":t.month}
         
         print file_path
         
         try:
             temp = load(file_path)
         except IOError:
-            file_path = downloads_cgi(now_dt)
+            file_path = downloads_cgi(t)
             temp = load(file_path)
     
         # time filtering
         i = 0
-        for t in temp["datetime"]:
-            if (begin_dt <= dt.parsing(t) <= end_dt):
+        for tt in temp["datetime"]:
+            if (begin_dt <= dt.parsing(tt) <= end_dt):
                 data["datetime"].append( temp["datetime"][i] )
                 data["dst"].append( temp["dst"][i] )
                 data["version"].append( temp["version"][i] )
             
             i += 1
-
-        #
-        now_dt = now_dt.replace(day=1)
-        now_dt = now_dt + dt.timedelta(days=32)
-        now_dt = now_dt.replace(day=1)
-        
-    print data.keys()
-    print zip(*data.values())[0]
-    print "..."
-    print zip(*data.values())[-1]
+            
+    if i > 0:
+        print data.keys()
+        print zip(*data.values())[0]
+        print "..."
+        print zip(*data.values())[-1]
     
     
     return data

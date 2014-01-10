@@ -18,7 +18,7 @@ DST_KEYS = ['datetime','version','dst']
 def empty_data():
     return {'datetime':[],'dst':[],'version':[]}
 
-def download_dst(begindate, enddate=None):
+def downloads_cgi(begindate, enddate=None):
     '''
     @return: downloaded filepath
     '''
@@ -63,7 +63,7 @@ def download_dst(begindate, enddate=None):
             
     return files
 
-def load_dst(begindate, enddate=""):
+def loads(begindate, enddate=""):
     #
     begin_dt, end_dt = dt.trim(begindate,3,'start'),dt.trim(enddate,3,'end')
     
@@ -82,10 +82,10 @@ def load_dst(begindate, enddate=""):
         print file_path
         
         try:
-            temp = load_dst_file(file_path)
+            temp = load(file_path)
         except IOError:
-            file_path = download_dst(now_dt)
-            temp = load_dst_file(file_path)
+            file_path = downloads_cgi(now_dt)
+            temp = load(file_path)
     
         # time filtering
         i = 0
@@ -105,9 +105,9 @@ def load_dst(begindate, enddate=""):
     return data
 
     
-def load_dst_file(file_path):
+def load(file_path):
     '''
-    @summary: Load dst file
+    Load dst file
     '''
     
     
@@ -145,9 +145,9 @@ def load_dst_file(file_path):
             
     return data
 
-def download_dst_web(begindate, enddate=""):
+def downloads_web(begindate, enddate=""):
     '''
-    @summary: Download from kyoto web pages
+    Download from kyoto web pages
     '''
     begin_dt, end_dt = dt.trim(begindate,3,'start'),dt.trim(enddate,3,'end')
 
@@ -208,68 +208,3 @@ def download_dst_web(begindate, enddate=""):
 
     return True
 
-
-def draw_dst(data, file_path=""):
-    from  matplotlib import pyplot as plt
-    
-    color = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']   
-        
-    # Date list for X-Axis
-    tick_dt = []
-    
-    days = len(data['datetime'])
-   
-    # Figure
-    fig = plt.figure(facecolor='white')
-           
-    # ticks
-    plt.rc('xtick.major', pad=12);
-    plt.rc('xtick.major', size=6);
-    
-    plt.rc('ytick.major', pad=12);
-    plt.rc('ytick.major', size=8);
-    plt.rc('ytick.minor', size=4);
-    
-    # Title
-    plt.title("Dst Index")
-    
-    # Plot
-    plt.plot(data['dst'], color=color[0])
-
-    # Scale
-    plt.yscale('linear')
-
-    # Limitation
-    #plt.xlim(tick_dt[0], tick_dt[days-1])
-    plt.ylim([-200, 50])
-
-    # Labels for X and Y axis 
-    #plt.xlabel("%s ~ %s [UTC]"% (tick_dt[0][0:10],tick_dt[days-1][0:10]),fontsize=14)
-    plt.ylabel("Dst Index")
-          
-    
-    
-    # Grid
-    plt.grid(True)
-
-    # Show or Save
-    if (file_path == ""):
-        plt.show()
-    else:
-        fig.savefig(file_path)
-
-    return fig
-
-
-def test():
-    print "Start"
-    download_dst("20130901", "20131010")
-    download_dst_web("19991011", "19991112")
-    
-    data = load_dst("20130901", "20130907")
-    draw_dst(data)
-    
-    
-    
-    
-#test()

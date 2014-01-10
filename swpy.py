@@ -5,12 +5,12 @@ Created on 2013. 12. 10.
 '''
 
 
-import sys
+import sys,os
 from os.path import normpath,exists
 import ConfigParser as cp
 
 
-swpy_path = sys.path[0]
+swpy_path = os.getcwd()
 
 data_dir = normpath(swpy_path+'/data')
 meta_dir = normpath(swpy_path+'/meta')

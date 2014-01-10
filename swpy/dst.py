@@ -11,6 +11,8 @@ from utils import with_dirs, alert_message
 import utils.datetime as dt
 import utils.download as dl
 
+import logging
+LOG = logging.getLogger('dst')
 
 DST_DIR = swpy.data_dir + "/kyoto/dst/";
 DST_KEYS = ['datetime','version','dst'] 
@@ -60,9 +62,6 @@ def downloads_cgi(begindate, enddate=None):
         mr = dt.monthrange(now_dt.year, now_dt.month)
         now_dt = now_dt + dt.timedelta(days=mr[1])
         
-    if (len(files) == 1):
-        files = files[0]
-        
     return files
 
 def loads(begindate, enddate=""):
@@ -77,13 +76,18 @@ def loads(begindate, enddate=""):
             "y":t.year,
             "m":t.month}
         
-        print file_path
+        LOG.debug(file_path)
         
+        temp = None
         try:
             temp = load(file_path)
         except IOError:
             file_path = downloads_cgi(t)
             temp = load(file_path)
+        
+        if temp == None:
+            return None
+            
     
         # time filtering
         i = 0

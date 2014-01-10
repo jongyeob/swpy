@@ -40,6 +40,10 @@ _*
 *_.*
 my*
 swpy/backup
+test/swpy/data
+test/swpy/temp
+test/data
+test/temp
 
 doc
 

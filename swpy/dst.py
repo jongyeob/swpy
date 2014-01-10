@@ -20,7 +20,9 @@ def empty_data():
 
 def downloads_cgi(begindate, enddate=None):
     '''
-    @return: downloaded filepath
+    Download dst data from cgi
+    
+    :return: downloaded filepath
     '''
     if enddate == None:
         enddate = begindate
@@ -58,9 +60,9 @@ def downloads_cgi(begindate, enddate=None):
         mr = dt.monthrange(now_dt.year, now_dt.month)
         now_dt = now_dt + dt.timedelta(days=mr[1])
         
-        if (len(files) == 1):
-            files = files[0]
-            
+    if (len(files) == 1):
+        files = files[0]
+        
     return files
 
 def loads(begindate, enddate=""):
@@ -169,9 +171,8 @@ def downloads_web(begindate, enddate=""):
         dst = "%(dir)s%(yyyy)04d/dst_web_%(sf)s_%(yyyy)04d%(mm)02d.txt"%{"dir":DST_DIR, "sf":suffix, "yyyy":now_dt.year, "mm":now_dt.month}
 
     
-
         # download it to a tmp file
-        tmp = dl.download_url_file(src)
+        tmp = dl.download_url_file(src,swpy.temp_dir+'/dst.tmp',overwrite=True)
         if (tmp == None):
             mr = dt.monthrange(now_dt.year, now_dt.month)
             now_dt = now_dt + dt.timedelta(days=mr[1])

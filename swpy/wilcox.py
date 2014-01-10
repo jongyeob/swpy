@@ -33,7 +33,7 @@ datatype_name = ['Prelim','Final']
 datatype_filename = ['prelim','final']
 DATA_DIR = swpy.data_dir + '/wilcox/synoptic'
 
-def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM):
+def download_synoptic(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM):
     '''
     Download synoptic file from cgi get
     
@@ -84,9 +84,9 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
          
     return dstpath
 
-def synoptic_path_local(datetime):
+def path_local(datetime):
     pass
-def synoptic_path_wso(datetime):
+def path_wso(datetime):
     pass
 
 if __name__ == '__main__':

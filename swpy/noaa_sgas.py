@@ -13,27 +13,27 @@ from noaa import download_sgas
 SGAS_DIR = '/noaa/sgas'
 DAYLY_INDICES_KEYS = ['10cm','ssn','3h_K_Boulder','3h_K_Planetary']
 
-def load_sgas(startdate):
+def loads(startdate):
     start_dt = parsing(startdate)
     
     filepath = swpy.data_dir+ SGAS_DIR + '/%s'%(start_dt.strftime("%Y/%Y%m%dSGAS.txt"))
     
     data = None
     try:
-        data = load_sgas_file(filepath)
+        data = load(filepath)
              
     except IOError as err:
         print err
         files = download_sgas(start_dt,start_dt)
         
         for afile in files:
-            data = load_sgas_file(afile)
+            data = load(afile)
         
         
     return data
         
     
-def load_sgas_file(filepath):
+def load(filepath):
     
     with open(filepath) as f:
         contents = f.read()
@@ -70,19 +70,4 @@ def load_sgas_file(filepath):
 
             
     return energetic_events,proton_events,daily_indices
-        
-
-def test():
-    #ret = load_sgas_file(swpy.data_dir + SGAS_DIR+"/20130110SGAS.txt")
-    #print ret
-    
-    data = load_sgas("20120212")
-    data = load_sgas("20130312")
-    data = load_sgas("19970512")
-    
-
-if __name__=='__main__':
-    test()
-    
-    print("end")
-    
+            

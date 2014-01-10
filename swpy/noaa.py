@@ -95,17 +95,17 @@ def download_se(begindate, enddate=""):
     download_template("events", begindate, enddate)
 
 def download_srs(begindate, enddate=""):
-    download_template("SRS", begindate, enddate)
+    download_template("srs", begindate, enddate)
 
 def download_sgas(begindate, enddate=""):
-    files = download_template("SGAS", begindate, enddate)
+    files = download_template("sgas", begindate, enddate)
     return files
 
 def download_rsga(begindate, enddate=""):
-    download_template("RSGA", begindate, enddate)
+    download_template("rsga", begindate, enddate)
 
 def download_geoa(begindate, enddate=""):
-    download_template("GEOA", begindate, enddate)
+    download_template("geoa", begindate, enddate)
 
 
 def download_index(begindate, enddate="", type=""):
@@ -147,13 +147,13 @@ def download_index(begindate, enddate="", type=""):
     return True
 
 def download_dsd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DSD");
+    return download_index(begindate, enddate, "dsd");
 
 def download_dpd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DPD");
+    return download_index(begindate, enddate, "dpd");
 
 def download_dgd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DGD");
+    return download_index(begindate, enddate, "dgd");
 
 
 
@@ -232,141 +232,3 @@ def load_dpd(begindate, enddate=""):
     
     return {"t0":t0, "mev1":mev1, "mev10":mev10, "mev100":mev100, "mev06":mev06, "mev20":mev20, "neutron":neutron}
 
-def draw_dpd(data, days=0, file_path="", color=""):
-    import matplotlib.pyplot as plt
-    #
-    if (color == ""):
-        color = COLOR_LIST
-    
-    #
-    dt = data["t0"]
-    
-    
-    # Date list for X-Axis
-    tick_dt = []
-    if (days == 0):
-        days = (max(dt) - min(dt)).days + 1
-
-    #if (days > 7):
-    #       days = 7
-    
-    for i in range(0, days+1):
-        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + dt.timedelta(days=i))
-    
-    # Figure
-    fig = plt.figure(facecolor='white')
-
-    plt.clf()
-    
-    # ticks
-    plt.rc('xtick.major', pad=12);
-    plt.rc('xtick.major', size=6);
-    
-    plt.rc('ytick.major', pad=12);
-    plt.rc('ytick.major', size=8);
-    plt.rc('ytick.minor', size=4);
-
-    # Plot
-    plt.plot(dt, data['mev1'], color=color[0], marker="o", label="Proton (> 1 MeV)")
-    plt.plot(dt, data['mev10'], color=color[1], marker="*", label="Proton (> 10 MeV)")
-    plt.plot(dt, data['mev100'], color=color[2], marker="^", label="Proton (>100 MeV)")
-
-#plt.plot(dt, data['mev06'], color=color[3], marker="^", label="Electron (> .6 MeV)")
-    plt.plot(dt, data['mev20'], color=color[4], marker="^", label="Electron (> 2 MeV)")
-
-    plt.legend(loc='upper right')
-
-    
-    # Title
-    plt.title("NOAA Daily Proton Data")
-    
-    # Scale
-    plt.yscale('log')
-
-    # Limitation
-    plt.xlim(tick_dt[0], tick_dt[days-1])
-    plt.ylim([1.0e2, 1.0e10])
-
-    # Labels for X and Y axis 
-    plt.xlabel("%s $\sim$ %s [UTC]"% \
-               (tick_dt[0].strftime("%Y.%m.%d."),
-                tick_dt[days-1].strftime("%Y.%m.%d.")),
-               fontsize=14)
-    
-    plt.ylabel("Particles/cm$^{2}$ cm sr")
-
-    
-    # X-Axis tick
-    tick_dt = []
-    tick_str = []
-
-    for i in range(0, days+1, 5):
-        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + dt.timedelta(days=i))
-
-    for item in tick_dt:
-        tick_str.append(item.strftime("%b %d"))
-
-    plt.xticks(tick_dt, tick_str)
-    
-    # Grid
-    plt.grid(True)
-
-    # Show or Save
-    if (file_path == ""):
-        plt.show()
-    else:
-        fig.savefig(file_path)
-    
-    return
-
-def test():
-    #download_se("1996", "2013")
-    #download_srs("2003", "2013")
-    download_sgas("1996", "2013")
-    #download_rsga("1996", "2013")
-    #download_geoa("1996", "2013")
-    #download_dsd("199401", "201212")
-    #download_dpd("199401", "201212")
-    #download_dgd("199401", "201212")
-    #data = load_dpd("19940101", "19940205")
-    #data.keys()
-    #draw_dpd(data)
-
-    '''
-    download_se("1996", "2013")
-    download_srs("1996", "2013")
-    download_sgas("1996", "2013")
-    download_rsga("1996", "2013")
-    download_geoa("1996", "2013")
-    download_dsd("1996", "2013")
-    download_dpd("1996", "2013")
-    download_dgd("1996", "2013")
-    '''
-
-    
-    #download_se("195701", "201301");
-    
-    #l = load_dst("19970501", "20130131");
-    #for item in l:
-    #    print item
-        
-    return
-
-
-def test2():
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import datetime
-
-    x = [datetime.datetime(2010, 12, 1, 10, 0),
-         datetime.datetime(2011, 1, 4, 9, 0),
-         datetime.datetime(2011, 5, 5, 9, 0)]
-    y = [4, 9, 2]
-
-    ax = plt.subplot(111)
-    ax.bar(x, y, width=10)
-    #ax.xaxis_date()
-
-    plt.show()
-
-#test()

@@ -82,7 +82,7 @@ def downloads(start_date,instrument,end_date=None):
         
     return files
     
-def loads(start_date,instrument,end_date=None):
+def load(start_date,instrument,end_date=None):
     '''
     Load files of instrument (mag,swepam) of ACE realtime, from start datetime to end datetime
     
@@ -105,7 +105,7 @@ def loads(start_date,instrument,end_date=None):
         print "local file : %s"%(localfile)
         
         try:
-            data = load(localfile,instrument)
+            data = load_file(localfile,instrument)
             
                 
         except IOError as err:
@@ -114,7 +114,7 @@ def loads(start_date,instrument,end_date=None):
             if download(t, instrument, localfile) == None:
                 return None
             
-            data = load(localfile,instrument)
+            data = load_file(localfile,instrument)
             
         except Exception as err:
             print err
@@ -130,23 +130,20 @@ def loads(start_date,instrument,end_date=None):
                     
     
     
-    print data_total.keys()
-    print zip(*data_total.values())[0]
-    print "..."
-    print zip(*data_total.values())[-1]
-            
         
     return data_total
 
 
 
-def load(filepath,instrument):
+def load_file(filepath,instrument):
     
     data = None
     if(instrument == 'mag'):
         data = load_mag(filepath)
     elif(instrument == 'swepam'):
         data = load_swepam(filepath)
+        
+ 
     
     return data
 def load_mag(filepath):
@@ -183,11 +180,7 @@ def load_mag(filepath):
                 mag[key].append(data.group(i))
                 i = i + 1
             
-    print mag.keys()
-    print zip(*mag.values())[0]
-    print "..."
-    print zip(*mag.values())[-1]
-        
+  
     return mag
             
         
@@ -225,12 +218,7 @@ def load_swepam(filepath):
                 swepam[key].append(data.group(i))
                 i = i + 1
                 
-    
-    print swepam.keys()
-    print zip(*swepam.values())[0]
-    print "..."
-    print zip(*swepam.values())[-1]
-    
+
     return(swepam)
         
     

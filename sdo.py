@@ -3,6 +3,8 @@ Created on 2013. 6. 19.
 
 @author: kasi
 '''
+import swpy
+import os, sys
 from math import modf
 import re
 
@@ -10,11 +12,62 @@ import utils as utl
 import utils.datetime as dt
 import utils.download as dl
 
+import logging
+LOG = logging.getLogger("sdo")
+
+import threading
 
 hmi_images = ['magnetogram','continuum']
 aia_images = ['94','131','171','193','211','304','335','1600','1700','4500']
 
+DATA_DIR = swpy.data_dir
 
+
+        
+def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=4):
+    '''
+    Downloads hmi jp2 files
+    
+    :param datetime start_datetime: start datetime
+    :param datetime end_datetime: end datetime
+    :param string image_string: continuum or magnetogram
+    :return: downloaded file list
+    '''
+    
+    dlist = []
+    thread_list = []
+    for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
+                            
+        ft = datetime_from_filename_nasa(f)
+
+        dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
+        print("JP2 Path(local) : %s"%(dst_filepath))
+            
+        t = threading.Thread(target=dl.download_url_file, args=(f, dst_filepath, True))
+        thread_list.append(t)
+        
+        
+        if len(thread_list) < threads:
+            t.start()
+        else:
+            while()
+        el
+    
+        for t in threads:
+            download_path = t.join()
+            
+            if download_path == None:
+                LOG.warn("Download fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
+                continue
+        
+            dlist.append(download_path)
+            
+            t.
+    
+    
+    return dlist
+    
+    
 
 def datetime_from_filename_nasa(filename):
     filename_regex = "(\d+)_(\d+)_(\d+)__(\d+)_(\d+)_(\d+)_(\d+)__\S+"

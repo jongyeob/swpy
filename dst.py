@@ -64,7 +64,7 @@ def downloads_cgi(begindate, enddate=None):
         
     return files
 
-def loads(begindate, enddate=""):
+def load(begindate, enddate=""):
     
     begin_dt,end_dt = dt.parsing(begindate),dt.parsing(enddate)
     data = empty_data()
@@ -80,10 +80,10 @@ def loads(begindate, enddate=""):
         
         temp = None
         try:
-            temp = load(file_path)
+            temp = load_file(file_path)
         except IOError:
             file_path = downloads_cgi(t)
-            temp = load(file_path)
+            temp = load_file(file_path)
         
         if temp == None:
             return None
@@ -98,18 +98,12 @@ def loads(begindate, enddate=""):
                 data["version"].append( temp["version"][i] )
             
             i += 1
-            
-    if i > 0:
-        print data.keys()
-        print zip(*data.values())[0]
-        print "..."
-        print zip(*data.values())[-1]
-    
+
     
     return data
 
     
-def load(file_path):
+def load_file(file_path):
     '''
     Load dst file
     '''

@@ -9,31 +9,36 @@ from re import match
 from utils.datetime import datetime_range, parsing
 from noaa import download_sgas
 
+import logging
+
+LOG = logging.getLogger("SGAS")
 
 SGAS_DIR = '/noaa/SGAS'
 DAYLY_INDICES_KEYS = ['10cm','ssn','3h_K_Boulder','3h_K_Planetary']
 
-def loads(startdate):
+
+
+def load(startdate):
     start_dt = parsing(startdate)
     
     filepath = swpy.data_dir+ SGAS_DIR + '/%s'%(start_dt.strftime("%Y/%Y%m%dSGAS.txt"))
     
     data = None
     try:
-        data = load(filepath)
+        data = load_file(filepath)
              
     except IOError as err:
         print err
         files = download_sgas(start_dt,start_dt)
         
         for afile in files:
-            data = load(afile)
+            data = load_file(afile)
         
         
     return data
         
     
-def load(filepath):
+def load_file(filepath):
     
     with open(filepath) as f:
         contents = f.read()
@@ -55,19 +60,18 @@ def load(filepath):
     
     di = daily_indices = {} 
     
-    
+    LOG.debug(contents)
     for line in contents.splitlines():
-        print line
         record = match(fmt_daily_indices, line)
         if record != None:
-            print record.groups()
+            LOG.debug(record.groups())
             di['10cm'],di['ssn'],_,_,_=record.groups()            
         
         record = match(fmt_3hr_kindices,line)
         if record != None:
-            print record.groups()
+            LOG.debug(record.groups())
             di['3h_K_Boulder'],di['3h_K_Planetary']=record.groups()
 
-            
+
     return energetic_events,proton_events,daily_indices
             

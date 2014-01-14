@@ -50,8 +50,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=4):
         if len(thread_list) < threads:
             t.start()
         else:
-            while()
-        el
+            pass
     
         for t in threads:
             download_path = t.join()
@@ -62,7 +61,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=4):
         
             dlist.append(download_path)
             
-            t.
+            
     
     
     return dlist

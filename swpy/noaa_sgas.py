@@ -29,7 +29,7 @@ def load(startdate):
              
     except IOError as err:
         print err
-        files = download_sgas(start_dt,start_dt)
+        files = download_sgas(startdate,startdate)
         
         for afile in files:
             data = load_file(afile)

@@ -52,7 +52,7 @@ def empty_data(instrument):
     swepam = {'datetime':[],'status':[],'density':[],'speed':[],'temperature':[]}
     return [mag,swepam,None,None][INST_NAME.index(instrument)]
 
-def downloads(start_date,instrument,end_date=None):
+def download(start_date,instrument,end_date=None):
     '''
     Download files of instrument of ACE realtime, from start_datetime to end_datetime
     
@@ -73,7 +73,7 @@ def downloads(start_date,instrument,end_date=None):
         localfile = data_dir + path_local(dt.tuples(t,'date'), instrument)
         print "local file : %s"%(localfile)
         try:
-            afile = download(t, instrument, localfile)            
+            afile = download_file(t, instrument, localfile)            
         except Exception as err:
             print err
             return None
@@ -111,7 +111,7 @@ def load(start_date,instrument,end_date=None):
         except IOError as err:
             print err
             
-            if download(t, instrument, localfile) == None:
+            if download_file(t, instrument, localfile) == None:
                 return None
             
             data = load_file(localfile,instrument)
@@ -222,7 +222,7 @@ def load_swepam(filepath):
     return(swepam)
         
     
-def download(date,inst,filepath=None):
+def download_file(date,inst,filepath=None):
     '''
     @summary:     Download ACE Realtime 1h average data.
     @param date:  (datetime)    Datetime class

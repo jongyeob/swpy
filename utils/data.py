@@ -18,19 +18,19 @@ def convert_text(data,keys=None):
     if keys != None:
         input_data = select_keys(data,keys)
         input_keys = keys
+    
+    for key in input_keys:    
+        text += key + ' '
         
+    text += '\n'
                  
     for i in range(len(data.values()[0])):
         for key in input_keys:
-            if i == 0:
-                text += key + ' '
-            else:
-            
-                text += str(input_data[key][i-1])
-                text += ' '
+            text += str(input_data[key][i])
+            text += ' '
+        
         text += '\n'
                     
-        
     return text
 def select_keys(data,keys):
     '''

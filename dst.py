@@ -108,7 +108,6 @@ def load_file(file_path):
     Load dst file
     '''
     
-    
     data = empty_data()
     
     # Load a file.

@@ -22,9 +22,8 @@ aia_images = ['94','131','171','193','211','304','335','1600','1700','4500']
 
 DATA_DIR = swpy.data_dir
 
-
         
-def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=4):
+def download_hmi_jp2(start_datetime,end_datetime,image_string):
     '''
     Downloads hmi jp2 files
     
@@ -35,35 +34,20 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=4):
     '''
     
     dlist = []
-    thread_list = []
     for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
                             
         ft = datetime_from_filename_nasa(f)
 
         dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
         print("JP2 Path(local) : %s"%(dst_filepath))
-            
-        t = threading.Thread(target=dl.download_url_file, args=(f, dst_filepath, True))
-        thread_list.append(t)
         
+        download_path = dl.download_url_file(f,dst_filepath,overwrite=True)
+        if download_path == None:
+            LOG.warn("Download fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
+            continue
         
-        if len(thread_list) < threads:
-            t.start()
-        else:
-            pass
-    
-        for t in threads:
-            download_path = t.join()
+        dlist.append(download_path)
             
-            if download_path == None:
-                LOG.warn("Download fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
-                continue
-        
-            dlist.append(download_path)
-            
-            
-    
-    
     return dlist
     
     

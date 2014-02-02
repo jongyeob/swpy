@@ -122,12 +122,15 @@ def datetime_from_filename_local(filename):
 
 def hmi_jp2_path_local(datetime_t,image_string):
     '''
-    @summary: return local path
+    return local path
     '''
     year,month,day,hour,miniute,second,fsecond = dt.tuples(datetime_t) 
     
-    local_path = '/sdo/hmi/%s/%04d/%04d%02d%02d/jp2/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
+    #local_path = '/nasa/sdo/hmi/%s/%04d/%04d%02d%02d/jp2/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
+    #For swpy-kasi : lib.sdo need override , import mechanism
+    local_path = '/nasa/sdo/jp2/hmi/%s/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
     %(image_string,year,year,month,day,year,month,day,hour,miniute,second,fsecond*1e-3,image_string)
+    
     
     return local_path 
     

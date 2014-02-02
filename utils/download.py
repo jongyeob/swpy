@@ -44,14 +44,14 @@ def callback(blocks_read,block_size,total_size):
     
     sys.stderr.write(g_callback_last_msg)
 
-def download_url_file(src,dst,post_args=None,overwrite=False):
+def download_url_file(src,dst=None,post_args=None,overwrite=False):
     '''
-    @summary:          Download a file on internet. return when a file saved to loacl is existed.
-    @param src:        (string) URL
-    @param dst:        (string) local path
-    @param id:         (string) ID for this event
-    @param overwrite:  (bool)   Overwrite when local file is already been
-    @return:           (string) downloaded path
+    Download a file on internet. return when a file saved to loacl is existed.
+    
+    :param string src: URL
+    :param string dst: local path
+    :param bool overwrite: Overwrite when local file is already been
+    :return: if dst == None, downloaded path string or if dst != None, bool return
     '''
     dst = path.normpath(dst)
     dst_exist = path.exists(dst) 

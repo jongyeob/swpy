@@ -6,18 +6,20 @@
 
 # standard library
 import os
-
-# SpaeWeatherPy library
 import swpy
-import utils
+
+import utils.utils as utils
 import utils.datetime as dt
 import utils.download as dl
 
 
-
+# SpaeWeatherPy library
 #noaa_url = "ftp://ftp.swpc.noaa.gov/pub/warehouse/"
 NOAA_URL = "http://www.swpc.noaa.gov/ftpdir/"
-NOAA_DIR = swpy.data_dir + "/noaa";
+NOAA_DIR = swpy.DATA_DIR + "/noaa";
+
+DATA_DIR = swpy.DATA_DIR
+TEMP_DIR = swpy.TEMP_DIR
 
 COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
@@ -32,34 +34,35 @@ def download_template(suffix, begindate, enddate=""):
         src = "%(url)swarehouse/%(yyyy)04d"%{"url":NOAA_URL, "yyyy":now_dt.year}        
         tar_file = "/%(yyyy)04d_%(suffix)s.tar.gz"%{"yyyy":now_dt.year,"suffix":suffix}
         
-        tmp = "%(tmp)s/%(yyyy)04d_%(suffix)s.tar.gz"%{"tmp":swpy.temp_dir, "yyyy":now_dt.year, "suffix":suffix}
+        tmp = "%(tmp)s/%(yyyy)04d_%(suffix)s.tar.gz"%{"tmp":TEMP_DIR, "yyyy":now_dt.year, "suffix":suffix}
         
         dst_dir = "%(dir)s/%(suffix)s/%(yyyy)04d"%{"dir":NOAA_DIR, "yyyy":now_dt.year, "suffix":suffix}
         txt_file = "/%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":now_dt.year,"mm":now_dt.month,"dd":now_dt.day}
         
         # check src
-        dst_path = dl.download_url_file(src+'/'+suffix+txt_file,utils.with_dirs(dst_dir + txt_file),overwrite=True)
+        src_path = src +'/'+suffix+txt_file
+        dst_path = utils.make_path(dst_dir + txt_file)
+        rv = dl.download_http_file(src_path, dst_path ,overwrite=True)
 
-        if dst_path == None:
-            tar_path = dl.download_url_file(src+tar_file,utils.with_dirs(tmp),overwrite=True)
+        if dst_path == False:
+            tar_path = dl.download_http_file(src+tar_file,overwrite=True)
             if tar_path == None:
                 print "No tar..."
                 continue
-                
             
             # Extract a gz file.
-            print "Extract it to the temp directory, %s."%(swpy.temp_dir)
+            print "Extract it to the temp directory, %s."%(TEMP_DIR)
     
             import tarfile
             tf = tarfile.open(tar_path, 'r:gz')
             _,filename = os.path.split(tar_path)
             filename,_ = os.path.splitext(filename)
-            tf.extractall(utils.with_dirs(swpy.temp_dir+'/'+filename))
+            tf.extractall(utils.make_path(TEMP_DIR+'/'+filename))
             tf.close()
         
         
             # Move extracted files to a data directory.
-            tmp_dir = swpy.temp_dir + '/' + filename
+            tmp_dir = TEMP_DIR + '/' + filename
             
             try:
             
@@ -68,10 +71,10 @@ def download_template(suffix, begindate, enddate=""):
                 for filepath in utils.get_files(tmp_dir+'/*.txt'):
                     _,filename = os.path.split(filepath)
                     if (os.path.exists(dst_dir +'/'+ filename) == True):
-                        shutil.copyfile(filepath, utils.with_dirs(dst_dir+'/'+filename))
+                        shutil.copyfile(filepath, utils.make_path(dst_dir+'/'+filename))
                         os.remove(filepath)
                     else:                        
-                        shutil.move(filepath, utils.with_dirs(dst_dir+'/'+filename))
+                        shutil.move(filepath, utils.make_path(dst_dir+'/'+filename))
             
                 # Remove a temp directory and a temp file.
                 shutil.rmtree(tmp_dir)
@@ -81,9 +84,9 @@ def download_template(suffix, begindate, enddate=""):
                 print err
             
             # retry
-            dst_path = dl.download_url_file(src+txt_file, dst_dir + txt_file)
+            rv = dl.download_http_file(src+txt_file, dst_dir + txt_file)
         
-        if dst_path != None:
+        if rv != False:
             print "Donwloaded : %s"%(dst_path)
             downloaded_files.append(dst_path)
                     
@@ -137,7 +140,7 @@ def download_index(begindate, enddate="", type=""):
         
         # Download a file.
         utils.alert_message("Download %s."%(src))
-        rv = dl.download_url_file(src, dst)
+        rv = dl.download_http_file(src, dst)
         if (rv == False):
             continue
         
@@ -147,13 +150,13 @@ def download_index(begindate, enddate="", type=""):
     return True
 
 def download_dsd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DSD");
+    return download_index(begindate, enddate, "dsd");
 
 def download_dpd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DPD");
+    return download_index(begindate, enddate, "dpd");
 
 def download_dgd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DGD");
+    return download_index(begindate, enddate, "dgd");
 
 
 

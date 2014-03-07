@@ -3,27 +3,26 @@ Created on 2013. 6. 19.
 
 @author: kasi
 '''
-import swpy
-import os, sys
-from math import modf
+import logging
+import math
+import os
 import re
 
-import utils as utl
 import utils.datetime as dt
 import utils.download as dl
+import utils.utils as utl
+from utils.download import DownloadPool
 
-import logging
-LOG = logging.getLogger("sdo")
+LOG = logging.getLogger(__name__)
 
-import threading
+HMI_IMAGES = ['magnetogram','continuum']
+AIA_IMAGES = ['94','131','171','193','211','304','335','1600','1700','4500']
 
-hmi_images = ['magnetogram','continuum']
-aia_images = ['94','131','171','193','211','304','335','1600','1700','4500']
-
-DATA_DIR = swpy.data_dir
-
+def initialize():
+    pass
+    
         
-def download_hmi_jp2(start_datetime,end_datetime,image_string):
+def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8,data_dir='.'):
     '''
     Downloads hmi jp2 files
     
@@ -34,25 +33,32 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string):
     '''
     
     dlist = []
-    for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
-                            
-        ft = datetime_from_filename_nasa(f)
-
-        dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
-        print("JP2 Path(local) : %s"%(dst_filepath))
+    
+    pool = DownloadPool()
+    
+    pool.start(dlist,max_thread=threads)
+    
+    try:
+        for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
         
-        download_path = dl.download_url_file(f,dst_filepath,overwrite=True)
-        if download_path == None:
-            LOG.warn("Download fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
-            continue
-        
-        dlist.append(download_path)
+            ft = datetime_nasa(f)
+    
+            dst_filepath = data_dir + hmi_jp2_path_local(ft,image_string)
+            print("JP2 Path(local) : %s"%(dst_filepath))
+                
+            rv = pool.append(f,dst_filepath)
             
-    return dlist
-    
-    
+            if rv == False:
+                LOG.error("Download thread fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
+                break
+    except:
+        LOG.error("current ft : %s"%(str(ft)))
+    finally:
+        pool.close()
+            
+    return dlist    
 
-def datetime_from_filename_nasa(filename):
+def datetime_nasa(filename):
     filename_regex = "(\d+)_(\d+)_(\d+)__(\d+)_(\d+)_(\d+)_(\d+)__\S+"
     res = re.search(filename_regex, filename)
     year,month,day,hour,minute,second,fsecond = [int(i) for i in res.groups()]
@@ -63,9 +69,8 @@ def datetime_from_filename_nasa(filename):
 def hmi_jp2_path_nasa(datetime,image_string):
     '''
     return hmi jp2 url from nasa data server
-    @param datetime_t : datetime_info
-    @param image_string : [continuum, magnetogram]
-    @return: return string
+    :param datetime datetime_t : datetime
+    :param string image_string : [continuum, magnetogram]
     '''
     t = dt.parsing(datetime)
     
@@ -96,7 +101,7 @@ def hmi_jp2_path_nasa(datetime,image_string):
         return None
     
     filename = None
-    fsec,sec = modf(second)
+    fsec,sec = math.modf(second)
     if int(round(fsec*1e3))%10 == 0 :
         filename = "%4d_%02d_%02d__%02d_%02d_%02d_%02d__SDO_HMI_HMI_%s.jp2"%(year,month,day,hour,miniute,sec,round(fsec*1e2),image_string)
     else:
@@ -108,8 +113,8 @@ def hmi_jp2_path_nasa(datetime,image_string):
     
 def hmi_jp2_path_kasi():
     '''
-    @summary: return hmi jp2 path from kasi data center
-    @note: NOT IMPLEMENTED
+    return hmi jp2 path from kasi data center
+    NOT IMPLEMENTED
     '''
     pass
 
@@ -128,7 +133,7 @@ def hmi_jp2_path_local(datetime_t,image_string):
     
     #local_path = '/nasa/sdo/hmi/%s/%04d/%04d%02d%02d/jp2/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
     #For swpy-kasi : lib.sdo need override , import mechanism
-    local_path = '/nasa/sdo/jp2/hmi/%s/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
+    local_path = '/nasa/sdo/hmi/%s/jp2/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
     %(image_string,year,year,month,day,year,month,day,hour,miniute,second,fsecond*1e-3,image_string)
     
     
@@ -137,43 +142,45 @@ def hmi_jp2_path_local(datetime_t,image_string):
 
 def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
     '''
-    summary: retrieve files from nasa data server (jp2).
+    retrieve files from nasa data server (jp2).
     
-    @return: generator return
+    :return: generator return
     '''
     start_datetime = dt.parsing(start_datetime)
     end_datetime = dt.parsing(end_datetime)
     
+    import time
     for t in dt.datetime_range(start_datetime, end_datetime, days=1):
         dir_str,_ = dl.path.split(hmi_jp2_path_nasa(t, image_string))
     
-        contents = dl.load_http_file(dir_str + '/')
+        contents = dl.download_http_file(dir_str + '/',None)
         if contents is None:
             continue
     
         list_files = dl.get_list_from_html(contents,'jp2')
         for f in list_files:
-            if start_datetime <= datetime_from_filename_nasa(f) <= end_datetime:     
+            if start_datetime <= datetime_nasa(f) <= end_datetime:     
                 yield dir_str+'/'+f
+                
           
     return 
     
 def hmi_jp2_list_nasa(start_datetime,end_datetime,image_string):
     '''
-    @summary: return files list from nasa data server (jp2)
-    @return: list
+    return files list from nasa data server (jp2)
+    :return: list
     '''
     return [i for i in hmi_jp2_iter_nasa(start_datetime, end_datetime, image_string)]
 
 def hmi_jp2_iter_local(start_datetime,end_datetime,image_string,base_dir='.'):
     '''
-    @summary:     real filepaths from local
-    @param start_datetime:     datetime
-    @param end_datetime:       datetime
-    @param image_string:       'continuum'|'magnetogram'                
-    @return :                 (generator) paths
-    @change:      2013-12-30 / Jongyeob Park(pjystar@gmail.com)
-                  New created
+    real filepaths from local
+    :param datetime start_datetime: datetime
+    :param datetime end_datetime: datetime
+    :param string image_string: 'continuum'|'magnetogram'                
+    :return: (generator) paths
+    2013-12-30 / Jongyeob Park(pjystar@gmail.com)
+                 New created
     '''
 
     for t in dt.datetime_range(start_datetime, end_datetime, days=1):
@@ -190,17 +197,18 @@ def hmi_jp2_iter_local(start_datetime,end_datetime,image_string,base_dir='.'):
     
 def hmi_jp2_list_local(start_datetime,end_datetime,image_string,base_dir='.'):
     '''
-    @summary:     real filepaths from local
-    @param start_datetime:     datetime
-    @param end_datetime:       datetime
-    @param image_string:       'continuum'|'magnetogram'                
-    @return :                 (list) paths
+    real filepaths from local
+    :param datetime start_datetime: datetime
+    :param datetime end_datetime: datetime
+    :param string image_string: 'continuum'|'magnetogram'                
+    :returns: (list) paths
     '''
     return [i for i in hmi_jp2_iter_local(start_datetime, end_datetime, image_string, base_dir)]
     
 
 def hmi_jp2_list_kasi():
     '''
+    Not implemented
     '''
     pass
 

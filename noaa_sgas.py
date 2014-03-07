@@ -3,17 +3,18 @@ Created on 2013. 12. 18.
 
 @author: jongyeob
 '''
-import swpy
-from re import match
-
-from utils.datetime import datetime_range, parsing
-from noaa import download_sgas
-
 import logging
+from re import match
+import swpy
+
+from noaa import download_sgas
+from utils.datetime import datetime_range, parsing
+
 
 LOG = logging.getLogger("SGAS")
 
 SGAS_DIR = '/noaa/SGAS'
+DATA_DIR = swpy.DATA_DIR
 DAYLY_INDICES_KEYS = ['10cm','ssn','3h_K_Boulder','3h_K_Planetary']
 
 
@@ -21,7 +22,7 @@ DAYLY_INDICES_KEYS = ['10cm','ssn','3h_K_Boulder','3h_K_Planetary']
 def load(startdate):
     start_dt = parsing(startdate)
     
-    filepath = swpy.data_dir+ SGAS_DIR + '/%s'%(start_dt.strftime("%Y/%Y%m%dSGAS.txt"))
+    filepath = DATA_DIR+ SGAS_DIR + '/%s'%(start_dt.strftime("%Y/%Y%m%dSGAS.txt"))
     
     data = None
     try:

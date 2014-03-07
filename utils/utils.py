@@ -10,8 +10,7 @@ from os.path import exists,normpath,split
 from math import sqrt,sin,cos,asin,floor
 import datetime
 
-__all__ =['get_files','make_dirs','with_dirs','alert_message']
-
+COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
 def get_files(path_exp):
     # path_exp : expression of path
@@ -23,17 +22,20 @@ def get_files(path_exp):
             file_list.append(filepath)
         
     return file_list
+   
+def make_dirs(path):
+    path = normpath(path)
+    if exists(path) == False:
+        os.makedirs(path)
 
-def make_dirs(dirpath):
-    if exists(dirpath) == False:
-        os.makedirs(dirpath)
-
-def with_dirs(filepath):
-    filepath = normpath(filepath)
-    dirname,_ = split(filepath)
-    if len(dirname) > 0:
-        make_dirs(dirname) 
-    return filepath
+def make_path(path):
+    
+    path = normpath(path)
+    dirpath,_ = split(path)
+    if len(dirpath) > 0:
+        make_dirs(dirpath)
+        
+    return path
 
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)
@@ -46,9 +48,9 @@ def great_circle_distance(lon,lat,lon2=0,lat2=0):
 
 
 def save_list(filepath, list):
-    with_dirs(filepath)
     
-    f = open(filepath, "w")
+    
+    f = open(make_path(filepath), "w")
     for line in list:
         f.write(line + "\n")
     f.close()
@@ -57,10 +59,10 @@ def save_list(filepath, list):
 
 
 def save_list_2(filepath, list):
-    with_dirs(filepath)
+    
 
     list.sort()
-    f = open(filepath, "w")
+    f = open(make_path(filepath), "w")
     
     for line in list:
         f.write(get_filename(line) + "\n")

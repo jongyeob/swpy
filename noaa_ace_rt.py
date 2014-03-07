@@ -3,16 +3,14 @@ Created on 2013. 11. 2.
 
 @author: Daniel
 '''
-from swpy import data_dir
+from os.path import normpath
+import re
+from swpy import DATA_DIR
 import sys
 
+from utils import datetime as dt, download as dl
 
-from utils import  download as dl
-from utils import  datetime as dt
 
-import re
-from os.path import normpath
- 
 SRS_DIR = '/noaa/ace_realtime'
 INST_NAME = ['mag','swepam','sis','loc']
 
@@ -70,7 +68,7 @@ def download(start_date,instrument,end_date=None):
         end_dt = dt.parsing(end_date)
         
     for t in dt.datetime_range(start_dt, end_dt, months=1):
-        localfile = data_dir + path_local(dt.tuples(t,'date'), instrument)
+        localfile = DATA_DIR + path_local(dt.tuples(t,'date'), instrument)
         print "local file : %s"%(localfile)
         try:
             afile = download_file(t, instrument, localfile)            
@@ -101,7 +99,7 @@ def load(start_date,instrument,end_date=None):
     data_total = empty_data(instrument)
     
     for t in dt.datetime_range(start_dt, end_dt, months=1):
-        localfile = data_dir + path_local(dt.tuples(t,'date'), instrument)
+        localfile = DATA_DIR + path_local(dt.tuples(t,'date'), instrument)
         print "local file : %s"%(localfile)
         
         try:
@@ -232,11 +230,13 @@ def download_file(date,inst,filepath=None):
     f = path_swpc(dt.tuples(date, 'date'), inst)
         
     if filepath is None :
-        filepath =  data_dir + path_local(date, inst)
+        filepath =  DATA_DIR + path_local(date, inst)
         
-    dst_path = dl.download_url_file(f, filepath,overwrite=True)
+    rv = dl.download_http_file(f, filepath,overwrite=True)
+    if rv != True:
+        return None
     
-    return dst_path
+    return filepath
     
 def path_swpc(date,inst):
     host  = 'http://www.swpc.noaa.gov'

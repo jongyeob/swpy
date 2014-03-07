@@ -3,13 +3,12 @@ Created on 2013. 12. 9.
 
 @author: jongyeob
 '''
+
 import swpy
 
-from utils import with_dirs
 import utils.datetime as dt
 import utils.download as dl
-
-from swpy import temp_dir
+from utils.utils import make_path
 
 
 PROGRAM_PHOTOSPHERIC = 0
@@ -31,9 +30,10 @@ projection_name = ['Sined_Latitude','Latitude']
 projection_filename = ['sl','l']
 datatype_name = ['Prelim','Final']
 datatype_filename = ['prelim','final']
-DATA_DIR = swpy.data_dir + '/wilcox/synoptic'
 
-def download_synoptic(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM):
+DATA_DIR = swpy.DATA_DIR + '/wilcox/synoptic'
+
+def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM):
     '''
     Download synoptic file from cgi get
     
@@ -45,8 +45,7 @@ def download_synoptic(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTIO
     cgi-post (sample)
     http://wso.stanford.edu/cgi-bin/wso_prsyn.pl?rotation=&degrees=360&center=2013_12_01_00&ProgName=Photospheric&Type=Prelim&Projection=Sine_Latitude
     '''
-    
-    
+       
 
     input_dt = dt.parsing(datetime)
     
@@ -61,27 +60,24 @@ def download_synoptic(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTIO
     dstpath = DATA_DIR + dstfile
     print dstpath
     
-    temp_path = with_dirs(temp_dir + '/wso.txt')
-    temp_path = dl.download_url_file(cgi,temp_path,post_args=args,overwrite=True)
-    if temp_path is None:
+     
+    contents = dl.download_http_file(cgi,None,post_args=args)
+    if contents == False:
         return None
         
-    with open(temp_path) as f:
-        contents = f.read()
-        
-        i1 = contents.find("<pre>")
-        i1 = i1 + 5 # length of <pre>
-        i2 = contents.find("</pre>")
-        
-        if (i1 == -1 or i2 == -1):
-            return None
-        
-        if contents[i1:i2].find("30 data points") == -1:
-            return None 
-                    
-        with open(with_dirs(dstpath), "w") as fw:
-            fw.write(contents[i1:i2])
-         
+    i1 = contents.find("<pre>")
+    i1 = i1 + 5 # length of <pre>
+    i2 = contents.find("</pre>")
+    
+    if (i1 == -1 or i2 == -1):
+        return None
+    
+    if contents[i1:i2].find("30 data points") == -1:
+        return None 
+                
+    with open(make_path(dstpath), "w") as fw:
+        fw.write(contents[i1:i2])
+     
     return dstpath
 
 def path_local(datetime):

@@ -8,12 +8,12 @@
 @version:    2013-08-06
 @note: Keywords[Time,Path]
 '''
-import os,sys
-from argparse import ArgumentParser
-from argparse import RawDescriptionHelpFormatter
-
-from swpy.utils import log,swdt
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+import os
 from swpy import sdo
+from swpy.utils import log, swdt
+import sys
+
 
 base_dir = ('./data')
 DEBUG = 0

@@ -8,29 +8,161 @@ __maintainer__ = "Seonghwan Choi"
 __email__ = "shchoi@kasi.re.kr"
 __status__ = "Production"
 '''
-
-import httplib
-import ftplib
-from os import path, makedirs
 import time
-import string
-
-
-import sys
-import os
-import math
-
 import datetime
+import ftplib
+from httplib import HTTPException
+import httplib
+import math
+from os import path, makedirs
+import os
 import socket
-
-from utils import with_dirs,alert_message 
+import string
+import swpy
+import sys
+import time
+import urllib2
 from urllib2 import urlopen, HTTPError
 
-import swpy
-from httplib import HTTPException
+import datetime
+from utils import make_path, make_dirs, alert_message
+import threading
 
 g_callback_last_msg = ''
+import logging
+LOG = logging.getLogger(__name__)
 
+_download_pools = []
+
+TEMP_DIR = swpy.TEMP_DIR
+
+class AutoTempFile():
+    _filepath = None
+    
+    def __init__(self,filepath=None):
+        self._filepath = filepath
+
+        if self._filepath is None:
+            now = datetime.datetime.now()
+            print now
+            self._filepath = TEMP_DIR + '/' + now.strftime("%Y%m%d_%H%M%S_%f.temp")  
+            
+    def get_path(self):
+        return self._filepath
+    
+    def __del__(self):
+        try:
+            if os.path.exists(self._filepath) == True:
+                os.remove(self._filepath)
+        except:
+            LOG.error("File removing error!")
+
+class DownloadPool():
+    '''
+    Class for download file list. 
+    '''
+    def __init__(self,max_pool=10,iter_obj=None):
+        self.recieving = False
+        self._pool_thread = None
+        self._pool = []
+        self._max = max_pool
+                        
+        if iter_obj is not None:
+            self._pool.extend(iter_obj)
+            
+    def start(self,output_list,overwrite=True,trials=3,max_thread=8):
+        if self.recieving == False : 
+            self.recieving = True
+        else:
+            LOG.warn("Download Pool has been already started")
+            return False
+        
+        assert self._pool_thread == None, 'Thread is not normally terminated'
+        
+        self._pool_thread = threading.Thread(target=_download_thread,\
+                                              args=(self.recieving,self._pool,output_list,overwrite,trials,max_thread))
+        self._pool_thread.start()
+        assert self._pool_thread != None, 'Thread is not created'
+        
+        return True        
+    def append(self,src,dst):
+        
+        while(len(self._pool) > self._max and self._pool_thread.isAlive() == True):
+            time.sleep(1)
+            
+        if(self._pool_thread.isAlive() == False):
+            return False
+        
+        self._pool.append((src,dst))
+               
+        
+    def close(self):
+        if self.recieving == True:
+            self.recieving = False
+        else:
+            LOG.warn("Download Pool was not started")
+            return False
+        
+        assert self._pool_thread != None, 'Thread is not normally terminated before closing itself'
+        
+        while(self._pool_thread.isAlive() == True):
+            print ("wait...")
+            self._pool_thread.join(1)
+        
+        self._pool_thread = None
+        print ("pool_thread end")
+            
+        
+        return True
+def _download_thread(r,input_pool,output_list=[],overwrite=True,trials=3,max_thread=3):
+    '''
+    Download files in pool class. when status of pool is end, pool count is 0
+    This function will be terminated. return number of download files
+    '''
+    assert type(input_pool) == list, 'Wrong input_pool type. must be download_pool'
+    
+    threads = []
+    
+    finish = False
+    while(not finish):
+        try:
+            if r == False and len(input_pool) == 0 and len(threads) == 0:
+                finish = True
+        
+            if len(threads) < max_thread and len(input_pool) > 0:
+                src,dst = input_pool.pop()
+                th = DownloadThread(src,dst,None,overwrite,trials)
+                threads.append(th)
+                th.start()
+                
+            for th in threads:
+                if(th.isAlive() == False):
+                    output_list.append((th.src,th.dst,th.rval)) 
+                    threads.remove(th)
+            
+        except:
+            LOG.error('parent(%s),this(%s),Threads(%d),Pool(%d)'%(r,finish,len(threads),len(input_pool)))
+            break
+                    
+        time.sleep(0.1)
+       
+class DownloadThread(threading.Thread):
+    '''
+    class for mulitthread of download_http_file
+    '''
+    def __init__(self,src,dst=None,post_args=None,overwrite=True,trials=3):
+        threading.Thread.__init__(self)
+                
+        self.src = ''.join(src)
+        self.dst = ''.join(dst)
+        self.post_args = post_args
+        self.overwrite = overwrite
+        self.trials = trials
+        self.rval = None
+        
+    def run(self):
+        
+        self.rval = download_http_file(self.src, self.dst, self.post_args, self.overwrite, self.trials)
 
 
 def callback(blocks_read,block_size,total_size):
@@ -44,58 +176,128 @@ def callback(blocks_read,block_size,total_size):
     
     sys.stderr.write(g_callback_last_msg)
 
-def download_url_file(src,dst=None,post_args=None,overwrite=False):
+def download_http_file(src_url,dst_path,post_args=None,overwrite=True,trials=3):
     '''
     Download a file on internet. return when a file saved to loacl is existed.
     
-    :param string src: URL
-    :param string dst: local path
-    :param bool overwrite: Overwrite when local file is already been
-    :return: if dst == None, downloaded path string or if dst != None, bool return
+    :param string src_url: URL
+    :param string dst_path: local path
+    :param string post_args: arguments for POST method
+    :param bool overwrite: raise IOError when local file is already been
+    :param int trials: method will be terminated in trails number
+    :return: bool
     '''
-    dst = path.normpath(dst)
-    dst_exist = path.exists(dst) 
-    if  dst_exist == True and overwrite == False:
-        raise IOError("The file is already been at %s"%(dst))
-                   
-    try_num = 0
-    dst2 = dst + '.down'
+    if dst_path is not None:
+        dst_path = path.normpath(dst_path)
+        dst_exist = path.exists(dst_path) 
+        if  dst_exist == True and overwrite == False:
+            raise IOError("The file is already been at %s"%(dst_path))
+    
+    if (src_url.find("http://") != 0):
+        print("src_url is invalid url, " + src_url + ".")
+        return False
+    
+    i = src_url.find("/", 7)
+    if (i < 9):
+        print("src_url is invalid url, " + src_url + ".")
+        return False
+    
+    domain_name = src_url[7:i]
+    file_path = src_url[i:]
+    
+    t = 0
+    headers = {"Content-type": "application/x-www-form-urlencoded",\
+               "Accept": "text/plain"}
+    
+    for t in range(1, trials):
+        contents = ""
         
-    success = False
-    while try_num < 3 and success == False:
-        
-        try_num = try_num + 1
-        
-        try:                            
-            result = urlopen(src,data=post_args)
+        try:
+            conn = httplib.HTTPConnection(domain_name)
+            if(post_args != None):
+                conn.request("POST", file_path, post_args,headers)
+            else:
+                conn.request("GET", file_path)
+            r = conn.getresponse()
+            if r.status != 200:
+                LOG.debug(r.status, r.reason)
+                print("Can not download the file, " + src_url + ".")
+                conn.close()
+            else:
+                contents = r.read()
+                conn.close()
             
-            contents = result.read()
-            with open(with_dirs(dst2),"wb") as fw:
-                fw.write(contents)
-                        
-            if path.exists(dst) == True:
-                os.remove(dst) 
-                                 
-            os.rename(dst2, dst)
-            
-            result.close()
-        
-            success = True
-                            
-        except HTTPError as err:
-            print err
-            if err.code == 404:
-                break
-        
-        except Exception as err:
-            print err   
+            t = 0
             break
-            
-       
-    if success == False:
-        return None
+        except httplib.HTTPException, msg:
+            #nFails = nFails + 1
+            LOG.debug("HTTPException")
+        except httplib.NotConnected, msg:
+            #nFails = nFails + 1
+            LOG.debug("NotConnected")
+        except httplib.InvalidURL, msg:
+            #nFails = nFails + 1
+            LOG.debug("InvalidURL")
+        except httplib.UnknownProtocol, msg:
+            #nFails = nFails + 1
+            LOG.debug("UnknownProtocol")
+        except httplib.UnknownTransferEncoding, msg:
+            #nFails = nFails + 1
+            LOG.debug("UnknownTransferEncoding")
+        except httplib.UnimplementedFileMode, msg:
+            #nFails = nFails + 1
+            LOG.debug("UnimplementedFileMode")
+        except httplib.IncompleteRead, msg:
+            #nFails = nFails + 1
+            LOG.debug("IncompleteRead")
+        except httplib.ImproperConnectionState, msg:
+            #nFails = nFails + 1
+            LOG.debug("ImproperConnectionState")
+        except httplib.CannotSendRequest, msg:
+            #nFails = nFails + 1
+            LOG.debug("CannotSendRequest")
+        except httplib.CannotSendHeader, msg:
+            #nFails = nFails + 1
+            LOG.debug("CannotSendHeader")
+        except httplib.ResponseNotReady, msg:
+            #nFails = nFails + 1
+            LOG.debug("ResponseNotReady")
+        except httplib.BadStatusLine, msg:
+            #nFails = nFails + 1
+            LOG.debug("BadStatusLine")
+        except socket.error, e:
+            LOG.debug("Socket exception error, %s."%e)
+        # finally:
+            #nFails = nFails + 1
+        #alert_message("Unknown exception in DownloadHttpFile().")
         
-    return dst
+        print("It will be start again after several seconds in download_http_file().")
+        time.sleep(5)
+
+    if (t > 0):
+        return False
+        
+    if (contents == ""):
+        return False
+    
+    if dst_path == None:
+        return contents
+       
+    
+    try:
+        dst_path2 = dst_path + '.down'
+        with open(make_path(dst_path2), "wb") as f:
+            f.write(contents)
+        if path.exists(dst_path) == True:
+            os.remove(dst_path)              
+        os.rename(dst_path2, dst_path)
+    except Exception:
+        LOG.error("File Save error! - %s"%(dst_path2))
+        return False
+
+    #print ("Success downloading the file, " + strSrcUrl + ".")
+
+    return True
 
 def get_list_from_html(contents, ext_list = None):
     strList = []
@@ -143,47 +345,8 @@ def get_list_from_html(contents, ext_list = None):
     
     return strList
 
-def load_http_file(url):
-    contents = None
-    
-    if (url.find("http://") != 0):
-        print("The url is invalid, " + url + ".")
-        return None
-    
-    i = url.find("/", 7)
-    if (i < 9):
-        print("The url is invalid, " + url + ".")
-        return None
 
-    domain_name = url[7:i]
-    file_path = url[i:]
-    try:
-        conn = httplib.HTTPConnection(domain_name)
-        conn.request("GET", file_path)
-    
-    
-        r = conn.getresponse()
-    
-        #print (r.getheaders())
-        
-        if r.status == 301:
-            contents = r.read()
-        elif r.status != 200:
-            print(r.status, r.reason)
-            print("Can not download the file, " + url + ".")
-            conn.close()
-            return None
-        else:
-            contents = r.read()
-    
-        conn.close()
-    except:
-        return None
-
-    return contents
-
-
-def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, id="", pw=""):
+def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, login_id="", login_pw=""):
     
     
     #if (os.path.isfile(dst_path) == True and overwrite == False):
@@ -209,7 +372,7 @@ def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, id="", pw=""
     try:
 
         ftp = ftplib.FTP(remote_domain_name)
-        ftp.login(id, pw)
+        ftp.login(login_id, login_pw)
         
 
         # If the file exists and its file size is the same.
@@ -228,11 +391,10 @@ def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, id="", pw=""
         # 1. The local file does not exist.
         # 2. OVERWRITE = TRUE
         # 3. The file sizes on a remote path and a local path are different.
-        file = open(with_dirs(dst_path), "wb")
-
-        ftp.retrbinary("RETR " + remote_file_path, file.write)
-
+        fw = open(make_path(dst_path), "wb")
+        ftp.retrbinary("RETR " + remote_file_path, fw.write)
         file.close()
+        
         ftp.quit()
         print "Downloaded, %s."%(src_url)
     except socket.error, e:
@@ -249,13 +411,13 @@ MODE_FILE = 2
 
 def get_list_from_ftp(ftp_domain, ftp_id, ftp_pw, ftp_dir, mode=MODE_ALL):
 
-    list = []
+    li = []
 
     try:
         ftp = ftplib.FTP(ftp_domain, ftp_id, ftp_pw)        
         ftp.login(ftp_id, ftp_pw)
         ftp.cwd(ftp_dir)
-        ftp.retrlines("LIST", list.append) #, list.append)
+        ftp.retrlines("LIST", li.append) #, list.append)
         ftp.quit()
     except ftplib.all_errors, e:
         err_string = str(e).split(None, 1)
@@ -266,7 +428,7 @@ def get_list_from_ftp(ftp_domain, ftp_id, ftp_pw, ftp_dir, mode=MODE_ALL):
     #
     file_names = []
     file_size = []
-    for line in list:
+    for line in li:
         if ((mode == MODE_DIRECTORY and line[0] != "d") or
             (mode == MODE_FILE and line[0] == "d") ):
             continue
@@ -276,11 +438,3 @@ def get_list_from_ftp(ftp_domain, ftp_id, ftp_pw, ftp_dir, mode=MODE_ALL):
 
 
     return file_names, file_size
-
-
-
-
-# rval = download('asadfasdf','http://www.eveningbeer.com/lib/exe/fetch.php?media=study:computer_languages:c_reference_card_ansi_2.2.pdf')
-# print(rval)
-# print(et.tostring(rval.element()))
-

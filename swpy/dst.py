@@ -5,22 +5,23 @@
 ## Final Dst index :2009 - current
 ##
 '''
+import logging
 import swpy
 
-from utils import with_dirs, alert_message
 import utils.datetime as dt
 import utils.download as dl
+from utils.utils import make_path, alert_message
 
-import logging
+
 LOG = logging.getLogger('dst')
 
-DST_DIR = swpy.data_dir + "/kyoto/dst/";
+DST_DIR = swpy.DATA_DIR + "/kyoto/dst/";
 DST_KEYS = ['datetime','version','dst'] 
 
 def empty_data():
     return {'datetime':[],'dst':[],'version':[]}
 
-def downloads_cgi(begindate, enddate=None):
+def download_cgi(begindate, enddate=None):
     '''
     Download dst data from cgi
     
@@ -50,9 +51,9 @@ def downloads_cgi(begindate, enddate=None):
                         "ym":now_dt.strftime("%Y%m")}
         
         
-        rv = dl.download_url_file(url_cgi, with_dirs(file_path),overwrite=True)
+        rv = dl.download_http_file(url_cgi, make_path(file_path),overwrite=True)
         
-        if (rv == None):
+        if (rv == False):
             print "Fail to download %s."%(file_path)
         else:
             print "Download %s."%(file_path)
@@ -82,7 +83,7 @@ def load(begindate, enddate=""):
         try:
             temp = load_file(file_path)
         except IOError:
-            file_path = downloads_cgi(t)
+            file_path = download_cgi(t)
             temp = load_file(file_path)
         
         if temp == None:
@@ -142,7 +143,7 @@ def load_file(file_path):
             
     return data
 
-def downloads_web(begindate, enddate=""):
+def download_web(begindate, enddate=""):
     '''
     Download from kyoto web pages
     '''
@@ -167,7 +168,7 @@ def downloads_web(begindate, enddate=""):
 
     
         # download it to a tmp file
-        tmp = dl.download_url_file(src,swpy.temp_dir+'/dst.tmp',overwrite=True)
+        tmp = dl.download_http_file(src,overwrite=True)
         if (tmp == None):
             mr = dt.monthrange(now_dt.year, now_dt.month)
             now_dt = now_dt + dt.timedelta(days=mr[1])
@@ -193,7 +194,7 @@ def downloads_web(begindate, enddate=""):
             
             # write a new dst
 
-            fw = open(with_dirs(dst), "w")
+            fw = open(make_path(dst), "w")
             fw.write(contents)
             fw.close()
 

@@ -17,7 +17,7 @@ DATETIME_FORMATS = [ "%Y-%m-%dT%H:%M:%S.%f","%Y-%m-%dT%H:%M:%S","%Y-%m-%dT%H:%M"
                      "%Y-%m-%d %H:%M:%S.%f","%Y-%m-%d %H:%M:%S","%Y-%m-%d %H:%M","%Y-%m-%d %H",
                      "%Y%m%d_%H%M%S.%f","%Y%m%d_%H%M%S","%Y%m%d_%H%M","%Y%m%d_%H","%Y%m%d","%Y%m"]
 
-LOG = logging.getLogger("datetime")
+LOG = logging.getLogger(__name__)
 
 NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; NSECOND2 = 7
 
@@ -108,7 +108,7 @@ def datetime_range(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,h
         #print datetime_t.month,m,m%12
         m1,m2 = int(m/12),m%12
         m1,m2 = [(m1,m2),(m1-1,12)][m2==0]
-        LOG.debug('Now(year):%d, Now(mon):%d, adj.(year):%d, Real(mon):%d)'%(t.year,t.month,m1,m2))
+    
         
         t = t.replace(year=t.year + years + m1, month=m2)
                       

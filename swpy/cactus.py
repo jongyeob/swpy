@@ -1,11 +1,10 @@
 #!/usr/bin/python
-
+'''
 ##
 #
 # Developed by Seonghwan Choi (shchoi@kasi.re.kr, http://www.choi.pro)
 # 
 #
-
 
 __author__ = "Seonghwan Choi"
 __copyright__ = "Copyright 2012, Korea Astronomy and Space Science"
@@ -16,20 +15,22 @@ __maintainer__ = "Seonghwan Choi"
 __email__ = "shchoi@kasi.re.kr"
 __status__ = "Production"
 
-# standard library
-import os
-import time
-import datetime
-import calendar
-import string
+'''
 
+# standard library
+import calendar
 from ctypes import *
 
-# SpaeWeatherPy library
-import swpy
-#import config as cnf
-import utilities as util
+import os
+import string
 
+import swpy
+from swpy.utils import datetime as dt ,download as dl
+
+
+
+# SpaeWeatherPy library
+#import config as cnf
 ERROR_INT = -99999
 
 #
@@ -54,8 +55,8 @@ cactus_lasco_url = "http://sidc.oma.be/cactus/catalog/LASCO/"
 cactus_secchia_url = "http://secchi.nrl.navy.mil/cactus/SECCHI-A/"
 cactus_secchib_url = "http://secchi.nrl.navy.mil/cactus/SECCHI-B/"
 
-cactus_lasco_dir = swpy.data_dir + "sidc/cactus/lasco/";
-cactus_cor2_dir = swpy.data_dir + "sidc/cactus/cor2/";
+cactus_lasco_dir = swpy.DATA_DIR + "/sidc/cactus/lasco/";
+cactus_cor2_dir = swpy.DATA_DIR + "/sidc/cactus/cor2/";
 
 
 # monthly files
@@ -63,7 +64,7 @@ cactus_cor2_dir = swpy.data_dir + "sidc/cactus/cor2/";
 # V.2.5.0 (L0) : 1997. 05. ~ 2010. 06.
 # V.2.5.0 (QL) : 2010. 07. ~
 def download_cactus_lasco(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    begin_dt, end_dt = dt.trim(begindate, 3, 'start'),dt.trim(begindate, 3, 'end')
 
     now_dt = begin_dt
     while ( now_dt <= end_dt ):
@@ -73,7 +74,7 @@ def download_cactus_lasco(begindate, enddate=""):
         dst1 = "%(dir)s%(yyyy)04d/cactus_lasco_l0_%(yyyy)04d%(mm)02d.txt"% \
             {"dir":cactus_lasco_dir, "yyyy":now_dt.year, "mm":now_dt.month}
 
-        rv = util.download_http_file(src1, dst1)
+        rv = dl.download_http_file(src1, dst1,overwrite=True)
         if (rv == True):
             print ("Downloaded %s."%src1)
 
@@ -84,13 +85,13 @@ def download_cactus_lasco(begindate, enddate=""):
             dst2 = "%(dir)s%(yyyy)04d/cactus_lasco_ql_%(yyyy)04d%(mm)02d.txt"% \
                 {"dir":cactus_lasco_dir, "yyyy":now_dt.year, "mm":now_dt.month}
             
-            rv = util.download_http_file(src2, dst2)
+            rv = dl.download_http_file(src2, dst2,overwrite=True)
             if (rv == True):
                 print ("Downloaded %s."%src2)
 
         #
         mr = calendar.monthrange(now_dt.year, now_dt.month)
-        now_dt = now_dt + datetime.timedelta(days=mr[1])
+        now_dt = now_dt + dt.timedelta(days=mr[1])
 
     return;
 
@@ -99,7 +100,7 @@ def download_cactus_lasco(begindate, enddate=""):
 # Date : 2007. 4. ~
 
 def download_cactus_cor2(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    begin_dt, end_dt = dt.trim(begindate, 3, 'start'),dt.trim(begindate, 3, 'end')
     
     now_dt = begin_dt
     while ( now_dt <= end_dt ):
@@ -109,7 +110,7 @@ def download_cactus_cor2(begindate, enddate=""):
         dst = "%(dir)s%(yyyy)04d/cactus_secchia_%(yyyy)04d%(mm)02d.txt"% \
                 {"dir":cactus_cor2_dir, "yyyy":now_dt.year, "mm":now_dt.month}
         
-        rv = util.download_http_file(src, dst)
+        rv = dl.download_http_file(src, dst,overwrite=True)
         if (rv == True):
             print ("Downloaded %s."%src)
         
@@ -119,18 +120,19 @@ def download_cactus_cor2(begindate, enddate=""):
         dst = "%(dir)s%(yyyy)04d/cactus_secchib_%(yyyy)04d%(mm)02d.txt"% \
                 {"dir":cactus_cor2_dir, "yyyy":now_dt.year, "mm":now_dt.month}
         
-        rv = util.download_http_file(src, dst)
+        rv = dl.download_http_file(src, dst,overwrite=True)
         if (rv == True):
             print ("Downloaded %s."%src)
         
         #
         mr = calendar.monthrange(now_dt.year, now_dt.month)
-        now_dt = now_dt + datetime.timedelta(days=mr[1])
+        now_dt = now_dt + dt.timedelta(days=mr[1])
     
     return;
 
 def load_cactus_lasco(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    
+    begin_dt, end_dt = dt.trim(begindate, 3, 'start'), dt.trim(begindate, 3, 'end')
     
     # cme_no t0 dt0 pa da v dv minv maxv halo
     list = []    
@@ -160,7 +162,7 @@ def load_cactus_lasco(begindate, enddate=""):
         if (file_path == ""):
             # next month
             mr = calendar.monthrange(now_dt.year, now_dt.month)
-            now_dt = now_dt + datetime.timedelta(days=mr[1])
+            now_dt = now_dt + dt.timedelta(days=mr[1])
             continue;
 
         print "Load the file, " + file_path + "."
@@ -193,10 +195,10 @@ def load_cactus_lasco(begindate, enddate=""):
             halo = line[63:67]
 
             #  
-            dt = datetime.datetime.strptime(t0, "%Y/%m/%d %H:%M")
+            dt2 = dt.datetime.strptime(t0, "%Y/%m/%d %H:%M")
 
 
-            if (dt < begin_dt or end_dt < dt):
+            if (dt2 < begin_dt or end_dt < dt2):
                 continue
 
             #
@@ -214,7 +216,7 @@ def load_cactus_lasco(begindate, enddate=""):
 
         # next month
         mr = calendar.monthrange(now_dt.year, now_dt.month)
-        now_dt = now_dt + datetime.timedelta(days=mr[1])
+        now_dt = now_dt + dt.timedelta(days=mr[1])
      
     # Sort order
     list = sorted(list, key=lambda CACTUS_CME: CACTUS_CME.t0)
@@ -222,7 +224,7 @@ def load_cactus_lasco(begindate, enddate=""):
     return list
 
 def load_cactus_secchia(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    begin_dt, end_dt = dt.trim(begindate, 3, 'start'),dt.trim(begindate, 3, 'end')
     
     # cme_no t0 dt0 pa da v dv minv maxv halo
     list = []    
@@ -238,7 +240,7 @@ def load_cactus_secchia(begindate, enddate=""):
         if ( os.path.exists(file_path) == False):
             # next month
             mr = calendar.monthrange(now_dt.year, now_dt.month)
-            now_dt = now_dt + datetime.timedelta(days=mr[1])
+            now_dt = now_dt + dt.timedelta(days=mr[1])
             continue;
         
         print "Load the file, " + file_path + "."
@@ -271,10 +273,10 @@ def load_cactus_secchia(begindate, enddate=""):
             halo = line[63:67]
             
             #  
-            dt = datetime.datetime.strptime(t0, "%Y/%m/%d %H:%M")
+            dt2 = dt.datetime.strptime(t0, "%Y/%m/%d %H:%M")
             
             
-            if (dt < begin_dt or end_dt < dt):
+            if (dt2 < begin_dt or end_dt < dt2):
                 continue
             
             #
@@ -292,7 +294,7 @@ def load_cactus_secchia(begindate, enddate=""):
         
         # next month
         mr = calendar.monthrange(now_dt.year, now_dt.month)
-        now_dt = now_dt + datetime.timedelta(days=mr[1])
+        now_dt = now_dt + dt.timedelta(days=mr[1])
     
     # Sort order
     list = sorted(list, key=lambda CACTUS_CME: CACTUS_CME.t0)
@@ -301,7 +303,7 @@ def load_cactus_secchia(begindate, enddate=""):
 
 
 def load_cactus_secchib(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    begin_dt, end_dt = dt.trim(begindate, 3, 'start'),dt.trim(begindate, 3, 'end')
     
     # cme_no t0 dt0 pa da v dv minv maxv halo
     list = []    
@@ -317,7 +319,7 @@ def load_cactus_secchib(begindate, enddate=""):
         if ( os.path.exists(file_path) == False):
             # next month
             mr = calendar.monthrange(now_dt.year, now_dt.month)
-            now_dt = now_dt + datetime.timedelta(days=mr[1])
+            now_dt = now_dt + dt.timedelta(days=mr[1])
             continue;
         
         print "Load the file, " + file_path + "."
@@ -350,10 +352,10 @@ def load_cactus_secchib(begindate, enddate=""):
             halo = line[63:67]
             
             #  
-            dt = datetime.datetime.strptime(t0, "%Y/%m/%d %H:%M")
+            dt2 = dt.datetime.strptime(t0, "%Y/%m/%d %H:%M")
             
             
-            if (dt < begin_dt or end_dt < dt):
+            if (dt2 < begin_dt or end_dt < dt2):
                 continue
             
             #
@@ -371,31 +373,11 @@ def load_cactus_secchib(begindate, enddate=""):
         
         # next month
         mr = calendar.monthrange(now_dt.year, now_dt.month)
-        now_dt = now_dt + datetime.timedelta(days=mr[1])
+        now_dt = now_dt + dt.timedelta(days=mr[1])
     
     # Sort order
     list = sorted(list, key=lambda CACTUS_CME: CACTUS_CME.t0)
 
     return list
-
-def test():
-    download_cactus_lasco("199705", "201301");
-    download_cactus_cor2("200704", "201301");
-
-    '''
-    l = load_cactus_lasco("19970501", "20130131");
-    for item in l:
-        print item.t0
-
-    a = load_cactus_secchia("20070401", "20130131");
-    for item in a:
-        print item.t0
-        '''
-    #b = load_cactus_secchib("20070401", "20130131");
-    #for item in b:
-    #    print item.t0
-
-
-    return
 
 

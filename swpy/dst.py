@@ -57,7 +57,7 @@ def download_cgi(begindate, enddate=None):
             print "Fail to download %s."%(file_path)
         else:
             print "Download %s."%(file_path)
-            files.append(rv)
+            files.append(file_path)
 
         #
         mr = dt.monthrange(now_dt.year, now_dt.month)
@@ -66,7 +66,9 @@ def download_cgi(begindate, enddate=None):
     return files
 
 def load(begindate, enddate=""):
-    
+    if enddate == "":
+        enddate = begindate
+        
     begin_dt,end_dt = dt.parsing(begindate),dt.parsing(enddate)
     data = empty_data()
 

@@ -26,7 +26,9 @@ COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
 def download_template(suffix, begindate, enddate=""):
     
-
+    if enddate == "":
+        enddate = begindate
+        
     begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
     downloaded_files = []
     for now_dt in dt.datetime_range(begin_dt, end_dt, days=1):
@@ -44,7 +46,7 @@ def download_template(suffix, begindate, enddate=""):
         dst_path = utils.make_path(dst_dir + txt_file)
         rv = dl.download_http_file(src_path, dst_path ,overwrite=True)
 
-        if dst_path == False:
+        if rv == False:
             tar_path = dl.download_http_file(src+tar_file,overwrite=True)
             if tar_path == None:
                 print "No tar..."

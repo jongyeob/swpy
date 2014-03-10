@@ -41,7 +41,6 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
     pool = DownloadPool()
     
     pool.start(dlist,max_thread=threads)
-    
     try:
         for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
         
@@ -59,7 +58,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
         LOG.error("current ft : %s"%(str(ft)))
     finally:
         pool.close()
-        
+            
     dlist.sort()
             
     return dlist    
@@ -155,7 +154,6 @@ def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
     start_datetime = dt.parsing(start_datetime)
     end_datetime = dt.parsing(end_datetime)
     
-    import time
     for t in dt.datetime_range(start_datetime, end_datetime, days=1):
         dir_str,_ = dl.path.split(hmi_jp2_path_nasa(t, image_string))
     
@@ -164,10 +162,12 @@ def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
             continue
     
         list_files = dl.get_list_from_html(contents,'jp2')
+        #print "Found files : %d"%(len(list_files))
         for f in list_files:
             if start_datetime <= datetime_nasa(f) <= end_datetime:     
                 yield dir_str+'/'+f
-                
+        
+        #print "End iteration"  
           
     return 
     

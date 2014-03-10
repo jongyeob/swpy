@@ -176,7 +176,7 @@ def callback(blocks_read,block_size,total_size):
     
     sys.stderr.write(g_callback_last_msg)
 
-def download_http_file(src_url,dst_path,post_args=None,overwrite=True,trials=3):
+def download_http_file(src_url,dst_path=None,post_args=None,overwrite=True,trials=3):
     '''
     Download a file on internet. return when a file saved to loacl is existed.
     
@@ -285,8 +285,8 @@ def download_http_file(src_url,dst_path,post_args=None,overwrite=True,trials=3):
        
     
     try:
-        dst_path2 = dst_path + '.down'
-        with open(make_path(dst_path2), "wb") as f:
+        dst_path2 = make_path(dst_path) + '.down'
+        with open(dst_path2, "wb") as f:
             f.write(contents)
         if path.exists(dst_path) == True:
             os.remove(dst_path)              

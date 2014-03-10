@@ -11,18 +11,22 @@ import re
 import utils.datetime as dt
 import utils.download as dl
 import utils.utils as utl
+from utils.config import Config 
 from utils.download import DownloadPool
 
 LOG = logging.getLogger(__name__)
 
 HMI_IMAGES = ['magnetogram','continuum']
 AIA_IMAGES = ['94','131','171','193','211','304','335','1600','1700','4500']
+DATA_DIR = './data/'
 
 def initialize():
-    pass
+    cnf = Config('swpy.ini',__name__)
+    
+    cnf.load('data_dir', DATA_DIR)
     
         
-def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8,data_dir='.'):
+def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
     '''
     Downloads hmi jp2 files
     
@@ -43,7 +47,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8,data_dir
         
             ft = datetime_nasa(f)
     
-            dst_filepath = data_dir + hmi_jp2_path_local(ft,image_string)
+            dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
             print("JP2 Path(local) : %s"%(dst_filepath))
                 
             rv = pool.append(f,dst_filepath)
@@ -55,6 +59,8 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8,data_dir
         LOG.error("current ft : %s"%(str(ft)))
     finally:
         pool.close()
+        
+    dlist.sort()
             
     return dlist    
 

@@ -62,7 +62,7 @@ class DownloadPool():
     Class for download file list. 
     '''
     def __init__(self,max_pool=10,iter_obj=None):
-        self.recieving = False
+        self.recieving = [False]
         self._pool_thread = None
         self._pool = []
         self._max = max_pool
@@ -71,8 +71,8 @@ class DownloadPool():
             self._pool.extend(iter_obj)
             
     def start(self,output_list,overwrite=True,trials=3,max_thread=8):
-        if self.recieving == False : 
-            self.recieving = True
+        if self.recieving[0] == False : 
+            self.recieving[0] = True
         else:
             LOG.warn("Download Pool has been already started")
             return False
@@ -97,8 +97,9 @@ class DownloadPool():
                
         
     def close(self):
-        if self.recieving == True:
-            self.recieving = False
+        if self.recieving[0] == True:
+            self.recieving[0] = False
+            #print 'id(self.recieving) : %d'%(id(self.recieving))
         else:
             LOG.warn("Download Pool was not started")
             return False
@@ -125,8 +126,9 @@ def _download_thread(r,input_pool,output_list=[],overwrite=True,trials=3,max_thr
     
     finish = False
     while(not finish):
+        #print "r",r,'id',id(r)
         try:
-            if r == False and len(input_pool) == 0 and len(threads) == 0:
+            if r[0] == False and len(input_pool) == 0 and len(threads) == 0:
                 finish = True
         
             if len(threads) < max_thread and len(input_pool) > 0:
@@ -218,14 +220,21 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=True,trial
                 conn.request("POST", file_path, post_args,headers)
             else:
                 conn.request("GET", file_path)
+                
             r = conn.getresponse()
-            if r.status != 200:
+            if r.status == 200:
+                contents = r.read()
+            elif r.status == 302:
+                ret = download_http_file(r.getheader('Location'),dst_path,post_args,overwrite,trials)
+                conn.close()
+                return ret
+            else:
                 LOG.debug(r.status, r.reason)
                 print("Can not download the file, " + src_url + ".")
-                conn.close()
-            else:
-                contents = r.read()
-                conn.close()
+            
+            conn.close()
+
+                
             
             t = 0
             break

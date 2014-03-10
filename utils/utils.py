@@ -12,9 +12,14 @@ import os,glob
 from os.path import exists,normpath,split
 from math import sqrt,sin,cos,asin,floor
 import datetime
+import sys
 
 COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
+def print_out(msg):
+    sys.stdout.write(msg+'\n')
+def print_err(msg):
+    sys.stderr.write(msg+'\n')
 def get_files(path_exp):
     # path_exp : expression of path
     arg_path = split(path_exp)

@@ -61,7 +61,6 @@ def load_file(filepath):
     
     di = daily_indices = {} 
     
-    LOG.debug(contents)
     for line in contents.splitlines():
         record = match(fmt_daily_indices, line)
         if record != None:

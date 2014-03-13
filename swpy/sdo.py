@@ -38,27 +38,26 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
     
     dlist = []
     
-    pool = DownloadPool()
-    
+    pool = DownloadPool()    
     pool.start(dlist,max_thread=threads)
-    try:
-        for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
-        
-            ft = datetime_nasa(f)
+       
+    for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
+ 
+        ft = datetime_nasa(f)
+        if ft == None:
+            LOG.error("Wrong file : %s"%(f))
+            continue
+
+        dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
+        print("JP2 Path(local) : %s"%(dst_filepath))
+               
+        rv = pool.append(f,dst_filepath)
+            
+        if rv == False:
+            LOG.error("Download thread fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
+            break
     
-            dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
-            print("JP2 Path(local) : %s"%(dst_filepath))
-                
-            rv = pool.append(f,dst_filepath)
-            
-            if rv == False:
-                LOG.error("Download thread fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
-                break
-    except:
-        LOG.error("current ft : %s"%(str(ft)))
-    finally:
-        pool.close()
-            
+    pool.close()
     dlist.sort()
             
     return dlist    
@@ -66,6 +65,9 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
 def datetime_nasa(filename):
     filename_regex = "(\d+)_(\d+)_(\d+)__(\d+)_(\d+)_(\d+)_(\d+)__\S+"
     res = re.search(filename_regex, filename)
+    if res == None:
+        return None
+
     year,month,day,hour,minute,second,fsecond = [int(i) for i in res.groups()]
     second = second + (fsecond*1.)/10**len(str(fsecond))
     

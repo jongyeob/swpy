@@ -25,9 +25,12 @@ class Config():
         self._config = cp.SafeConfigParser()
         
         is_find = False        
-        while(path.ismount(filepath) == False and is_find == False):
+        while(is_find == False):
+            dirpath,filename = path.split(filepath)
+
             if path.exists(filepath) == False:
-                dirpath,filename = path.split(filepath)
+                if path.ismount(dirpath) == True:
+                    break
                 filepath = path.normpath(dirpath +'/../'+filename)
                 LOG.debug('searching ini file at %s'%(filepath))
             else:

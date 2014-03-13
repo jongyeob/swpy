@@ -70,7 +70,7 @@ class DownloadPool():
         if iter_obj is not None:
             self._pool.extend(iter_obj)
             
-    def start(self,output_list,overwrite=True,trials=3,max_thread=8):
+    def start(self,output_list,overwrite=False,trials=3,max_thread=8):
         if self.recieving[0] == False : 
             self.recieving[0] = True
         else:
@@ -79,7 +79,7 @@ class DownloadPool():
         
         assert self._pool_thread == None, 'Thread is not normally terminated'
         
-        self._pool_thread = threading.Thread(target=_download_thread,\
+        self._pool_thread = threading.Thread(target=_pool_thread,\
                                               args=(self.recieving,self._pool,output_list,overwrite,trials,max_thread))
         self._pool_thread.start()
         assert self._pool_thread != None, 'Thread is not created'
@@ -115,7 +115,7 @@ class DownloadPool():
             
         
         return True
-def _download_thread(r,input_pool,output_list=[],overwrite=True,trials=3,max_thread=3):
+def _pool_thread(r,input_pool,output_list=[],overwrite=False,trials=3,max_thread=3):
     '''
     Download files in pool class. when status of pool is end, pool count is 0
     This function will be terminated. return number of download files
@@ -152,11 +152,11 @@ class DownloadThread(threading.Thread):
     '''
     class for mulitthread of download_http_file
     '''
-    def __init__(self,src,dst=None,post_args=None,overwrite=True,trials=3):
+    def __init__(self,src,dst=None,post_args=None,overwrite=False,trials=3):
         threading.Thread.__init__(self)
                 
-        self.src = ''.join(src)
-        self.dst = ''.join(dst)
+        self.src = src
+        self.dst = dst
         self.post_args = post_args
         self.overwrite = overwrite
         self.trials = trials
@@ -178,14 +178,14 @@ def callback(blocks_read,block_size,total_size):
     
     sys.stderr.write(g_callback_last_msg)
 
-def download_http_file(src_url,dst_path,post_args=None,overwrite=True,trials=3):
+def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,trials=3):
     '''
     Download a file on internet. return when a file saved to loacl is existed.
     
     :param string src_url: URL
     :param string dst_path: local path
     :param string post_args: arguments for POST method
-    :param bool overwrite: raise IOError when local file is already been
+    :param bool overwrite: if ture, local file will be overwritten.
     :param int trials: method will be terminated in trails number
     :return: bool
     '''
@@ -193,7 +193,7 @@ def download_http_file(src_url,dst_path,post_args=None,overwrite=True,trials=3):
         dst_path = path.normpath(dst_path)
         dst_exist = path.exists(dst_path) 
         if  dst_exist == True and overwrite == False:
-            raise IOError("The file is already been at %s"%(dst_path))
+            print('Already exist, %s'%(dst_path))
     
     if (src_url.find("http://") != 0):
         print("src_url is invalid url, " + src_url + ".")
@@ -292,10 +292,10 @@ def download_http_file(src_url,dst_path,post_args=None,overwrite=True,trials=3):
     if dst_path == None:
         return contents
        
-    
+    dst_path2 = make_path(dst_path) + '.down'
+
     try:
-        dst_path2 = dst_path + '.down'
-        with open(make_path(dst_path2), "wb") as f:
+        with open(dst_path2, "wb") as f:
             f.write(contents)
         if path.exists(dst_path) == True:
             os.remove(dst_path)              

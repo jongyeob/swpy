@@ -5,6 +5,9 @@ Created on 2013. 11. 9.
 '''
 from __future__ import absolute_import
 
+import logging
+LOG = logging.getLogger(__name__)
+
 import os,glob
 from os.path import exists,normpath,split
 from math import sqrt,sin,cos,asin,floor
@@ -29,16 +32,16 @@ def get_files(path_exp):
     return file_list
    
 def make_dirs(path):
-    path = normpath(path)
+    path = normpath(path+'/')
     if exists(path) == False:
         os.makedirs(path)
 
-def make_path(path):
-    
+def make_path(path):    
     path = normpath(path)
-    dirpath,_ = split(path)
-    if len(dirpath) > 0:
-        make_dirs(dirpath)
+    dirpath,filename = split(path)
+
+    if len(dirpath) > 0 and exists(dirpath) == False:
+        os.makedirs(dirpath)
         
     return path
 

@@ -88,7 +88,7 @@ class DownloadPool():
     def append(self,src,dst):
         
         while(len(self._pool) > self._max and self._pool_thread.isAlive() == True):
-            time.sleep(1)
+            time.sleep(0.1)
             
         if(self._pool_thread.isAlive() == False):
             return False

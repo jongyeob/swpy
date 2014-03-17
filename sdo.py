@@ -160,7 +160,7 @@ def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
         dir_str,_ = dl.path.split(hmi_jp2_path_nasa(t, image_string))
     
         contents = dl.download_http_file(dir_str + '/',None)
-        if contents is None:
+        if contents is False:
             continue
     
         list_files = dl.get_list_from_html(contents,'jp2')

@@ -71,6 +71,8 @@ def load_file(filepath):
         if record != None:
             LOG.debug(record.groups())
             di['3h_K_Boulder'],di['3h_K_Planetary']=record.groups()
+            di['3h_K_Boulder'].split()
+            di['3h_K_Planetary'].split()
 
 
     return energetic_events,proton_events,daily_indices

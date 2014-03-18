@@ -3,9 +3,48 @@ Created on 2013. 12. 15.
 
 @author: Jongyeob
 '''
-def empty_data(keys):
-    pass
-
+import sys
+table_keys = ['keywords','data']
+def get_table(keywords):
+    
+    table = {'keywords':[],'data':{}}
+     
+    for key in keywords:
+        table['keywords'].append(key)
+        table['data'][key] = []
+        
+    return table 
+def check_table(table):
+    for key in table_keys:
+        if table.has_key(key) == False:
+            return False
+        
+    return True
+def print_summary(table):
+    print '**** Print table summary'
+    
+    line = ''
+    for key in table['keywords']:
+        line += key + ' '
+    
+    print 'total : ', len(table['data'][key])
+    print line
+    
+    line = ''
+    for key in table['keywords']:
+        line += str(table['data'][key][0]) + ' '
+    
+    print line
+    space = len(line) / 2 - 1
+    print ' '*space + '...'
+    line = ''
+    for key in table['keywords']:
+        line += str(table['data'][key][-1]) + ' '
+    
+    print line
+    print '****'
+    
+        
 def convert_text(data,keys=None):
     '''
     @summary:           Convert data to text format
@@ -32,6 +71,7 @@ def convert_text(data,keys=None):
         text += '\n'
                     
     return text
+
 def select_keys(data,keys):
     '''
     @summary: select data and making new data

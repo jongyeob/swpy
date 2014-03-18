@@ -13,7 +13,8 @@ test_modules = [\
                 #'download_sdo',\
                 #'swpy.utils.download',\
                 #'swpy.cactus'\
-                'swpy.wilcox'
+                #'swpy.wilcox'\,
+                #'swpy.noaa'\,
                 ]
 
 
@@ -21,7 +22,7 @@ test_modules = [\
 for test in test_modules:
     print "$$ Test module : %s"%(test)
     try:
-        exec('import test.%s'%(test))
+        exec('import test_%s'%(test))
         print "$$ Done"
     except Exception as e:
         traceback.print_exc()

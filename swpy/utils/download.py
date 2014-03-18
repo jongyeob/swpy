@@ -88,7 +88,7 @@ class DownloadPool():
     def append(self,src,dst):
         
         while(len(self._pool) > self._max and self._pool_thread.isAlive() == True):
-            time.sleep(1)
+            time.sleep(0.1)
             
         if(self._pool_thread.isAlive() == False):
             return False
@@ -107,11 +107,11 @@ class DownloadPool():
         assert self._pool_thread != None, 'Thread is not normally terminated before closing itself'
         
         while(self._pool_thread.isAlive() == True):
-            print ("wait...")
+            print ("Waiting to exit a thread")
             self._pool_thread.join(1)
         
         self._pool_thread = None
-        print ("pool_thread end")
+        #print ("pool_thread end")
             
         
         return True
@@ -143,10 +143,10 @@ def _pool_thread(r,input_pool,output_list=[],overwrite=False,trials=3,max_thread
                     threads.remove(th)
             
         except:
-            LOG.error('parent(%s),this(%s),Threads(%d),Pool(%d)'%(r,finish,len(threads),len(input_pool)))
+            #print ('parent(%s),this(%s),Threads(%d),Pool(%d)'%(r,finish,len(threads),len(input_pool)))
             break
                     
-        time.sleep(0.1)
+        time.sleep(1)
        
 class DownloadThread(threading.Thread):
     '''

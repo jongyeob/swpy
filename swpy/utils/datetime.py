@@ -10,16 +10,20 @@ from calendar import monthrange
 from datetime import datetime, timedelta
 
 import logging
+import time
+import threading
 
 
 MONTH_NUMBERS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
 DATETIME_FORMATS = [ "%Y-%m-%dT%H:%M:%S.%f","%Y-%m-%dT%H:%M:%S","%Y-%m-%dT%H:%M","%Y-%m-%dT%H","%Y-%m-%d","%Y-%m","%Y",
                      "%Y-%m-%d %H:%M:%S.%f","%Y-%m-%d %H:%M:%S","%Y-%m-%d %H:%M","%Y-%m-%d %H",
-                     "%Y%m%d_%H%M%S.%f","%Y%m%d_%H%M%S","%Y%m%d_%H%M","%Y%m%d_%H","%Y%m%d","%Y%m"]
+                     "%Y%m%d_%H%M%S.%f","%Y%m%d_%H%M%S","%Y%m%d_%H%M","%Y%m%d_%H","%Y%m%d","%Y%m",
+                     "%d-%b-%Y","%d-%b-%y"]
 
 LOG = logging.getLogger(__name__)
 
 NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; NSECOND2 = 7
+lock_parsing = threading.Lock()
 
 def parse_string(datetime_string):
     '''
@@ -29,12 +33,14 @@ def parse_string(datetime_string):
     :return: Datetime|None
     '''
     
+    lock_parsing.acquire()
     parsed = None
     for form in DATETIME_FORMATS:
-        try:
+        try:            
             parsed = datetime.strptime(datetime_string,form)
-        except ValueError:
+        except :
             continue
+    lock_parsing.release()
     
     return parsed
     
@@ -88,7 +94,7 @@ def datetime_range(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,h
     if(start_datetime == None or end_datetime == None):
         return []
     
-    LOG.debug('Start/End : %s/%s'%(start_datetime,end_datetime))
+    #print 'Start/End : %s/%s'%(start_datetime,end_datetime)
     
     ret_list = []
     t = start_datetime
@@ -121,6 +127,8 @@ def parsing(*args):
     @param args: Datetime string |
     @return: Datetime or None 
     '''
+    
+    
     ret = None
     num = len(args)
     init = datetime(1,1,1)

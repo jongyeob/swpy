@@ -40,24 +40,28 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
     
     pool = DownloadPool()    
     pool.start(dlist,max_thread=threads)
-       
-    for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
- 
-        ft = datetime_nasa(f)
-        if ft == None:
-            LOG.error("Wrong file : %s"%(f))
-            continue
-
-        dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
-        print("JP2 Path(local) : %s"%(dst_filepath))
-               
-        rv = pool.append(f,dst_filepath)
-            
-        if rv == False:
-            LOG.error("Download thread fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
-            break
     
-    pool.close()
+    try:
+       
+        for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
+     
+            ft = datetime_nasa(f)
+            if ft == None:
+                LOG.error("Wrong file : %s"%(f))
+                continue
+    
+            dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
+            print("JP2 Path(local) : %s"%(dst_filepath))
+                   
+            rv = pool.append(f,dst_filepath)
+                
+            if rv == False:
+                LOG.error("Download thread fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
+                break
+    except Exception as err: raise err
+    finally:
+        pool.close()
+        
     dlist.sort()
             
     return dlist    

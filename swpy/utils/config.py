@@ -17,11 +17,10 @@ class Config():
     _section = None
     _change = False
     
-    def __init__(self,filepath,section):
+    def __init__(self,filepath,section=''):
         
         filepath = path.abspath(filepath)
         self._filepath = filepath
-        self._section = section
         self._config = cp.SafeConfigParser()
         
         is_find = False        
@@ -42,18 +41,32 @@ class Config():
         if is_find == False:
             LOG.info("No log file is found! %s"%(self._filepath))
         
-        if self._config.has_section(section) == False:
-            self._config.add_section(section)
-            self._change = True
+        self.set_section(section)
+            
     def get_working_directory(self):
         dirpath,_ = path.split(self._filepath)
-        return dirpath 
-    def load(self,option,default):
+        return dirpath
+    def get_sections(self):
+        return self._config.sections()
+    def set_section(self,section):
+        if section is None or section == '':
+            self._section = 'DEFAULT'
+            return
+        
+        self._section = section
+       
+        if self._config.has_section(self._section) == False:
+            self._config.add_section(self._section)
+            self._change = True
+    
+    def load(self,option,default,section=None):
         '''
         return option value (string)
         '''
         value = default
-            
+        if section is not None:
+            self.set_section(section)
+         
         if self._config.has_option(self._section, option) == False:
             self._config.set(self._section, option, str(default))
             self._change = True

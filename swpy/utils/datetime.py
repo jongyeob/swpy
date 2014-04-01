@@ -7,25 +7,37 @@ Created on 2013. 5. 7.
 from __future__ import absolute_import
 
 from calendar import monthrange
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date,time
 
 import logging
-import time
 import threading
 
+import re
 
 MONTH_NUMBERS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
-DATETIME_FORMATS = [ "%Y-%m-%dT%H:%M:%S.%f","%Y-%m-%dT%H:%M:%S","%Y-%m-%dT%H:%M","%Y-%m-%dT%H","%Y-%m-%d","%Y-%m","%Y",
-                     "%Y-%m-%d %H:%M:%S.%f","%Y-%m-%d %H:%M:%S","%Y-%m-%d %H:%M","%Y-%m-%d %H",
-                     "%Y%m%d_%H%M%S.%f","%Y%m%d_%H%M%S","%Y%m%d_%H%M","%Y%m%d_%H","%Y%m%d","%Y%m",
-                     "%d-%b-%Y","%d-%b-%y"]
+RE_FORMATS = {'%Y': '(?P<Y>\d{4})',
+              '%y': '(?P<y>\d{2})',
+              '%m': '(?P<m>\d{1,2})',
+              '%d': '(?P<d>\d{1,2})',
+              '%H': '(?P<H>\d{1,2})',
+              '%M': '(?P<M>\d{1,2})',
+              '%S': '(?P<S>\d{1,2})',
+              '%f': '(?P<f>\d{1,6})',
+              '%b': '(?P<b>[a-zA-Z]+)',
+                   }
+DATE_FORMATS = [ "%Y-%m-%d","%d-%b-%Y","%d-%b-%y"]
+TIME_FORMATS = [ "%H:%M:%S\.%f","%H:%M:%S"]
+SEPS = ['_',' ','T']
+DATE_SEPS = ['','_',' ']
+TIME_SEPS = ['','_',' ']
 
 LOG = logging.getLogger(__name__)
 
 NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; NSECOND2 = 7
+
 lock_parsing = threading.Lock()
 
-def parse_string(datetime_string):
+def parse_string(datetime_string,index=False):
     '''
     parsing datetime string
 
@@ -33,16 +45,100 @@ def parse_string(datetime_string):
     :return: Datetime|None
     '''
     
+    
+    
+    parsed_date = None
+    parsed_time = None   
+    
+    time_offset = 0
+    date_start,date_end = 0,len(datetime_string)
+    time_start, time_end = 0,len(datetime_string)
+    
+    # date searching
     lock_parsing.acquire()
-    parsed = None
-    for form in DATETIME_FORMATS:
-        try:            
-            parsed = datetime.strptime(datetime_string,form)
-        except :
-            continue
+    for fmt in DATE_FORMATS:
+        f = fmt
+        for k,v in RE_FORMATS.iteritems():
+            f = f.replace(k,v)
+        fs = f
+        for sep in DATE_SEPS:
+                            
+            r = re.search(fs, datetime_string)
+            
+            fs = f.replace('-',sep)
+            if r is None: continue
+            
+            parsed_date = date(*[int(s) for s in r.groups()])
+            date_start,date_end = r.start(),r.end()
+            LOG.debug('Find date : ',parsed_date,' with ',  fs,'[%d:%d]'%(r.start(),r.end()))
+            
+            try:
+                SEPS.index(datetime_string[r.end()])
+                time_offset= r.end() + 1
+
+            except:
+                #print 'Not Find Time ',datetime_string[r.end():]
+                time_offset= len(datetime_string)
+                
+            break
+        
+        if parsed_date is not None: break
+                    
+    # time searching        
+    for fmt in TIME_FORMATS:
+        f = fmt
+        for k,v in RE_FORMATS.iteritems():
+            f = f.replace(k,v)
+        fs = f
+        for sep in TIME_SEPS:
+            if parsed_date is not None: fs = '^'+fs # excact match when date is parsed
+            
+            r = re.search(fs, datetime_string[time_offset:])
+            
+            fs = f.replace(':',sep)
+            if r is None: continue
+    
+                
+            parsed_time = time(*[int(s) for s in r.groups()])
+            
+            d = r.groupdict()
+            if d.has_key('f') == True:
+                parsed_time  = parsed_time.replace(microsecond=int(d['f'].ljust(6,'0')))
+        
+                
+            time_start,time_end = r.start(),r.end()
+            LOG.debug('Find time : ',parsed_time,' with ',  fs,'[%d:%d]'%(r.start(),r.end()))
+            
+            break
+        
+        if parsed_time is not None: break
     lock_parsing.release()
     
-    return parsed
+    ret = []
+           
+    parsed = None
+    start,end = 0, 0
+    if parsed_date is not None and parsed_time is not None:
+        parsed = datetime.combine(parsed_date,parsed_time)
+        start,end = date_start,time_end + time_offset
+    elif parsed_date is not None:
+        parsed = parsed_date
+        start,end = date_start,date_end
+    elif parsed_time is not None:
+        parsed = parsed_time
+        start,end = time_start + time_offset,time_end + time_offset
+        
+    #print "Found at (%d,%d) "%(start,end), datetime_string[start:end]
+    
+    
+    ret.append(parsed)
+          
+    if index == True:
+        ret.append((start,end))
+    
+    if len(ret) == 1: ret = ret[0]
+    
+    return ret
     
 def trim(datetime_info,pos,init):
     '''
@@ -121,25 +217,33 @@ def datetime_range(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,h
        
     return ret_list 
 
-def parsing(*args):
+def parse(*args,**kargs):
     '''
-    @summary: Make datatime object with args
-    @param args: Datetime string |
-    @return: Datetime or None 
-    '''
+    Make datatime object with args
+    input : int sequence,list,tuple,string
+    keywords : type - datetime, date, time
     
+    Datetime object or None 
+    '''
     
     ret = None
     num = len(args)
-    init = datetime(1,1,1)
-    
+    init = datetime(1,1,1) 
+       
     buf = []
     
     if num == 1:
         if(isinstance(args[0],datetime)):
             ret = args[0]
         elif(isinstance(args[0],str)):
-            ret = parse_string(args[0])
+            parsed = parse_string(args[0])
+            if isinstance(parsed, datetime):
+                ret = parsed
+            elif isinstance(parsed,date):
+                ret = datetime.combine(parsed,time())
+            elif isinstance(parsed,time):
+                ret = datetime.combine(date(1,1,1),parsed)
+                 
         elif(isinstance(args[0],tuple) or isinstance(args[0],list)):
             buf.extend(args[0])
         elif(isinstance(args[0],int)):
@@ -156,7 +260,8 @@ def parsing(*args):
                 buf.append(int(round(fa-na,6)*1e6))
                 break
         
-    if(ret == None and len(buf) > 0):    
+    if(ret == None and len(buf) > 0):
+        
         try:
             ret = init.replace(*buf)
         except Exception as err:
@@ -284,3 +389,4 @@ def modified_julian_day(jd,reverse=False):
     return mjd
 
 
+parsing = parse # For compatibility

@@ -6,7 +6,7 @@ import sys
 file_path = None
 os_type = None
 
-# check platform
+print "# check platform"
 if sys.platform.startswith("win"):
     os_type = 'win'
 elif sys.platform.startswith("linux"):
@@ -15,7 +15,7 @@ else:
     sys.stderr.write("Unknown platform")
     sys.exit(-1)
 
-# build document
+print "# build document"
 ret = None
 old = os.getcwd()
 
@@ -27,7 +27,7 @@ elif os_type == 'linux':
 os.chdir(old)
 
 
-# write package path in python directory
+print "# Write package path in python directory"
 
 if os_type == 'win':
     file_path = "%s/lib/site-packages/swpy.pth"%(sys.prefix)

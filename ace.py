@@ -141,8 +141,6 @@ def load_file(filepath,instrument):
     elif(instrument == 'swepam'):
         data = load_swepam(filepath)
         
- 
-    
     return data
 def load_mag(filepath):
     '''

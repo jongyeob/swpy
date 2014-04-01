@@ -119,7 +119,8 @@ def download_geoa(begindate, enddate=""):
 
 def download_index(begindate, enddate="", type=""):
     begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
-    
+    if end_dt == None:
+        end_dt = begin_dt
     if (type != "DSD" and type != "DPD" and type != "DGD"):
         return False
     
@@ -147,8 +148,8 @@ def download_index(begindate, enddate="", type=""):
         # Download a file.
         utils.alert_message("Download %s."%(src))
         rv = dl.download_http_file(src, dst)
-        if (rv == False):
-            continue
+        if (rv != False):
+            pass
         
         #
         year_dt = year_dt + dt.timedelta(days=367)
@@ -187,7 +188,10 @@ def load_dgd(begindate,enddate=""):
         
         if os.path.exists(file_path) == False:
             print "File is not exist!"
-            continue
+            rv = download_dgd(t1)
+            if rv == False:
+                print "Download Failed!"
+                continue
         
         with open(file_path, "r") as f:
             init = False

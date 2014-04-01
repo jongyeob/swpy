@@ -214,8 +214,9 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
     for t in range(1, trials):
         contents = ""
         
+        conn = httplib.HTTPConnection(domain_name)
         try:
-            conn = httplib.HTTPConnection(domain_name)
+            
             if(post_args != None):
                 conn.request("POST", file_path, post_args,headers)
             else:
@@ -226,18 +227,15 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
                 contents = r.read()
             elif r.status == 302:
                 ret = download_http_file(r.getheader('Location'),dst_path,post_args,overwrite,trials)
-                conn.close()
                 return ret
             else:
                 LOG.debug(r.status, r.reason)
                 print("Can not download the file, " + src_url + ".")
-            
-            conn.close()
-
-                
+                break
             
             t = 0
             break
+
         except httplib.HTTPException, msg:
             #nFails = nFails + 1
             LOG.debug("HTTPException")
@@ -276,6 +274,8 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
             LOG.debug("BadStatusLine")
         except socket.error, e:
             LOG.debug("Socket exception error, %s."%e)
+        finally:
+            conn.close()
         # finally:
             #nFails = nFails + 1
         #alert_message("Unknown exception in DownloadHttpFile().")

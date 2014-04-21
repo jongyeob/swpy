@@ -3,8 +3,6 @@ Created on 2013. 11. 9.
 
 @author: Daniel
 '''
-from __future__ import absolute_import
-
 import logging
 LOG = logging.getLogger(__name__)
 

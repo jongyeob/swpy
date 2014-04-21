@@ -4,8 +4,6 @@ Created on 2013. 5. 7.
 @author: kasi
 '''
 
-from __future__ import absolute_import
-
 from calendar import monthrange
 from datetime import datetime, timedelta,date,time
 
@@ -28,7 +26,7 @@ RE_FORMATS = {'%Y': '(?P<Y>\d{4})',
 DATE_FORMATS = [ "%Y-%m-%d","%d-%b-%Y","%d-%b-%y"]
 TIME_FORMATS = [ "%H:%M:%S\.%f","%H:%M:%S"]
 SEPS = ['_',' ','T']
-DATE_SEPS = ['','_',' ']
+DATE_SEPS = ['','_','/',' ']
 TIME_SEPS = ['','_',' ']
 
 LOG = logging.getLogger(__name__)
@@ -44,9 +42,7 @@ def parse_string(datetime_string,index=False):
     :param str datetime_string: string of datetime
     :return: Datetime|None
     '''
-    
-    
-    
+            
     parsed_date = None
     parsed_time = None   
     
@@ -179,7 +175,7 @@ def trim(datetime_info,pos,init):
     
     return dt.replace(*replaces)
 
-def datetime_range(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
+def series(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
     '''
     @param - start_datetime
     @param - end_datetime
@@ -388,5 +384,7 @@ def modified_julian_day(jd,reverse=False):
         
     return mjd
 
+# For compatibility
 
-parsing = parse # For compatibility
+parsing = parse 
+datetime_range = series

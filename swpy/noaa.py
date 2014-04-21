@@ -10,7 +10,7 @@ import os
 import swpy
 
 from swpy.utils import utils
-from swpy.utils import datetime as dt
+from swpy.utils import date_time as dt
 from swpy.utils import download as dl
 from swpy.utils import data as da
 
@@ -125,11 +125,17 @@ def download_index(begindate, enddate="", type=""):
         return False
     
     
-    # Yearly Loop
-    year_dt = begin_dt
-    while ( year_dt <= end_dt ):
-        #
-        year_dt = year_dt.replace(month=1, day=1);
+    quater = ['','Q1','Q2','Q3','Q4']
+    
+    for year_dt in dt.datetime_range(begin_dt,end_dt,years=1):
+        
+        if year_dt.year == end_dt.year:
+            if end_dt.month <= 9:
+                quater.pop(-1)
+            if end_dt.month <= 6:
+                quater.pop(-1)
+            if end_dt.month <= 3:
+                quater.pop(-1)
         
         #
         file_name = "%(y)04d_%(type)s.txt"%{
@@ -148,12 +154,28 @@ def download_index(begindate, enddate="", type=""):
         # Download a file.
         utils.alert_message("Download %s."%(src))
         rv = dl.download_http_file(src, dst)
-        if (rv != False):
-            pass
         
-        #
-        year_dt = year_dt + dt.timedelta(days=367)
-    
+        # start parsing quater data
+        if (rv == False):
+            text = ''
+            for i in range(1,len(quater)):
+                file_name = "%(y)04d%(q)s_%(type)s.txt"%{"y":year_dt.year,"q":quater[i],"type":type}
+                src = "%(url)sindices/old_indices/%(fn)s"%{"url":NOAA_URL,"fn":file_name}
+                data = dl.download_http_file(src)
+                if data == '':
+                    continue
+                
+                for line in data.splitlines():
+                    if line[0] == ':' or line[0] =='#':
+                        continue
+                    if line != '':
+                        text += line + '\n'
+            
+            if text != '':
+                with open(dst,'w') as f: f.write(text)
+            else:
+                return False
+            
     return True
 
 def download_dsd(begindate, enddate=""):
@@ -167,19 +189,19 @@ def download_dgd(begindate, enddate=""):
 
 
 def load_dgd(begindate,enddate=""):
-    begin_dt =  dt.trim(begindate, 3, 'start')
+    begin_dt =  dt.trim(begindate,3,'start')
     
     end_dt = begin_dt
     if enddate != "":
-        end_dt = dt.trim(enddate, 3, 'end')
+        end_dt = dt.trim(enddate,3,'end')
         
     keys = ['date','mid_a','mid_k','high_a','high_k','ap','kp']
     table = da.get_table(keys)
     data = table['data']
     
     
-    
     for t1 in dt.datetime_range(begin_dt, end_dt, years=1):
+        
         file_name = "%(y)04d_DGD.txt"%{"y":t1.year}
         
         file_path = "%(dir)s/indices/DGD/%(fn)s"%{
@@ -211,6 +233,9 @@ def load_dgd(begindate,enddate=""):
                 dt1 = dt.parsing('%s%s%s'%(line[0:4],line[5:7],line[8:10]))
                 if dt1 is None:
                     #print "Wrong datetime"
+                    continue
+                
+                if (dt1 < begin_dt or end_dt < dt1):
                     continue
                 
                 init = False
@@ -268,11 +293,11 @@ def load_dgd(begindate,enddate=""):
     return table 
         
 def load_dsd(begindate,enddate=""):
-    begin_dt =  dt.trim(begindate, 3, 'start')
+    begin_dt =  dt.trim(begindate,3,'start')
     
     end_dt = begin_dt
     if enddate != "":
-        end_dt = dt.trim(enddate, 3, 'end')
+        end_dt = dt.trim(enddate,3,'end')
     
     keys = ['date','radio_flux','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
                 'x-ray','optical']
@@ -306,6 +331,8 @@ def load_dsd(begindate,enddate=""):
                 dt1 = dt.parsing('%s%s%s'%(cols[0],cols[1],cols[2]))
                 if dt1 is None:
                     #print "Wrong datetime"
+                    continue
+                if (dt1 < begin_dt or end_dt < dt1):
                     continue
                 
                 v = [float('nan')]*13
@@ -343,7 +370,7 @@ def load_dpd(begindate, enddate=""):
     begin_dt = dt.trim(begindate,3,'start')
     end_dt = begin_dt
     if enddate != "":
-        end_dt = dt.trim(enddate, 3, 'end') 
+        end_dt = dt.trim(enddate,3,'end') 
 
     
     t0 = []
@@ -394,6 +421,9 @@ def load_dpd(begindate, enddate=""):
                     continue
     
                 dt1 = dt.parsing("%s-%s-%s"%(column[0], column[1], column[2]))
+                
+                if dt1 is None:
+                    continue
                     
                 if (dt1 < begin_dt or end_dt < dt1):
                     continue
@@ -427,7 +457,8 @@ def load_dpd(begindate, enddate=""):
                     else:
                         neutron.append(float(column[7]))
                         
-                        
+        prime_keys = ['date']
+                         
         keys = ['date','mev1','mev10','mev100','mev06','mev08','mev20','neutron']
         data = {"date":t0, "mev1":mev1, "mev10":mev10, "mev100":mev100, "mev06":mev06, "mev08":mev08,"mev20":mev20, "neutron":neutron} 
     

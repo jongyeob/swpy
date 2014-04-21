@@ -194,6 +194,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         dst_exist = path.exists(dst_path) 
         if  dst_exist == True and overwrite == False:
             print('Already exist, %s'%(dst_path))
+            return True
     
     if (src_url.find("http://") != 0):
         print("src_url is invalid url, " + src_url + ".")
@@ -285,10 +286,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
 
     if (t > 0):
         return False
-        
-    if (contents == ""):
-        return False
-    
+           
     if dst_path == None:
         return contents
        

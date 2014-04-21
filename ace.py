@@ -8,7 +8,7 @@ import re
 from swpy import DATA_DIR
 import sys
 
-from utils import datetime as dt, download as dl
+from utils import date_time as dt, download as dl
 
 
 SRS_DIR = '/noaa/ace_realtime'

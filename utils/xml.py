@@ -10,7 +10,7 @@ import os
 from lxml import etree as et
 from lxml.etree import Element
 
-from swpy.utils.time import swdt
+from swpy.utils import date_time as swdt
 
 
 def create_xml(rootname,filepath=None):

@@ -23,6 +23,7 @@ class Table():
         '''
         self._data = {}
         self._keys = []
+        self._max_depth = 0
         self._primes = []
         self._fmts = []
         self._max_len = []
@@ -65,12 +66,19 @@ class Table():
             if self.length() > 0 and self.length() != len(data[k]):
                 return False
             
+            # update maximum depth of keywords
+            ks  = k.split(':')
+            ksn = len(ks)
+            
+            if ksn > self._max_depth:
+                self._max_depth = ksn 
+            
+            # when key is already been. add number after key name.
             i = 2
             new_k = k
             while (self._data.has_key(new_k) == True):
-                ks = k.split(':')
                 new_k = '%s%d'%(ks[0],i)
-                for i in range(1,len(ks)):
+                for i in range(1,ksn):
                     new_k += ':%s'%ks[i]
                 i += 1
             
@@ -190,14 +198,11 @@ class Table():
                 n -= len(str(l))
             except: l = maxl
             
-                                                       
-            kl = 0
-            for kn in key.split(':'): #key name
-                knl = len(kn)
-                if kl < knl:
-                    kl = knl
-                    
-            if kl > l : l = kl
+            # comparison key length and data length                                           
+            ns = key.split(':') # namespace
+            knl = len(ns[-1])   # last name length   
+           
+            if knl > l : l = knl
             
             
             if self._parsed == True:
@@ -216,106 +221,131 @@ class Table():
                             
         return new   
     
-def print_text(table,summary=0,f=sys.stdout):
-    
-    keys = table.get_keywords()
-    data = table.get_data(keywords=keys)
-    
-    fmts = table.get_formats()
-    
-    if summary > 0:
-        f.write('**** Print table summary\n')       
-        f.write('total : %d\n'%(table.length()))
+    def print_text(self,summary=0,f=sys.stdout):
         
-    
-    lines  = ['']
-    last_key  = {0:''} 
-    max_depth = 0
-    
-    
-    for key,fmt in zip(keys,fmts):
-        num = int(float(fmt[1:-1]))       
-        fk = '|%%%ds'%(num)
-        ns = key.split(':') # namespaces
-        ns.reverse()
-        l = len(ns)
-        if l > max_depth:
-            for i in range(max_depth,l):
-                last_key[i] = ''
-                lines.append(lines[-1])
+        keys = self.get_keywords()
+        data = self.get_data(keywords=keys)
+        
+        fmts = self.get_formats()
+        
+        if summary > 0:
+            f.write('**** Print table summary\n')       
+            f.write('total : %d\n'%(self.length()))
+        
+        
+        # Creating titles
+        max_depth = self._max_depth
+        num_keys  = len(keys)
+        
+        key_map = [['' for _ in range(max_depth)] for _ in range(num_keys)]
+        key_lens = [0 for _ in range(num_keys)]
+        
+        
+        for i in range(num_keys):
+            ns = keys[i].split(':')
             
-            max_depth = l
+            l = len(ns)            
+            key_map[i][max_depth-l:] = ns
+            key_lens[i] = int(float(fmts[i][1:-1]))
+        
+        
+        
+        for j in range(max_depth):
             
             
-        key_changed = False
-        for i in range(max_depth):
-            i = max_depth-1 -i 
+            last_key = key_map[0]
+            last_len = 0
+            offset   = 0
             
-            #print "i:", i, "lines : ", lines[i]
-            if i > l -1:
-                last_key[i] = ''
-                lines[i]   += fk%('*')
-                key_changed = True
-                continue
+            for i in range(num_keys):
             
-            if last_key[i] != ns[i] :
-                key_changed = True
-            
-            if key_changed == True:
-                last_key[i] = ns[i]
-                lines[i]   += fk%(ns[i])
-                continue
+                if key_map[i][:j+1] == last_key[:j+1]: # when key name is same
+                    last_len   += key_lens[i]   # add spaces
+                    continue
 
-            lines[i]   += ' '+fk[1:]%('')
-            
-                 
-    
-    for i in range(max_depth):
-        f.write(lines[max_depth-1 -i]+'\n')
-    
-    
-    num_line  = table.length()
-    ll = num_line
-    if summary > 0 and summary < num_line :
-        ll = summary
-        
-    ll2 = ll/2 
-    
-    linefmts = {}
-    for key,fmt in zip(keys,fmts):
-        linefmts[key] =' %s'%(fmt), abs(int(float(fmt[1:-1]))) # format, max_len    
-    
-    for i in range(ll2):
-        line = ''
-        for key,d in zip(keys,data):
-            fk,max_len = linefmts[key]
-            t = fk%(d[i])
-            if  max_len < len(t) - 1:
-                t = t[:max_len-1] +'~ '
-            line += t
-            
-        f.write(line+'\n')
-    
-    if summary > 0:   
-        f.write(' '*(ll2-1) + '...'+'\n')
-    
-    
-    for i in range(ll2,ll):
-        line = ''
-        for key,d in zip(keys,data):
-            fk,max_len = linefmts[key]
-            
-            t = fk%(d[i])
-            if  max_len < len(t) - 1:
-                t = t[:max_len-1] +'~ '
-            line += t
-        
-        f.write(line+'\n')
-            
+                offset = last_len  - len(last_key[j])
+                if offset < 0:    key_lens[i] -= offset
+                    
+                last_key = key_map[i]
+                last_len = key_lens[i]
                 
-    line = ''
-    if summary > 0:
-        f.write('****'+'\n')
+                
+        
+            offset = last_len - len(last_key[j])
+            if offset < 0:    key_lens[i] -= offset
+        
+        
+
+        for j in range(max_depth):
+            line = ''
+            last_key  = key_map[0]
+            last_len  = 0
+            count     = -1
+            for i in range(num_keys):
+                
+                if key_map[i][:j+1] == last_key[:j+1]: # when key name is same
+                    last_len += key_lens[i]
+                    count    += 1 
+                    continue
+                
+                fk  = '|%%-%ds'%(last_len+count) 
+                key = last_key[j]     
+                line += fk%(key)
+                
+                last_key = key_map[i]
+                last_len = key_lens[i]
+                count    = 0
+                    
+    
+            fk = '|%%-%ds'%(last_len+count)
+            key = last_key[j]
+            line += fk%(key)
+            
+            print line+'|'
+            
+        
+        num_line  = self.length()
+        ll = num_line
+        if summary > 0 and summary < num_line :
+            ll = summary
+            
+        ll2 = ll/2 
+        
+        linefmts = {}
+        for key,fmt in zip(keys,fmts):
+            linefmts[key] =' %s'%(fmt), abs(int(float(fmt[1:-1]))) # format, max_len    
+        
+        for i in range(ll2):
+            line = ''
+            for key,d in zip(keys,data):
+                fk,max_len = linefmts[key]
+                t = fk%(d[i])
+                if  max_len < len(t) - 1:
+                    t = t[:max_len-1] +'~ '
+                line += t
+                
+            f.write(line+'\n')
+        
+        if summary > 0:   
+            f.write(' '*(ll2-1) + '...'+'\n')
+        
+        
+        for i in range(ll2,ll):
+            line = ''
+            for key,d in zip(keys,data):
+                fk,max_len = linefmts[key]
+                
+                t = fk%(d[i])
+                if  max_len < len(t) - 1:
+                    t = t[:max_len-1] +'~ '
+                line += t
+            
+            f.write(line+'\n')
+                
+                    
+        line = ''
+        if summary > 0:
+            f.write('****'+'\n')
     
 
 
@@ -363,36 +393,42 @@ def test():
     
     t1 = Table()
     print t1
-    print_text(t1)
+    t1.print_text()
     
     data = {'a:a:a':['1','2','3'],'b:a:b':['a','b','c'],'b:b:c':['1.1','2.2','3.3'],'b:d':['20100101_120000','2011-11-22 22:00:00','2013/03/02T11:00:01.333'],'e':[[1,2],[2,3],[3,4]]}
     keys = ['a:a:a','b:a:b','b:b:c','b:d','e']
     fmts = ['02d','4s','5.3f','t','']
     
     t2 = Table(data=data)
-    print_text(t2)
+    t2.print_text()
     
      
     t3 = Table(keys=keys, data=data)
-    print_text(t3)
+    t3.print_text()
     
      
     t4 = Table(keys=keys, data=data, fmts=fmts,primekeys='b:d')
-    print_text(t4)
+    t4.print_text()
     
     
     t4.set_data(keys=keys, data=data, fmts=fmts)
-    print_text(t4)
-    print_text(t4,summary=2)
+    t4.print_text()
+    t4.print_text(summary=2)
     
     
     t5 = Table(keys=keys, data=data, fmts=fmts,primekeys='b:d',parse=True)
-    print_text(t5)
+    t5.print_text()
     
     t5_keys = t5.get_keywords('b')
     print t5_keys
     data = t5.get_data(keywords=t5_keys)
     print data
+    
+    data = {'1234567890:1:1':[1,2,3],'1234567890:1:2':[1,2,3]}
+    keys = ['1234567890:1:1','1234567890:1:2']
+    
+    t6 = Table(data=data,keys=keys)
+    t6.print_text()
     
     
 

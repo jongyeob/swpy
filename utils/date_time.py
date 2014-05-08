@@ -43,7 +43,6 @@ NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; 
 
 lock_parsing = threading.Lock()
 
- 
 def parse_string(format_string,datetime_string,index=[]):
     '''
     parsing datetime string with format
@@ -176,7 +175,6 @@ def parse_datetime(datetime_string,prior='date',index=[]):
     parsed1 = parse1(datetime_string,index=index1)
     
     if parsed1 is not None:
-        print index1
         start,end  = index1
         offset = end
         
@@ -500,6 +498,3 @@ if __name__ == '__main__':
       
     text = '2-Jul-02'
     print parse('2-Jul-98')
-    
-    
-    

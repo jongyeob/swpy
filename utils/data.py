@@ -346,7 +346,6 @@ class Table():
         line = ''
         if summary > 0:
             f.write('****'+'\n')
-    
 
 
 def combine(*data_args,**kargs):

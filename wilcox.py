@@ -6,6 +6,7 @@ Created on 2013. 12. 9.
 
 import swpy
 
+import os.path
 import utils.date_time as dt
 import utils.download as dl
 from utils.utils import make_path
@@ -33,14 +34,14 @@ datatype_filename = ['prelim','final']
 
 DATA_DIR = swpy.DATA_DIR + '/wilcox/synoptic'
 
-def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM):
+def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM,overwrite=False):
     '''
     Download synoptic file from cgi get
     
-    @param program: Program name [Photospheric:0,ClassicSS:1,Radial250:2,Radial325:3,Filled:4]
-    @param projection: projection method [Sine_latitude:0, Latitude:1]
-    @return: File path, if it failed, return None
-    @see: Data request form refers to http://wso.stanford.edu/forms/prsyn.html  
+    :param int program: Program name [Photospheric:0,ClassicSS:1,Radial250:2,Radial325:3,Filled:4]
+    :param int projection: projection method [Sine_latitude:0, Latitude:1]
+    :return: File path, if it failed, return None
+    :see: Data request form refers to http://wso.stanford.edu/forms/prsyn.html  
     
     cgi-post (sample)
     http://wso.stanford.edu/cgi-bin/wso_prsyn.pl?rotation=&degrees=360&center=2013_12_01_00&ProgName=Photospheric&Type=Prelim&Projection=Sine_Latitude
@@ -60,8 +61,10 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
     dstpath = DATA_DIR + dstfile
     print dstpath
     
+    if overwrite == False and os.path.exists(dstpath) == True:
+        return dstpath
      
-    contents = dl.download_http_file(cgi,None,post_args=args)
+    contents = dl.download_http_file(cgi,post_args=args)
     if contents == False:
         return None
         
@@ -74,7 +77,7 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
     
     if contents[i1:i2].find("30 data points") == -1:
         return None 
-                
+    
     with open(make_path(dstpath), "w") as fw:
         fw.write(contents[i1:i2])
      

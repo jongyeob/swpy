@@ -30,7 +30,7 @@ DGD_keys = ['date',\
             'high_a','high_k:0','high_k:3','high_k:6','high_k:9','high_k:12','high_k:15','high_k:18','high_k:21',\
             'ap',    'kp:0','kp:3','kp:6','kp:9','kp:12','kp:15','kp:18','kp:21']
 DPD_keys = ['date','mev1','mev10','mev100','mev06','mev08','mev20','neutron']
-DSD_keys = ['date','radio','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
+DSD_keys = ['date','radio_flux','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
             'x-ray:C','x-ray:M','x-ray:X',\
             'optical:S','optical:1','optical:2','optical:3']
 
@@ -130,13 +130,13 @@ def _download_template(suffix, begindate, enddate="",overwrite=False):
     return downloaded_files
 
 def download_dsd(begindate, enddate="",overwrite=False):
-    return _download_index(begindate, enddate, "DSD");
+    return _download_index(begindate, enddate, "DSD",overwrite=overwrite);
 
 def download_dpd(begindate, enddate="",overwrite=False):
-    return _download_index(begindate, enddate, "DPD");
+    return _download_index(begindate, enddate, "DPD",overwrite=overwrite);
 
 def download_dgd(begindate, enddate="",overwrite=False):
-    return _download_index(begindate, enddate, "DGD");
+    return _download_index(begindate, enddate, "DGD",overwrite=overwrite);
 
 def _download_index(begindate, enddate="", type="",overwrite=False):
     begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
@@ -234,11 +234,11 @@ def load_dgd(begindate,enddate=""):
             for line in f:
                 if init == False:        
                     mid_a           = float('nan')  # middle lat. A index
-                    mid_k           = [float('nan')]*8 # middle lat. K index
+                    mid_k           = [float('nan') for _ in range(8)] # middle lat. K index
                     high_a          = float('nan')  # high lat. A index
-                    high_k          = [float('nan')]*8 # high lat. K index
+                    high_k          = [float('nan') for _ in range(8)] # high lat. K index
                     ap              = float('nan')  # ap
-                    kp              = [float('nan')]*8 # kp
+                    kp              = [float('nan') for _ in range(8)] # kp
                     init = True
                 
                 if line[0] == ':' or line[0] == '#':
@@ -323,7 +323,9 @@ def load_dsd(begindate,enddate=""):
     end_dt = begin_dt
     if enddate != "":
         end_dt = dt.trim(enddate,3,'end')
-
+    
+    
+    data = None
 
     d              = []
     radio_flux     = []
@@ -365,7 +367,7 @@ def load_dsd(begindate,enddate=""):
                 if (dt1 < begin_dt or end_dt < dt1):
                     continue
                 
-                v = [float('nan')]*13
+                v = [float('nan') for _ in range(13)]
                 v[5] = '' # for xray background
                 
                 
@@ -399,11 +401,11 @@ def load_dsd(begindate,enddate=""):
         x = ['C','M','X'] 
         for i in range(3):
             key = 'x-ray:'+x[i]                
-            data[key].append(list(zip(*x_ray)[i]))
+            data[key] = list(zip(*x_ray)[i])
         o = ['S','1','2','3']
         for i in range(4):
-            key = 'optical'+o[i] 
-            data[key].append(list(zip(*optical)[i]))
+            key = 'optical:'+o[i]
+            data[key] = list(zip(*optical)[i])
             
     return data
 
@@ -428,10 +430,10 @@ def load_dpd(begindate, enddate=""):
 
     neutron = []
     
-    
+    data = None
     # Yearly Loop
     year_dt = begin_dt
-    for year_dt in dt.datetime_range(begin_dt, end_dt, years=1):
+    for year_dt in dt.series(begin_dt, end_dt, years=1):
         
         #
         file_name = "%(y)04d_DPD.txt"%{"y":year_dt.year}

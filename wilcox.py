@@ -6,7 +6,7 @@ Created on 2013. 12. 9.
 
 import swpy
 
-import utils.datetime as dt
+import utils.date_time as dt
 import utils.download as dl
 from utils.utils import make_path
 

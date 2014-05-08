@@ -25,6 +25,15 @@ TEMP_DIR = swpy.TEMP_DIR
 
 COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
+DGD_keys = ['date',\
+            'mid_a', 'mid_k:0','mid_k:3','mid_k:6','mid_k:9','mid_k:12','mid_k:15','mid_k:18','mid_k:21',\
+            'high_a','high_k:0','high_k:3','high_k:6','high_k:9','high_k:12','high_k:15','high_k:18','high_k:21',\
+            'ap',    'kp:0','kp:3','kp:6','kp:9','kp:12','kp:15','kp:18','kp:21']
+DPD_keys = ['date','mev1','mev10','mev100','mev06','mev08','mev20','neutron']
+DSD_keys = ['date','radio','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
+            'x-ray:C','x-ray:M','x-ray:X',\
+            'optical:S','optical:1','optical:2','optical:3']
+
 def initialize():
     pass
 
@@ -194,11 +203,8 @@ def load_dgd(begindate,enddate=""):
     end_dt = begin_dt
     if enddate != "":
         end_dt = dt.trim(enddate,3,'end')
-        
-    keys = ['date','mid_a','mid_k','high_a','high_k','ap','kp']
-    table = da.get_table(keys)
-    data = table['data']
     
+    data = {}
     
     for t1 in dt.datetime_range(begin_dt, end_dt, years=1):
         
@@ -214,6 +220,13 @@ def load_dgd(begindate,enddate=""):
             if rv == False:
                 print "Download Failed!"
                 continue
+        ldt1    = []
+        lmid_a  = []
+        lmid_k  = []
+        lhigh_a = []
+        lhigh_k = []
+        lap     = []
+        lkp     = []
         
         with open(file_path, "r") as f:
             init = False
@@ -281,16 +294,27 @@ def load_dgd(begindate,enddate=""):
                     
                 #'date','mid_a','mid_k','high_a','high_k','ap','kp'
                
-                data['date'].append(dt1)
-                data['mid_a'].append(mid_a)
-                data['mid_k'].append(mid_k)
-                data['high_a'].append(high_a)
-                data['high_k'].append(high_k)
-                data['ap'].append(ap)
-                data['kp'].append(kp)         
-         
+                
+                ldt1.append(dt1)
+                lmid_a.append(mid_a)
+                lhigh_a.append(high_a)
+                lap.append(ap)
+                lmid_k.append(mid_k)
+                lhigh_k.append(high_k)
+                lkp.append(kp)
+
+
+    data = {'date':ldt1, 'mid_a':lmid_a, 'high_a':lhigh_a, 'ap':lap}
+    for i in range(8):
+        ii = i*3
+        key  = 'mid_k:%d'%(ii)
+        key2 = 'high_k:%d'%(ii)
+        key3 = 'kp:%d'%(ii) 
+        data[key] = list(zip(*lmid_k)[i])
+        data[key2] = list(zip(*lhigh_k)[i])
+        data[key3] = list(zip(*lkp)[i])
           
-    return table 
+    return data 
         
 def load_dsd(begindate,enddate=""):
     begin_dt =  dt.trim(begindate,3,'start')
@@ -298,13 +322,18 @@ def load_dsd(begindate,enddate=""):
     end_dt = begin_dt
     if enddate != "":
         end_dt = dt.trim(enddate,3,'end')
-    
-    keys = ['date','radio_flux','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
-                'x-ray','optical']
-    table = da.get_table(keys)
-    data = table['data']
 
-        
+
+    d              = []
+    radio_flux     = []
+    sunspot_number = []
+    sunspot_area   = []
+    new_regions    = []
+    mean_field     = []
+    xray_background= []
+    x_ray          = [] 
+    optical        = [] 
+    
     for t1 in dt.datetime_range(begin_dt, end_dt, years=1):
         file_name = "%(y)04d_DSD.txt"%{"y":t1.year}
         
@@ -352,17 +381,30 @@ def load_dsd(begindate,enddate=""):
                 
            #['date','radio_flux','sunspot_number','sunspot_area','new_regions','mean_field','xray_background','x-ray','optical']
                 
-                data['date'].append(dt1)
-                data['radio_flux'].append(v[0])
-                data['sunspot_number'].append(v[1])
-                data['sunspot_area'].append(v[2])
-                data['new_regions'].append(v[3])
-                data['mean_field'].append(v[4])
-                data['xray_background'].append(v[5])                
-                data['x-ray'].append(v[6:9])
-                data['optical'].append(v[9:])
-                
-    return table
+                d.append(dt1)
+                radio_flux.append(v[0])
+                sunspot_number.append(v[1])
+                sunspot_area.append(v[2])
+                new_regions.append(v[3])
+                mean_field.append(v[4])
+                xray_background.append(v[5])
+                x_ray.append(v[6:9])
+                optical.append(v[9:])
+        
+        
+        data = {'date':d,'radio_flux':radio_flux,'sunspot_number':sunspot_number,'sunspot_area':sunspot_area,\
+                'new_regions':new_regions,'mean_field':mean_field,'xray_background':xray_background}
+        
+        x = ['C','M','X'] 
+        for i in range(3):
+            key = 'x-ray:'+x[i]                
+            data[key].append(list(zip(*x_ray)[i]))
+        o = ['S','1','2','3']
+        for i in range(4):
+            key = 'optical'+o[i] 
+            data[key].append(list(zip(*optical)[i]))
+            
+    return data
 
 
 def load_dpd(begindate, enddate=""):
@@ -457,10 +499,8 @@ def load_dpd(begindate, enddate=""):
                     else:
                         neutron.append(float(column[7]))
                         
-        prime_keys = ['date']
                          
-        keys = ['date','mev1','mev10','mev100','mev06','mev08','mev20','neutron']
         data = {"date":t0, "mev1":mev1, "mev10":mev10, "mev100":mev100, "mev06":mev06, "mev08":mev08,"mev20":mev20, "neutron":neutron} 
     
-    return da.get_table(keys,data)
+    return data
                         

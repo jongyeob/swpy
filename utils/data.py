@@ -56,7 +56,7 @@ class Table():
     def set_data(self,keys,data,fmts=[],parse=False):
         
         if len(fmts) == 0:
-            fmts = ['']*len(keys)
+            fmts = ['' for _ in range(len(keys))]
             
         if len(keys) != len(fmts):
             return False
@@ -301,7 +301,7 @@ class Table():
             key = last_key[j]
             line += fk%(key)
             
-            print line+'|'
+            f.write(line+'|')
             
         
         num_line  = self.length()

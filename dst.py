@@ -1,10 +1,15 @@
 '''
+Author : Jongyeob Park (pjystar@gmail.com)
+         Seonghwan Choi (shchoi@kasi.re.kr)
+'''
+
+
 ##
 ##
 ## Real-tme Dst index : 1967 - 2008
 ## Final Dst index :2009 - current
 ##
-'''
+
 import logging
 import swpy
 
@@ -12,16 +17,14 @@ import utils.date_time as dt
 import utils.download as dl
 from utils.utils import make_path, alert_message
 
-
 LOG = logging.getLogger('dst')
-
 DST_DIR = swpy.DATA_DIR + "/kyoto/dst/";
 DST_KEYS = ['datetime','version','dst'] 
 
 def empty_data():
     return {'datetime':[],'dst':[],'version':[]}
 
-def download_cgi(begindate, enddate=None):
+def download_cgi(begindate, enddate=None,overwrite=False):
     '''
     Download dst data from cgi
     
@@ -51,7 +54,7 @@ def download_cgi(begindate, enddate=None):
                         "ym":now_dt.strftime("%Y%m")}
         
         
-        rv = dl.download_http_file(url_cgi, make_path(file_path),overwrite=True)
+        rv = dl.download_http_file(url_cgi, make_path(file_path),overwrite=overwrite)
         
         if (rv == False):
             print "Fail to download %s."%(file_path)
@@ -145,7 +148,7 @@ def load_file(file_path):
             
     return data
 
-def download_web(begindate, enddate=""):
+def download_web(begindate, enddate="",overwrite=False):
     '''
     Download from kyoto web pages
     '''
@@ -170,7 +173,7 @@ def download_web(begindate, enddate=""):
 
     
         # download it to a tmp file
-        tmp = dl.download_http_file(src,overwrite=True)
+        tmp = dl.download_http_file(src,overwrite=overwrite)
         if (tmp == None):
             mr = dt.monthrange(now_dt.year, now_dt.month)
             now_dt = now_dt + dt.timedelta(days=mr[1])

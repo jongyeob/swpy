@@ -30,14 +30,35 @@ DGD_keys = ['date',\
             'high_a','high_k:0','high_k:3','high_k:6','high_k:9','high_k:12','high_k:15','high_k:18','high_k:21',\
             'ap',    'kp:0','kp:3','kp:6','kp:9','kp:12','kp:15','kp:18','kp:21']
 DPD_keys = ['date','mev1','mev10','mev100','mev06','mev08','mev20','neutron']
-DSD_keys = ['date','radio','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
+DSD_keys = ['date','radio_flux','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
             'x-ray:C','x-ray:M','x-ray:X',\
             'optical:S','optical:1','optical:2','optical:3']
 
 def initialize():
     pass
 
-def download_template(suffix, begindate, enddate=""):
+def download_se(begindate, enddate="",overwrite=False):
+    files = _download_template("events", begindate, enddate,overwrite)
+    return files
+
+def download_srs(begindate, enddate="",overwrite=False):
+    files = _download_template("SRS", begindate, enddate,overwrite)
+    return files
+
+def download_sgas(begindate, enddate="",overwrite=False):
+    files = _download_template("SGAS", begindate, enddate,overwrite)
+    return files
+
+def download_rsga(begindate, enddate="",overwrite=False):
+    files = _download_template("RSGA", begindate, enddate,overwrite)
+    return files
+
+def download_geoa(begindate, enddate="",overwrite=False):
+    files = _download_template("GEOA", begindate, enddate,overwrite)
+    return files
+
+
+def _download_template(suffix, begindate, enddate="",overwrite=False):
     
     if enddate == "":
         enddate = begindate
@@ -57,10 +78,10 @@ def download_template(suffix, begindate, enddate=""):
         # check src
         src_path = src +'/'+suffix+txt_file
         dst_path = utils.make_path(dst_dir + txt_file)
-        rv = dl.download_http_file(src_path, dst_path ,overwrite=True)
+        rv = dl.download_http_file(src_path, dst_path ,overwrite=overwrite)
 
         if rv == False:
-            tar_path = dl.download_http_file(src+tar_file,overwrite=True)
+            tar_path = dl.download_http_file(src+tar_file,overwrite=overwrite)
             if tar_path == None:
                 print "No tar..."
                 continue
@@ -108,25 +129,16 @@ def download_template(suffix, begindate, enddate=""):
 
     return downloaded_files
 
+def download_dsd(begindate, enddate="",overwrite=False):
+    return _download_index(begindate, enddate, "DSD",overwrite=overwrite);
 
-def download_se(begindate, enddate=""):
-    download_template("events", begindate, enddate)
+def download_dpd(begindate, enddate="",overwrite=False):
+    return _download_index(begindate, enddate, "DPD",overwrite=overwrite);
 
-def download_srs(begindate, enddate=""):
-    download_template("SRS", begindate, enddate)
+def download_dgd(begindate, enddate="",overwrite=False):
+    return _download_index(begindate, enddate, "DGD",overwrite=overwrite);
 
-def download_sgas(begindate, enddate=""):
-    files = download_template("SGAS", begindate, enddate)
-    return files
-
-def download_rsga(begindate, enddate=""):
-    download_template("RSGA", begindate, enddate)
-
-def download_geoa(begindate, enddate=""):
-    download_template("GEOA", begindate, enddate)
-
-
-def download_index(begindate, enddate="", type=""):
+def _download_index(begindate, enddate="", type="",overwrite=False):
     begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
     if end_dt == None:
         end_dt = begin_dt
@@ -162,7 +174,7 @@ def download_index(begindate, enddate="", type=""):
         
         # Download a file.
         utils.alert_message("Download %s."%(src))
-        rv = dl.download_http_file(src, dst)
+        rv = dl.download_http_file(src, dst,overwrite=overwrite)
         
         # start parsing quater data
         if (rv == False):
@@ -187,15 +199,6 @@ def download_index(begindate, enddate="", type=""):
             
     return True
 
-def download_dsd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DSD");
-
-def download_dpd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DPD");
-
-def download_dgd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DGD");
-
 
 def load_dgd(begindate,enddate=""):
     begin_dt =  dt.trim(begindate,3,'start')
@@ -216,10 +219,8 @@ def load_dgd(begindate,enddate=""):
         
         if os.path.exists(file_path) == False:
             print "File is not exist!"
-            rv = download_dgd(t1)
-            if rv == False:
-                print "Download Failed!"
-                continue
+            continue
+        
         ldt1    = []
         lmid_a  = []
         lmid_k  = []
@@ -233,11 +234,11 @@ def load_dgd(begindate,enddate=""):
             for line in f:
                 if init == False:        
                     mid_a           = float('nan')  # middle lat. A index
-                    mid_k           = [float('nan')]*8 # middle lat. K index
+                    mid_k           = [float('nan') for _ in range(8)] # middle lat. K index
                     high_a          = float('nan')  # high lat. A index
-                    high_k          = [float('nan')]*8 # high lat. K index
+                    high_k          = [float('nan') for _ in range(8)] # high lat. K index
                     ap              = float('nan')  # ap
-                    kp              = [float('nan')]*8 # kp
+                    kp              = [float('nan') for _ in range(8)] # kp
                     init = True
                 
                 if line[0] == ':' or line[0] == '#':
@@ -322,7 +323,9 @@ def load_dsd(begindate,enddate=""):
     end_dt = begin_dt
     if enddate != "":
         end_dt = dt.trim(enddate,3,'end')
-
+    
+    
+    data = None
 
     d              = []
     radio_flux     = []
@@ -364,7 +367,7 @@ def load_dsd(begindate,enddate=""):
                 if (dt1 < begin_dt or end_dt < dt1):
                     continue
                 
-                v = [float('nan')]*13
+                v = [float('nan') for _ in range(13)]
                 v[5] = '' # for xray background
                 
                 
@@ -398,11 +401,11 @@ def load_dsd(begindate,enddate=""):
         x = ['C','M','X'] 
         for i in range(3):
             key = 'x-ray:'+x[i]                
-            data[key].append(list(zip(*x_ray)[i]))
+            data[key] = list(zip(*x_ray)[i])
         o = ['S','1','2','3']
         for i in range(4):
-            key = 'optical'+o[i] 
-            data[key].append(list(zip(*optical)[i]))
+            key = 'optical:'+o[i]
+            data[key] = list(zip(*optical)[i])
             
     return data
 
@@ -427,10 +430,10 @@ def load_dpd(begindate, enddate=""):
 
     neutron = []
     
-    
+    data = None
     # Yearly Loop
     year_dt = begin_dt
-    for year_dt in dt.datetime_range(begin_dt, end_dt, years=1):
+    for year_dt in dt.series(begin_dt, end_dt, years=1):
         
         #
         file_name = "%(y)04d_DPD.txt"%{"y":year_dt.year}
@@ -503,4 +506,6 @@ def load_dpd(begindate, enddate=""):
         data = {"date":t0, "mev1":mev1, "mev10":mev10, "mev100":mev100, "mev06":mev06, "mev08":mev08,"mev20":mev20, "neutron":neutron} 
     
     return data
-                        
+
+if __name__ == '__main__':
+    pass

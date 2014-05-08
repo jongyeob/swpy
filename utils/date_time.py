@@ -175,7 +175,6 @@ def parse_datetime(datetime_string,prior='date',index=[]):
     parsed1 = parse1(datetime_string,index=index1)
     
     if parsed1 is not None:
-        print index1
         start,end  = index1
         offset = end
         

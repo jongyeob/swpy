@@ -37,7 +37,28 @@ DSD_keys = ['date','radio','sunspot_number','sunspot_area','new_regions','mean_f
 def initialize():
     pass
 
-def download_template(suffix, begindate, enddate=""):
+def download_se(begindate, enddate="",overwrite=False):
+    files = _download_template("events", begindate, enddate,overwrite)
+    return files
+
+def download_srs(begindate, enddate="",overwrite=False):
+    files = _download_template("SRS", begindate, enddate,overwrite)
+    return files
+
+def download_sgas(begindate, enddate="",overwrite=False):
+    files = _download_template("SGAS", begindate, enddate,overwrite)
+    return files
+
+def download_rsga(begindate, enddate="",overwrite=False):
+    files = _download_template("RSGA", begindate, enddate,overwrite)
+    return files
+
+def download_geoa(begindate, enddate="",overwrite=False):
+    files = _download_template("GEOA", begindate, enddate,overwrite)
+    return files
+
+
+def _download_template(suffix, begindate, enddate="",overwrite=False):
     
     if enddate == "":
         enddate = begindate
@@ -57,10 +78,10 @@ def download_template(suffix, begindate, enddate=""):
         # check src
         src_path = src +'/'+suffix+txt_file
         dst_path = utils.make_path(dst_dir + txt_file)
-        rv = dl.download_http_file(src_path, dst_path ,overwrite=True)
+        rv = dl.download_http_file(src_path, dst_path ,overwrite=overwrite)
 
         if rv == False:
-            tar_path = dl.download_http_file(src+tar_file,overwrite=True)
+            tar_path = dl.download_http_file(src+tar_file,overwrite=overwrite)
             if tar_path == None:
                 print "No tar..."
                 continue
@@ -108,25 +129,16 @@ def download_template(suffix, begindate, enddate=""):
 
     return downloaded_files
 
+def download_dsd(begindate, enddate="",overwrite=False):
+    return _download_index(begindate, enddate, "DSD");
 
-def download_se(begindate, enddate=""):
-    download_template("events", begindate, enddate)
+def download_dpd(begindate, enddate="",overwrite=False):
+    return _download_index(begindate, enddate, "DPD");
 
-def download_srs(begindate, enddate=""):
-    download_template("SRS", begindate, enddate)
+def download_dgd(begindate, enddate="",overwrite=False):
+    return _download_index(begindate, enddate, "DGD");
 
-def download_sgas(begindate, enddate=""):
-    files = download_template("SGAS", begindate, enddate)
-    return files
-
-def download_rsga(begindate, enddate=""):
-    download_template("RSGA", begindate, enddate)
-
-def download_geoa(begindate, enddate=""):
-    download_template("GEOA", begindate, enddate)
-
-
-def download_index(begindate, enddate="", type=""):
+def _download_index(begindate, enddate="", type="",overwrite=False):
     begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
     if end_dt == None:
         end_dt = begin_dt
@@ -162,7 +174,7 @@ def download_index(begindate, enddate="", type=""):
         
         # Download a file.
         utils.alert_message("Download %s."%(src))
-        rv = dl.download_http_file(src, dst)
+        rv = dl.download_http_file(src, dst,overwrite=overwrite)
         
         # start parsing quater data
         if (rv == False):
@@ -187,15 +199,6 @@ def download_index(begindate, enddate="", type=""):
             
     return True
 
-def download_dsd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DSD");
-
-def download_dpd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DPD");
-
-def download_dgd(begindate, enddate=""):
-    return download_index(begindate, enddate, "DGD");
-
 
 def load_dgd(begindate,enddate=""):
     begin_dt =  dt.trim(begindate,3,'start')
@@ -216,10 +219,8 @@ def load_dgd(begindate,enddate=""):
         
         if os.path.exists(file_path) == False:
             print "File is not exist!"
-            rv = download_dgd(t1)
-            if rv == False:
-                print "Download Failed!"
-                continue
+            continue
+        
         ldt1    = []
         lmid_a  = []
         lmid_k  = []
@@ -503,4 +504,6 @@ def load_dpd(begindate, enddate=""):
         data = {"date":t0, "mev1":mev1, "mev10":mev10, "mev100":mev100, "mev06":mev06, "mev08":mev08,"mev20":mev20, "neutron":neutron} 
     
     return data
-                        
+
+if __name__ == '__main__':
+    pass

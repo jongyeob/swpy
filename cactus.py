@@ -381,3 +381,19 @@ def load_cactus_secchib(begindate, enddate=""):
     return list
 
 
+if __name__ == '__main__':
+    download_cactus_lasco("199705", "201301");
+    download_cactus_cor2("200704", "201301");
+
+
+    l = load_cactus_lasco("19970501", "20130131");
+    for item in l:
+        print item.t0
+    
+    a = load_cactus_secchia("20070401", "20130131");
+    for item in a:
+        print item.t0
+    
+    b = load_cactus_secchib("20070401", "20130131");
+    for item in b:
+        print item.t0

@@ -445,3 +445,43 @@ def get_list_from_ftp(ftp_domain, ftp_id, ftp_pw, ftp_dir, mode=MODE_ALL):
 
 
     return file_names, file_size
+
+if __name__ =='__main__':
+    # ## Configuration
+    # src = "http://www.swpc.noaa.gov/ftpdir/latest/27DO.txt"
+    # dst = './a/test.txt'
+    # 
+    # 
+    # print "No dstination path"
+    # print dl.download_http_file(src)
+    # 
+    # ##
+    # print "TEST : 404 Error"
+    # print dl.download_http_file(src[:-2], dst)
+    # 
+    # ##
+    # print "TEST : Download"
+    # 
+    # print dl.download_http_file(src,dst)
+    # if(os.path.exists(src) == True):
+    #     print src + 'is exists'
+    # 
+    # ##
+    # print "TEST : Already exists"
+    # try:
+    #     dl.download_http_file(src,dst,overwrite=False)
+    # except Exception as err:
+    #     print err
+    
+    # print 'TEST : DownloadPool'
+    # pool = DownloadPool()
+    # print pool.recieving
+    # pool.close()
+    # print pool.recieving 
+    
+    print "TEST: AutoTempFile"
+    
+    temp_file = dl.AutoTempFile()
+    print temp_file.get_path()
+    
+    print "end"

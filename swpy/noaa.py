@@ -506,6 +506,126 @@ def load_dpd(begindate, enddate=""):
         data = {"date":t0, "mev1":mev1, "mev10":mev10, "mev100":mev100, "mev06":mev06, "mev08":mev08,"mev20":mev20, "neutron":neutron} 
     
     return data
+def draw_dpd(data, days=0, file_path="", color=""):
+    import matplotlib.pyplot as plt
+    #
+    if (color == ""):
+        color = COLOR_LIST
+    
+    #
+    dt = data["t0"]
+    
+    
+    # Date list for X-Axis
+    tick_dt = []
+    if (days == 0):
+        days = (max(dt) - min(dt)).days + 1
 
+    #if (days > 7):
+    #       days = 7
+    
+    for i in range(0, days+1):
+        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + dt.timedelta(days=i))
+    
+    # Figure
+    fig = plt.figure(facecolor='white')
+
+    plt.clf()
+    
+    # ticks
+    plt.rc('xtick.major', pad=12);
+    plt.rc('xtick.major', size=6);
+    
+    plt.rc('ytick.major', pad=12);
+    plt.rc('ytick.major', size=8);
+    plt.rc('ytick.minor', size=4);
+
+    # Plot
+    plt.plot(dt, data['mev1'], color=color[0], marker="o", label="Proton (> 1 MeV)")
+    plt.plot(dt, data['mev10'], color=color[1], marker="*", label="Proton (> 10 MeV)")
+    plt.plot(dt, data['mev100'], color=color[2], marker="^", label="Proton (>100 MeV)")
+
+#plt.plot(dt, data['mev06'], color=color[3], marker="^", label="Electron (> .6 MeV)")
+    plt.plot(dt, data['mev20'], color=color[4], marker="^", label="Electron (> 2 MeV)")
+
+    plt.legend(loc='upper right')
+
+    
+    # Title
+    plt.title("NOAA Daily Proton Data")
+    
+    # Scale
+    plt.yscale('log')
+
+    # Limitation
+    plt.xlim(tick_dt[0], tick_dt[days-1])
+    plt.ylim([1.0e2, 1.0e10])
+
+    # Labels for X and Y axis 
+    plt.xlabel("%s $\sim$ %s [UTC]"% \
+               (tick_dt[0].strftime("%Y.%m.%d."),
+                tick_dt[days-1].strftime("%Y.%m.%d.")),
+               fontsize=14)
+    
+    plt.ylabel("Particles/cm$^{2}$ cm sr")
+
+    
+    # X-Axis tick
+    tick_dt = []
+    tick_str = []
+
+    for i in range(0, days+1, 5):
+        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + dt.timedelta(days=i))
+
+    for item in tick_dt:
+        tick_str.append(item.strftime("%b %d"))
+
+    plt.xticks(tick_dt, tick_str)
+    
+    # Grid
+    plt.grid(True)
+
+    # Show or Save
+    if (file_path == ""):
+        plt.show()
+    else:
+        fig.savefig(file_path)
+    
+    return
 if __name__ == '__main__':
-    pass
+    
+    now = dt.datetime.now()
+
+    
+    # rv = download_dpd("1994",str(now.year))
+    # print rv
+    # data = load_dpd("1994",str(now.year))
+    # for key in data.keys():
+    #     sys.stdout.write(key+' ')
+    # sys.stdout.write('\n')
+    # 
+    # for key in data.keys():
+    #     sys.stdout.write(str(data[key][-1])+' ')
+    # sys.stdout.write('\n')
+    
+    
+            
+            
+    
+    #rv = noaa.download_dsd("1994",str(now.year))
+    #print rv
+    dsd = load_dsd("1994",str(now.year))
+    table = da.Table(data=dsd)
+    table.print_summary()
+    
+    #rv = noaa.download_dgd("1994",str(now.year))
+    #print rv
+    dgd = load_dgd("1994",str(now.year))
+    table = da.Table(data=dgd)
+    table.print_summary()
+    
+    #download_se("1996", "2013")
+    #download_srs("2003", "2013")
+    #download_sgas("1996", "2013")
+    #download_rsga("1996", "2013")
+    #download_geoa("1996", "2013")    

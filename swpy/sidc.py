@@ -2,7 +2,7 @@
 import swpy
 
 from utils import utils
-import utils.datetime as dt
+import utils.date_time as dt
 import utils.download as dl
 
 
@@ -33,3 +33,7 @@ def download_ssn(begindate, enddate=""):
         
 
     return files
+
+if __name__=='_main__':
+    files = download_ssn("2013", "2013")
+    print files

@@ -89,4 +89,5 @@ def path_wso(datetime):
     pass
 
 if __name__ == '__main__':
-    pass
+    print "TEST : WILCOX download"
+    print download_synoptic_file("2013-12-19")

@@ -15,6 +15,7 @@ from utils.config import Config
 from utils.download import DownloadPool
 
 LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.DEBUG)
 
 HMI_IMAGES = ['magnetogram','continuum']
 AIA_IMAGES = ['94','131','171','193','211','304','335','1600','1700','4500']
@@ -56,7 +57,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
             rv = pool.append(f,dst_filepath)
                 
             if rv == False:
-                LOG.error("Download thread fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
+                LOG.error("Download thread fail : %s->%s"%(f,dst_filepath))
                 break
     except Exception as err: raise err
     finally:

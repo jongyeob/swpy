@@ -19,12 +19,17 @@ SWEPAM_KEYS = ['datetime','status','density','speed','temperature']
 SIS_KEYS = []
 LOC_KEYS = []
 INST_KEYS = [MAG_KEYS,SWEPAM_KEYS,SIS_KEYS,LOC_KEYS]
+
+def empty_data(instrument):
+    mag = {'datetime':[],'status':[],'bx':[],'by':[],'bz':[],'bt':[],'latitude':[],'longitude':[]}
+    swepam = {'datetime':[],'status':[],'density':[],'speed':[],'temperature':[]}
+    return [mag,swepam,None,None][INST_NAME.index(instrument)]
   
 def check_instrument(data):
     '''
-    @summary     Check data dictionary
-    @param data: Input data
-    @return:     (list) INST_NAME
+    Check data dictionary
+    :param dict data: Input data
+    :return:     (list) INST_NAME
     '''
     inst = INST_NAME[:]
     i = 0
@@ -41,24 +46,16 @@ def check_instrument(data):
         i += 1
     
     return inst
-     
-    pass
 
-
-def empty_data(instrument):
-    mag = {'datetime':[],'status':[],'bx':[],'by':[],'bz':[],'bt':[],'latitude':[],'longitude':[]}
-    swepam = {'datetime':[],'status':[],'density':[],'speed':[],'temperature':[]}
-    return [mag,swepam,None,None][INST_NAME.index(instrument)]
-
-def download(start_date,instrument,end_date=None):
+def download(start_date,instrument,end_date=None,overwrite=False):
     '''
     Download files of instrument of ACE realtime, from start_datetime to end_datetime
     
+    :param string instrument: Instrument name [swepam,mag]
     :param string|datetime start_date: start date for searching
     :param string|datetime end_date: end date for searching
-    :param string instrument: Instrument name [swepam,mag]
-    :return: file list
-    :rtype: list
+    
+    :return: (list) file list
     '''
     start_dt = dt.parsing(start_date)
     end_dt = start_dt
@@ -71,10 +68,10 @@ def download(start_date,instrument,end_date=None):
         localfile = DATA_DIR + path_local(dt.tuples(t,'date'), instrument)
         print "local file : %s"%(localfile)
         try:
-            afile = download_file(t, instrument, localfile)            
+            afile = download_file(t, instrument, localfile,overwrite=overwrite)            
         except Exception as err:
             print err
-            return None
+            continue
         
         files.append(afile)
         
@@ -125,16 +122,11 @@ def load(start_date,instrument,end_date=None):
             if start_dt <= dt.parsing(data['datetime'][i]) <= end_dt:
                 for key in data_total.keys():
                     data_total[key].append(data[key][i])
-                    
-    
     
         
     return data_total
 
-
-
-def load_file(filepath,instrument):
-    
+def load_file(filepath,instrument):    
     data = None
     if(instrument == 'mag'):
         data = load_mag(filepath)
@@ -144,9 +136,9 @@ def load_file(filepath,instrument):
     return data
 def load_mag(filepath):
     '''
-    @summary: Load a file is magnetic parameters of 1hr averaged ACE realtime data
-    @param filepath: (string) local filepath
-    @return: (dict) mag dictionary
+    Load a file is magnetic parameters of 1hr averaged ACE realtime data
+    :param string filepath: local filepath
+    :return: (dict) mag data
     '''
     
     lines = []
@@ -182,9 +174,9 @@ def load_mag(filepath):
         
 def load_swepam(filepath):
     '''
-    @summary:          Load a file is solar wind parameters of 1hr averaged ACE realtime data
-    @param filepath:   (string) local filepath
-    @return:           (dict) swepam dictionary
+    Load a file is solar wind parameters of 1hr averaged ACE realtime data
+    :param string filepath: local filepath
+    :return: (dict) swepam data 
     '''
       
     lines = []
@@ -218,19 +210,19 @@ def load_swepam(filepath):
     return(swepam)
         
     
-def download_file(date,inst,filepath=None):
+def download_file(date,inst,filepath=None,overwrite=False):
     '''
-    @summary:     Download ACE Realtime 1h average data.
-    @param date:  (datetime)    Datetime class
-    @param inst:  (string)      Instrument name
-    @return:      (string)      Downloaded path
+    Download ACE Realtime 1h average data.
+    :param datetime date:         Datetime
+    :param string   inst:         Instrument name
+    :return:                      Downloaded path
     '''
     f = path_swpc(dt.tuples(date, 'date'), inst)
         
     if filepath is None :
         filepath =  DATA_DIR + path_local(date, inst)
         
-    rv = dl.download_http_file(f, filepath,overwrite=True)
+    rv = dl.download_http_file(f, filepath,overwrite=overwrite)
     if rv != True:
         return None
     
@@ -245,13 +237,10 @@ def path_swpc(date,inst):
 
 def path_local(date,inst):
     '''
-    @summary:     Return file path pattern string.
-    @param date:  (tuple)    date
-    @param inst:  (string)   instrument name
-    @return:      (string)   file path 
+    Return file path pattern string.
+    :param tuple  date:   date
+    :param string inst:   instrument name
+    :return:              file path 
     ''' 
     yyyy,mm,_ = date
     return normpath('/ace_rt1h/%04d/%4d%02d_ace_%s_1h.txt'%(yyyy,yyyy,mm,inst))
-       
-def date_from_filename():    
-    pass

@@ -63,16 +63,18 @@ def parse_string(format_string,datetime_string,index=[]):
             v = '('+RE_NAMES[k]+RE_FORMATS[k]+')'
             f = f[:i] + v + f[i+2:]
         
-        f.replace(k,RE_FORMATS[k])
+        f = f.replace(k,RE_FORMATS[k])
     
-    
+  
     with lock_parsing:
         r = re.search(f, datetime_string)
-        
+
     if r == None:
         return None
     
     rd = r.groupdict()
+    if len(rd) <= 0 :
+        return None
     
     if rd.has_key('y') == True:
         rd['Y'] = 1900 + int(rd['y'])
@@ -498,3 +500,5 @@ if __name__ == '__main__':
       
     text = '2-Jul-02'
     print parse('2-Jul-98')
+
+    print parse_string("/abcd/%Y/%Y%m%d","/abcd/2014/20140101")

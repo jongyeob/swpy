@@ -31,10 +31,14 @@ import threading
 g_callback_last_msg = ''
 import logging
 LOG = logging.getLogger(__name__)
+LOG.setLevel(10)
 
 _download_pools = []
 
 TEMP_DIR = swpy.TEMP_DIR
+
+_http_conn_lock = threading.Lock()
+
 
 class AutoTempFile():
     _filepath = None
@@ -189,13 +193,15 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
     :param int trials: method will be terminated in trails number
     :return: bool
     '''
+    global _http_conn_lock
+
     if dst_path is not None:
         dst_path = path.normpath(dst_path)
         dst_exist = path.exists(dst_path) 
         if  dst_exist == True and overwrite == False:
             print('Already exist, %s'%(dst_path))
             return True
-    
+
     if (src_url.find("http://") != 0):
         print("src_url is invalid url, " + src_url + ".")
         return False
@@ -214,15 +220,16 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
     
     for t in range(1, trials):
         contents = ""
-        
-        conn = httplib.HTTPConnection(domain_name)
+        with _http_conn_lock:
+            conn = httplib.HTTPConnection(domain_name)
+
         try:
             
             if(post_args != None):
                 conn.request("POST", file_path, post_args,headers)
             else:
                 conn.request("GET", file_path)
-                
+            
             r = conn.getresponse()
             if r.status == 200:
                 contents = r.read()
@@ -289,7 +296,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
            
     if dst_path == None:
         return contents
-       
+    
     dst_path2 = make_path(dst_path) + '.down'
 
     try:
@@ -301,7 +308,6 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
     except Exception:
         LOG.error("File Save error! - %s"%(dst_path2))
         return False
-
     #print ("Success downloading the file, " + strSrcUrl + ".")
 
     return True

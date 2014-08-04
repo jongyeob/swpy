@@ -15,6 +15,7 @@ from utils.config import Config
 from utils.download import DownloadPool
 
 LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.DEBUG)
 
 HMI_IMAGES = ['magnetogram','continuum']
 AIA_IMAGES = ['94','131','171','193','211','304','335','1600','1700','4500']
@@ -45,7 +46,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
        
         for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
      
-            ft = datetime_nasa(f)
+            ft = get_datetime_nasa(f)
             if ft == None:
                 LOG.error("Wrong file : %s"%(f))
                 continue
@@ -56,7 +57,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
             rv = pool.append(f,dst_filepath)
                 
             if rv == False:
-                LOG.error("Download thread fail : %s->%s"%(f,os.path.abspath(dst_filepath)))
+                LOG.error("Download thread fail : %s->%s"%(f,dst_filepath))
                 break
     except Exception as err: raise err
     finally:
@@ -66,7 +67,7 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
             
     return dlist    
 
-def datetime_nasa(filename):
+def get_datetime_nasa(filename):
     filename_regex = "(\d+)_(\d+)_(\d+)__(\d+)_(\d+)_(\d+)_(\d+)__\S+"
     res = re.search(filename_regex, filename)
     if res == None:
@@ -83,10 +84,10 @@ def hmi_jp2_path_nasa(datetime,image_string):
     :param datetime datetime_t : datetime
     :param string image_string : [continuum, magnetogram]
     '''
-    t = dt.parsing(datetime)
+    t = dt.parse(datetime)
     
-    continuum_start_time = [dt.parsing(2010,12,6,6,53,41.305),dt.parsing(2012,5,29,11,51,40.30)]
-    magnetogram_start_time = [dt.parsing(2010,12,6,6,53,41.305),dt.parsing(2012,05,29,11,39,40.30)]
+    continuum_start_time = [dt.parse(2010,12,6,6,53,41.305),dt.parse(2012,5,29,11,51,40.30)]
+    magnetogram_start_time = [dt.parse(2010,12,6,6,53,41.305),dt.parse(2012,05,29,11,39,40.30)]
     
     #continuum_filename_changed_time = [dt.datetime_t(2010,12,7,16,44,41.00)]
     #magnetogram_filename_changed_time = [dt.datetime_t(2010,12,7,16,37,11.00)]
@@ -129,7 +130,7 @@ def hmi_jp2_path_kasi():
     '''
     pass
 
-def datetime_from_filename_local(filename):
+def get_datetime_local(filename):
     filename_regex = '(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(\d{3})_\S+'
     res = re.search(filename_regex, filename)
     year,month,day,hour,minute,second,fsecond = [int(i) for i in res.groups()]
@@ -144,9 +145,8 @@ def hmi_jp2_path_local(datetime_t,image_string):
     
     #local_path = '/nasa/sdo/hmi/%s/%04d/%04d%02d%02d/jp2/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
     #For swpy-kasi : lib.sdo need override , import mechanism
-    local_path = '/nasa/sdo/hmi/%s/jp2/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d%03d_sdo_hmi_%s.jp2'\
-    %(image_string,year,year,month,day,year,month,day,hour,miniute,second,fsecond*1e-3,image_string)
-    
+    local_path = '/nasa/sdo/hmi/%s/jp2/%04d/%04d%02d%02d/%4d%02d%02d_%02d%02d%02d_sdo_hmi_%s.jp2'\
+    %(image_string,year,year,month,day,year,month,day,hour,miniute,second,image_string)
     
     return local_path 
     
@@ -170,7 +170,7 @@ def hmi_jp2_iter_nasa(start_datetime,end_datetime,image_string):
         list_files = dl.get_list_from_html(contents,'jp2')
         #print "Found files : %d"%(len(list_files))
         for f in list_files:
-            if start_datetime <= datetime_nasa(f) <= end_datetime:     
+            if start_datetime <= get_datetime_nasa(f) <= end_datetime:     
                 yield dir_str+'/'+f
         
         #print "End iteration"  
@@ -195,13 +195,13 @@ def hmi_jp2_iter_local(start_datetime,end_datetime,image_string,base_dir='.'):
                  New created
     '''
 
-    for t in dt.datetime_range(start_datetime, end_datetime, days=1):
+    for t in dt.series(start_datetime, end_datetime, days=1):
         
         dir_str,_ = dl.path.split(hmi_jp2_path_local(t, image_string))
     
         list_files = utl.get_files(base_dir + dir_str+'/*.jp2')
         for f in sorted(list_files):
-            if start_datetime <= datetime_from_filename_local(f) <= end_datetime:
+            if start_datetime <= get_datetime_local(f) <= end_datetime:
                 yield f
         
     return

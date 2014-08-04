@@ -6,9 +6,8 @@ Created on 2013. 11. 9.
 import logging
 LOG = logging.getLogger(__name__)
 
-import os,glob
-from os.path import exists,normpath,split
-from math import sqrt,sin,cos,asin,floor
+import os,glob,math
+from os import path
 import datetime
 import sys
 
@@ -18,7 +17,7 @@ def print_err(msg):
     sys.stderr.write(msg+'\n')
 def get_files(path_exp):
     # path_exp : expression of path
-    arg_path = split(path_exp)
+    arg_path = path.split(path_exp)
                 
     file_list = []
     for dirname,_,_ in os.walk(arg_path[0]):
@@ -27,19 +26,19 @@ def get_files(path_exp):
         
     return file_list
    
-def make_dirs(path):
-    path = normpath(path+'/')
-    if exists(path) == False:
-        os.makedirs(path)
+def make_dirs(pathstr):
+    pathstr = path.normpath(pathstr+'/')
+    if path.exists(pathstr) == False:
+        os.makedirs(pathstr)
 
-def make_path(path):    
-    path = normpath(path)
-    dirpath,filename = split(path)
+def make_path(pathstr):    
+    pathstr = path.normpath(pathstr)
+    dirpath,filename = path.split(pathstr)
 
-    if len(dirpath) > 0 and exists(dirpath) == False:
+    if len(dirpath) > 0 and path.exists(dirpath) == False:
         os.makedirs(dirpath)
         
-    return path
+    return pathstr
 
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)
@@ -47,8 +46,8 @@ def alert_message(message):
 def great_circle_distance(lon,lat,lon2=0,lat2=0):
     dlon,dlat = (lon2-lon)/2.,(lat2-lat)/2.
     
-    sindis = sqrt(sin(dlat)*sin(dlat)+cos(lon)*cos(lon2)*sin(dlon)*sin(dlon))
-    return 2.0*asin(sindis)
+    sindis = math.sqrt(math.sin(dlat)*math.sin(dlat)+math.cos(lon)*math.cos(lon2)*math.sin(dlon)*math.sin(dlon))
+    return 2.0*math.asin(sindis)
 
 
 def save_list(filepath, list):
@@ -88,25 +87,25 @@ def num2str(num):
     str_num = ""
 
     if (num >= 1000000000000):
-        temp = int(floor(num / 1000000000000))
+        temp = int(math.floor(num / 1000000000000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000000000000
 
     if (num >= 1000000000):
-        temp = int(floor(num / 1000000000))
+        temp = int(math.floor(num / 1000000000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000000000
 
     if (num >= 1000000):
-        temp = int(floor(num / 1000000))
+        temp = int(math.floor(num / 1000000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000000
 
     if (num >= 1000):
-        temp = int(floor(num / 1000))
+        temp = int(math.floor(num / 1000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000

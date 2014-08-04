@@ -5,28 +5,52 @@
 
 binary_score_keywords= ['yy','yn','ny','nn','acc', 'pody', 'podn', 'far', 'bias', 'csi', 'tss', 'hss', 'gss']
 
+def f_score(c,beta=1):
+    '''
+    return f-score
+    '''
+    b2 = beta*beta
+    f  = (1+b2)*c['yy']
+    f_ = f + b2*c['ny'] + c['yn'] 
+    
+    return f/f_
+def relative_value(c,alpha=1):
+    '''
+    return relative_value, alpha is cost/loss ratio
+    '''
+    freq = (c['yy']+c['ny']) / (c['yy']+c['ny']+c['yn']+c['nn']) # Event frequency
+    
+    me_cli  = min(alpha,freq) # Mean expected expense for climate forecast
+    me_perf = freq*alpha      # Mean expected expense for Perfect forecast
+    me_fore = c['pofd']*alpha*(1-freq) \
+              - c['pody']*(1-alpha)*freq \
+              + freq          # Mean expected expense for forecast
+    
+    return (me_fore - me_cli)/(me_perf - me_cli)
+     
 def binary_scores(data):
     '''
-    @summary: calculates all scores from 2-dim contingency table
+    calculates all scores from 2-dim contingency table
              
-    @param data: (tuple) yy, yn, ny, nn 
+    :param data: (tuple) yy, yn, ny, nn 
         yy : the number of 'Yes' forecasts and 'Yes' observations
         yn: the number of 'Yes' forecasts and 'No' observations
         ny: the number of 'No' forecasts and 'Yes' observations
         nn: the number of 'No' forecasts and 'No' observations
 
-    @return: (dict) list of all scores
+    :return: (dict) list of all scores
     
         pody : yy/(yy+ny), probability of detection of 'yes' observations
         podn : nn/(yn+nn), probability of detection of 'no' observations
+        pofd : yn/(yn+nn), probability of false detection, so called false alarm rate
         far  : yn/(yy+yn), false alarm ratio
         csi  : yy/(yy+ny+yn), critical success index
         bias : (yy+yn)/(yy+ny), forecast bias
         tss  : pody + podn - 1, true skill statistic
         hss  : Heidke skill score, [(yy+nn) - c1] / (total - c1) when .....
         gss  : Gilbert skill score, (yy-c2) / [ (yy-c2) + yn + ny ] when ....
+        
     
-    @version: 2013-12-10
     '''
     
     scores = {}
@@ -44,15 +68,26 @@ def binary_scores(data):
     
     #print ("yy=%(yy)d, yn=%(yn)d, ny=%(ny)d, nn=%(nn)d, yy+nn=%(yynn)d, all=%(all).4f"%{"yy":yy, "yn":yn, "ny":ny, "nn":nn, "yynn":yy+nn,"all":all})
 
-    if (yy+ny != 0.0):       scores['pody'] = yy/(yy+ny)                       # probabilty of detection of 'yes' observations
-    if (yn+nn != 0.0):       scores['podn'] = nn/(yn+nn)                       # probability of detection of 'no' observations
-    if (yy+yn != 0.0):       scores['far']  = yn/(yy+yn)                       # false alarm ratio
-    if (yy+ny+yn != 0.0):    scores['csi'] = yy/(yy+ny+yn)                     # critical success index
-    if (yy+ny != 0.0):       scores['bias'] = (yy+yn)/(yy+ny)                  # forecast bias
+    try :    scores['pody'] = yy/(yy+ny)                       # probabilty of detection of 'yes' observations
+    except : scores['pody'] = float('nan')
+    try :    scores['podn'] = nn/(yn+nn)                       # probability of detection of 'no' observations
+    except : scores['podn'] = float('nan')
+    try :    scores['pofd'] = yn/(yn+nn)                       # probability of false detection
+    except : scores['pofd'] = float('nan')
+    try :    scores['far']  = yn/(yy+yn)                       # false alarm ratio
+    except : scores['far']  = float('nan')
+    try :    scores['csi']  = yy/(yy+ny+yn)                     # critical success index
+    except : scores['csi']  = float('nan')
+    try :    scores['bias'] = (yy+yn)/(yy+ny)                  # forecast bias
+    except : scores['bias'] = float('nan')
     
     scores['tss']	 = scores['pody'] + scores['podn'] - 1                                           # true skill statistic
-    if (total-c1 != 0.0):    scores['hss']  = ( (yy+nn) - c1 ) / (total - c1)  # Heidke skill score;
-    if (yy-c2+yn+ny != 0.0): scores['gss']  = (yy - c2) / ( ( yy-c2) + yn + ny) # Gilbert skill score
+    try:     scores['hss']  = ( (yy+nn) - c1 ) / (total - c1)  # Heidke skill score;
+    except : scores['hss']  = float('nan')
+    try:     scores['gss']  = (yy - c2) / ( ( yy-c2) + yn + ny) # Gilbert skill score
+    except : scores['gss']  = float('nan')
+    
+     
 
     return scores
 

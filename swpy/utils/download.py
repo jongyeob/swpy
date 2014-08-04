@@ -31,6 +31,7 @@ import threading
 g_callback_last_msg = ''
 import logging
 LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 _download_pools = []
 
@@ -193,7 +194,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         dst_path = path.normpath(dst_path)
         dst_exist = path.exists(dst_path) 
         if  dst_exist == True and overwrite == False:
-            print('Already exist, %s'%(dst_path))
+            LOG.info('Already exist, %s'%(dst_path))
             return True
     
     if (src_url.find("http://") != 0):
@@ -231,7 +232,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
                 return ret
             else:
                 LOG.debug(r.status, r.reason)
-                print("Can not download the file, " + src_url + ".")
+                LOG.info("Can not download the file, " + src_url + ".")
                 break
             
             t = 0
@@ -391,7 +392,7 @@ def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, login_id="",
 
             if (rs == ls and overwrite == False):
                 ftp.quit()
-                print "Already exist, %s."%(dst_path)
+                LOG.info("Already exist, %s."%(dst_path))
                 return True
 
         # In the case,
@@ -481,7 +482,7 @@ if __name__ =='__main__':
     
     print "TEST: AutoTempFile"
     
-    temp_file = dl.AutoTempFile()
+    temp_file = AutoTempFile()
     print temp_file.get_path()
     
     print "end"

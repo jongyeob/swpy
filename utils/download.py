@@ -37,8 +37,6 @@ _download_pools = []
 
 TEMP_DIR = swpy.TEMP_DIR
 
-_http_conn_lock = threading.Lock()
-
 
 class AutoTempFile():
     _filepath = None
@@ -199,16 +197,16 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         dst_path = path.normpath(dst_path)
         dst_exist = path.exists(dst_path) 
         if  dst_exist == True and overwrite == False:
-            print('Already exist, %s'%(dst_path))
+            LOG.debug('Already exist, %s'%(dst_path))
             return True
 
     if (src_url.find("http://") != 0):
-        print("src_url is invalid url, " + src_url + ".")
+        LOG.debug("src_url is invalid url, " + src_url + ".")
         return False
     
     i = src_url.find("/", 7)
     if (i < 9):
-        print("src_url is invalid url, " + src_url + ".")
+        LOG.debug("src_url is invalid url, " + src_url + ".")
         return False
     
     domain_name = src_url[7:i]
@@ -219,11 +217,12 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
                "Accept": "text/plain"}
     
     for t in range(1, trials):
+        
         contents = ""
-        with _http_conn_lock:
-            conn = httplib.HTTPConnection(domain_name)
+
 
         try:
+            conn = httplib.HTTPConnection(domain_name)
             
             if(post_args != None):
                 conn.request("POST", file_path, post_args,headers)
@@ -231,14 +230,11 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
                 conn.request("GET", file_path)
             
             r = conn.getresponse()
+
             if r.status == 200:
                 contents = r.read()
-            elif r.status == 302:
-                ret = download_http_file(r.getheader('Location'),dst_path,post_args,overwrite,trials)
-                return ret
             else:
                 LOG.debug(r.status, r.reason)
-                print("Can not download the file, " + src_url + ".")
                 break
             
             t = 0
@@ -288,7 +284,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
             #nFails = nFails + 1
         #alert_message("Unknown exception in DownloadHttpFile().")
         
-        print("It will be start again after several seconds in download_http_file().")
+        LOG.debug("It will be start again after several seconds in download_http_file().")
         time.sleep(5)
 
     if (t > 0):

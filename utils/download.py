@@ -189,38 +189,35 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
     :param string post_args: arguments for POST method
     :param bool overwrite: if ture, local file will be overwritten.
     :param int trials: method will be terminated in trails number
+
     :return: bool
     '''
-    global _http_conn_lock
-
+    # Check existing file
     if dst_path is not None:
         dst_path = path.normpath(dst_path)
         dst_exist = path.exists(dst_path) 
         if  dst_exist == True and overwrite == False:
             LOG.debug('Already exist, %s'%(dst_path))
             return True
+   
 
-    if (src_url.find("http://") != 0):
-        LOG.debug("src_url is invalid url, " + src_url + ".")
-        return False
-    
     i = src_url.find("/", 7)
-    if (i < 9):
-        LOG.debug("src_url is invalid url, " + src_url + ".")
-        return False
+    if (src_url.find("http://") != 0 and \
+        i < 9 ):
+        raise ValueError("Url is invalid, " + src_url)
+    
     
     domain_name = src_url[7:i]
     file_path = src_url[i:]
     
-    t = 0
     headers = {"Content-type": "application/x-www-form-urlencoded",\
                "Accept": "text/plain"}
-    
-    for t in range(1, trials):
+   
+    t = 0
+    is_response = False
+    while(not is_response and t < trials): 
         
         contents = ""
-
-
         try:
             conn = httplib.HTTPConnection(domain_name)
             
@@ -234,79 +231,42 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
             if r.status == 200:
                 contents = r.read()
             else:
-                LOG.debug(r.status, r.reason)
-                break
-            
-            t = 0
-            break
+                LOG.error("HTTP response error : %d, %s"%(r.status, r.reason))
 
-        except httplib.HTTPException, msg:
-            #nFails = nFails + 1
-            LOG.debug("HTTPException")
-        except httplib.NotConnected, msg:
-            #nFails = nFails + 1
-            LOG.debug("NotConnected")
-        except httplib.InvalidURL, msg:
-            #nFails = nFails + 1
-            LOG.debug("InvalidURL")
-        except httplib.UnknownProtocol, msg:
-            #nFails = nFails + 1
-            LOG.debug("UnknownProtocol")
-        except httplib.UnknownTransferEncoding, msg:
-            #nFails = nFails + 1
-            LOG.debug("UnknownTransferEncoding")
-        except httplib.UnimplementedFileMode, msg:
-            #nFails = nFails + 1
-            LOG.debug("UnimplementedFileMode")
-        except httplib.IncompleteRead, msg:
-            #nFails = nFails + 1
-            LOG.debug("IncompleteRead")
-        except httplib.ImproperConnectionState, msg:
-            #nFails = nFails + 1
-            LOG.debug("ImproperConnectionState")
-        except httplib.CannotSendRequest, msg:
-            #nFails = nFails + 1
-            LOG.debug("CannotSendRequest")
-        except httplib.CannotSendHeader, msg:
-            #nFails = nFails + 1
-            LOG.debug("CannotSendHeader")
-        except httplib.ResponseNotReady, msg:
-            #nFails = nFails + 1
-            LOG.debug("ResponseNotReady")
-        except httplib.BadStatusLine, msg:
-            #nFails = nFails + 1
-            LOG.debug("BadStatusLine")
-        except socket.error, e:
-            LOG.debug("Socket exception error, %s."%e)
+            is_response = True
+ 
+        except Exception as err:
+            LOG.error("Error : %s"%str(err))
+            t += 1
         finally:
             conn.close()
-        # finally:
-            #nFails = nFails + 1
-        #alert_message("Unknown exception in DownloadHttpFile().")
         
-        LOG.debug("It will be start again after several seconds in download_http_file().")
-        time.sleep(5)
-
-    if (t > 0):
-        return False
+        if not is_response:
+            LOG.debug("Re-trying...(%d/%d)"%(t,trials))
+            time.sleep(5)
            
-    if dst_path == None:
-        return contents
-    
-    dst_path2 = make_path(dst_path) + '.down'
+   
+    # File saving... 
+    if dst_path is not None:
 
-    try:
-        with open(dst_path2, "wb") as f:
-            f.write(contents)
-        if path.exists(dst_path) == True:
-            os.remove(dst_path)              
-        os.rename(dst_path2, dst_path)
-    except Exception:
-        LOG.error("File Save error! - %s"%(dst_path2))
-        return False
-    #print ("Success downloading the file, " + strSrcUrl + ".")
+        if is_response == False:
+            return False
 
-    return True
+        dst_path2 = make_path(dst_path) + '.down'
+        try:
+            with open(dst_path2, "wb") as f:
+                f.write(contents)
+            if path.exists(dst_path) == True:
+                os.remove(dst_path)              
+            os.rename(dst_path2, dst_path)
+
+            return True
+        except Exception as err:
+            LOG.error("File Save error! - %s"%str(err))
+            return False
+
+
+    return contents
 
 def get_list_from_html(contents, ext_list = None):
     strList = []

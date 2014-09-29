@@ -6,21 +6,60 @@ Created on 2013. 11. 9.
 import logging
 LOG = logging.getLogger(__name__)
 
-import os,glob
-from os.path import exists,normpath,split
-from math import sqrt,sin,cos,asin,floor
+import os,glob,math
+from os import path
 import datetime
 import sys
 
-COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
+def replace(format_string,kw):
+    '''
+    Replace datetime format to a filled string with datetime
+    :param string format:
+    :param datetime datetime_info: 
+    '''
+    
+    f = format_string    
 
+    for k in kw.iterkeys():
+        i = f.find('%('+k+')') # i : index
+        while(i != -1): 
+            i2 = f.find('%',i+1) # i2 : next index before '%'
+            if i2 == -1: i2 = len(f)
+            v = f[i:i2]%{k:kw[k]}
+            f = f[:i] + v + f[i2:]
+            i = f.find('%('+k+')') 
+
+        
+    return f    
+def import_all(name,globals={},locals={}):
+    try:
+        pkg   = __import__(name)
+        for key in pkg.__all__:
+            globals[key] = getattr(pkg,key)
+            locals[key]  = getattr(pkg,key)
+            LOG.info('Import %s in %s'%(key,name))
+    except Exception as err:
+        LOG.error('Download package is not loaded : %s'%(str(err)))
+        return False
+    
+    return True
+
+def get_logger(name='',level=0,handler=logging.NullHandler()):
+    if name == '__main__':
+        name = ''
+        
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+    return logger
+    
 def print_out(msg):
     sys.stdout.write(msg+'\n')
 def print_err(msg):
     sys.stderr.write(msg+'\n')
 def get_files(path_exp):
     # path_exp : expression of path
-    arg_path = split(path_exp)
+    arg_path = path.split(path_exp)
                 
     file_list = []
     for dirname,_,_ in os.walk(arg_path[0]):
@@ -29,19 +68,19 @@ def get_files(path_exp):
         
     return file_list
    
-def make_dirs(path):
-    path = normpath(path+'/')
-    if exists(path) == False:
-        os.makedirs(path)
+def make_dirs(pathstr):
+    pathstr = path.normpath(pathstr+'/')
+    if path.exists(pathstr) == False:
+        os.makedirs(pathstr)
 
-def make_path(path):    
-    path = normpath(path)
-    dirpath,filename = split(path)
+def make_path(pathstr):    
+    pathstr = path.normpath(pathstr)
+    dirpath,filename = path.split(pathstr)
 
-    if len(dirpath) > 0 and exists(dirpath) == False:
+    if len(dirpath) > 0 and path.exists(dirpath) == False:
         os.makedirs(dirpath)
         
-    return path
+    return pathstr
 
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)
@@ -49,8 +88,8 @@ def alert_message(message):
 def great_circle_distance(lon,lat,lon2=0,lat2=0):
     dlon,dlat = (lon2-lon)/2.,(lat2-lat)/2.
     
-    sindis = sqrt(sin(dlat)*sin(dlat)+cos(lon)*cos(lon2)*sin(dlon)*sin(dlon))
-    return 2.0*asin(sindis)
+    sindis = math.sqrt(math.sin(dlat)*math.sin(dlat)+math.cos(lon)*math.cos(lon2)*math.sin(dlon)*math.sin(dlon))
+    return 2.0*math.asin(sindis)
 
 
 def save_list(filepath, list):
@@ -90,25 +129,25 @@ def num2str(num):
     str_num = ""
 
     if (num >= 1000000000000):
-        temp = int(floor(num / 1000000000000))
+        temp = int(math.floor(num / 1000000000000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000000000000
 
     if (num >= 1000000000):
-        temp = int(floor(num / 1000000000))
+        temp = int(math.floor(num / 1000000000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000000000
 
     if (num >= 1000000):
-        temp = int(floor(num / 1000000))
+        temp = int(math.floor(num / 1000000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000000
 
     if (num >= 1000):
-        temp = int(floor(num / 1000))
+        temp = int(math.floor(num / 1000))
         if (len(str_num) > 0): str_num += "%03d,"%(temp)
         else: str_num += "%d,"%(temp)
         num = num - temp * 1000

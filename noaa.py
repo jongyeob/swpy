@@ -6,24 +6,26 @@
 
 # standard library
 import os
+import re
 
-import swpy
 
 from swpy.utils import utils
-from swpy.utils import date_time as dt
-from swpy.utils import download as dl
-from swpy.utils import data as da
+from swpy.utils import date_time as dt,\
+                       download as dl,\
+                       data as da,\
+                       Config
+
 
 
 # SpaeWeatherPy library
 #noaa_url = "ftp://ftp.swpc.noaa.gov/pub/warehouse/"
+DATA_DIR = 'data/'
 NOAA_URL = "http://www.swpc.noaa.gov/ftpdir/"
-NOAA_DIR = swpy.DATA_DIR + "/noaa";
+NOAA_DIR = "noaa/"
+TEMP_DIR = 'temp/'
+PACKAGES = ''
+LOG = utils.get_logger(__name__)
 
-DATA_DIR = swpy.DATA_DIR
-TEMP_DIR = swpy.TEMP_DIR
-
-COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
 DGD_keys = ['date',\
             'mid_a', 'mid_k:0','mid_k:3','mid_k:6','mid_k:9','mid_k:12','mid_k:15','mid_k:18','mid_k:21',\
@@ -33,30 +35,102 @@ DPD_keys = ['date','mev1','mev10','mev100','mev06','mev08','mev20','neutron']
 DSD_keys = ['date','radio_flux','sunspot_number','sunspot_area','new_regions','mean_field','xray_background',\
             'x-ray:C','x-ray:M','x-ray:X',\
             'optical:S','optical:1','optical:2','optical:3']
+events_keys = ['date','event:no','event:flag','begin:flag','begin:time',\
+               'max:flag','max:time','end:flag','end:time','obs','quality',\
+               'type','loc/frq','property:1','property:2','region']
+SRS_keys = ['date','nmbr','loc','l0','area','z','ll','nn','mag']
 
-def initialize():
-    pass
 
-def download_se(begindate, enddate="",overwrite=False):
-    files = _download_template("events", begindate, enddate,overwrite)
+
+first_data = {'events':dt.parse(1996,07,31),\
+              'SRS':dt.parse(1996,02,01)}
+color_list = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
+
+def initialize(config=Config()):
+    global DATA_DIR,PACKAGES
+    config.set_section(__name__)
+    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
+    PACKAGES = config.load('PACKAGES',PACKAGES)
+    
+    for pkg in PACKAGES.split():
+        utils.import_all(pkg, globals())
+
+def get_path(suffix,dateobj):
+    
+    path = ''
+    d = dt.parse(dateobj)
+    if d == None:
+        return path
+    
+        
+    dirpath = DATA_DIR + NOAA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":d.year, "suffix":suffix}
+    filename ="%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":d.year,"mm":d.month,"dd":d.day}
+    
+    path = utils.path.normpath(DATA_DIR+ dirpath + filename)
+    
+        
+    
+    return path
+
+def get_files(suffix,begindate='',enddate=''):
+    
+    if begindate != '':
+        begindate = dt.parse(begindate)
+    if enddate != '':
+        enddate   = dt.parse(enddate)
+            
+    files = []
+            
+    dirpath = DATA_DIR + NOAA_DIR + "%(suffix)s/"%{"suffix":suffix}
+    file_pattern = "*%(suffix)s.txt"%{"suffix":suffix}
+      
+    filepath = DATA_DIR + dirpath + file_pattern
+        
+    for f  in utils.get_files(filepath):
+        ft = dt.parse(f)
+        if begindate == '' and enddate =='':
+            files.append(f)
+            continue
+        
+        if begindate == '' and enddate >= ft:
+            files.append(f)
+            continue
+        
+        if enddate == '' and begindate <= ft:
+            files.append(f)
+            continue
+
+    
     return files
+    
+   
+def download_events(begindate, enddate="",overwrite=False):
+    begindate = dt.parse(begindate)
+    if begindate < first_data['events']:
+        begindate = first_data['events']
+
+    _download_template("events", begindate, enddate,overwrite)
+    
 
 def download_srs(begindate, enddate="",overwrite=False):
-    files = _download_template("SRS", begindate, enddate,overwrite)
-    return files
+    begindate = dt.parse(begindate)
+    if begindate < first_data['SRS']:
+        begindate = first_data['SRS']
+    
+    _download_template("SRS", begindate, enddate,overwrite)
+    
 
 def download_sgas(begindate, enddate="",overwrite=False):
-    files = _download_template("SGAS", begindate, enddate,overwrite)
-    return files
+    _download_template("SGAS", begindate, enddate,overwrite)
+    
 
 def download_rsga(begindate, enddate="",overwrite=False):
-    files = _download_template("RSGA", begindate, enddate,overwrite)
-    return files
+    _download_template("RSGA", begindate, enddate,overwrite)
+    
 
 def download_geoa(begindate, enddate="",overwrite=False):
-    files = _download_template("GEOA", begindate, enddate,overwrite)
-    return files
-
+    _download_template("GEOA", begindate, enddate,overwrite)
+    
 
 def _download_template(suffix, begindate, enddate="",overwrite=False):
     
@@ -64,70 +138,79 @@ def _download_template(suffix, begindate, enddate="",overwrite=False):
         enddate = begindate
         
     begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
-    downloaded_files = []
+            
+    
     for now_dt in dt.datetime_range(begin_dt, end_dt, days=1):
 
-        src = "%(url)swarehouse/%(yyyy)04d"%{"url":NOAA_URL, "yyyy":now_dt.year}        
-        tar_file = "/%(yyyy)04d_%(suffix)s.tar.gz"%{"yyyy":now_dt.year,"suffix":suffix}
         
-        tmp = "%(tmp)s/%(yyyy)04d_%(suffix)s.tar.gz"%{"tmp":TEMP_DIR, "yyyy":now_dt.year, "suffix":suffix}
+        src_dir = "%(url)swarehouse/%(yyyy)04d/"%{"url":NOAA_URL,"yyyy":now_dt.year}        
+        dst_dir = DATA_DIR + NOAA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":now_dt.year, "suffix":suffix}
         
-        dst_dir = "%(dir)s/%(suffix)s/%(yyyy)04d"%{"dir":NOAA_DIR, "yyyy":now_dt.year, "suffix":suffix}
-        txt_file = "/%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":now_dt.year,"mm":now_dt.month,"dd":now_dt.day}
+        txt_file = "%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":now_dt.year,"mm":now_dt.month,"dd":now_dt.day}
+        tar_file = "%04d_%s.tar.gz"%(now_dt.year,suffix)
         
-        # check src
-        src_path = src +'/'+suffix+txt_file
         dst_path = utils.make_path(dst_dir + txt_file)
+        dst_tarpath = TEMP_DIR +  tar_file
+        
+        prefix_events = ''
+        if suffix == 'events':
+            prefix_events = str(now_dt.year)+'_'
+            
+        if suffix == 'SRS' and (2006<=now_dt.year<=2007):
+            tar_file = tar_file[5:]
+        
+            
+        src_path = src_dir + prefix_events+ suffix+'/'+txt_file
+        src_tarpath = src_dir +  tar_file
+        
+        
         rv = dl.download_http_file(src_path, dst_path ,overwrite=overwrite)
 
-        if rv == False:
-            tar_path = dl.download_http_file(src+tar_file,overwrite=overwrite)
-            if tar_path == None:
-                print "No tar..."
+        if rv == False: 
+ 
+            rv =  dl.download_http_file(src_tarpath,dst_tarpath)
+            if rv == False:
+                LOG.info("No tar... %s"%(src_dir+tar_file))
                 continue
             
             # Extract a gz file.
-            print "Extract it to the temp directory, %s."%(TEMP_DIR)
     
             import tarfile
-            tf = tarfile.open(tar_path, 'r:gz')
-            _,filename = os.path.split(tar_path)
-            filename,_ = os.path.splitext(filename)
-            tf.extractall(utils.make_path(TEMP_DIR+'/'+filename))
-            tf.close()
-        
-        
-            # Move extracted files to a data directory.
-            tmp_dir = TEMP_DIR + '/' + filename
-            
-            try:
-            
-                import shutil
-        
-                for filepath in utils.get_files(tmp_dir+'/*.txt'):
-                    _,filename = os.path.split(filepath)
-                    if (os.path.exists(dst_dir +'/'+ filename) == True):
-                        shutil.copyfile(filepath, utils.make_path(dst_dir+'/'+filename))
-                        os.remove(filepath)
-                    else:                        
-                        shutil.move(filepath, utils.make_path(dst_dir+'/'+filename))
-            
-                # Remove a temp directory and a temp file.
-                shutil.rmtree(tmp_dir)
-                os.remove(tmp)
+            rv = False
+            with tarfile.open(dst_tarpath, 'r:gz') as tf:
+                _,filename = os.path.split(dst_tarpath)
+                filename,_ = os.path.splitext(filename)
                 
-            except Exception as err:
-                print err
+                
+                for name in tf.getnames():
+                    if name.find(txt_file) != -1:
+                        break
+                    name = ''
+                    
+                
+                if name != '':
+                    tmp_dir = utils.make_path(TEMP_DIR + filename)
+                    
+                    tf.extractall(tmp_dir)
+                    
+                    import shutil
+                    for filepath in utils.get_files(tmp_dir+'/*.txt'):
+                        _,filename = os.path.split(filepath)
+                        
+                        if os.path.exists(dst_dir + filename) == True and overwrite == True:
+                            continue
+                                                
+                        shutil.copyfile(filepath, dst_dir + filename)
+                
+                    # Remove a temp directory and a temp file.
+                    shutil.rmtree(tmp_dir)
+                else:
+                    LOG.info("There is not %s in tar"%(txt_file))       
             
-            # retry
-            rv = dl.download_http_file(src+txt_file, dst_dir + txt_file)
         
         if rv != False:
-            print "Donwloaded : %s"%(dst_path)
-            downloaded_files.append(dst_path)
-                    
-
-    return downloaded_files
+            LOG.info("Donwloaded : %s"%(dst_path))
+     
 
 def download_dsd(begindate, enddate="",overwrite=False):
     return _download_index(begindate, enddate, "DSD",overwrite=overwrite);
@@ -167,10 +250,10 @@ def _download_index(begindate, enddate="", type="",overwrite=False):
             "url":NOAA_URL,
                 "fn":file_name}
         
-        dst = "%(dir)s/indices/%(type)s/%(fn)s"%{
-            "dir":NOAA_DIR,
+        dst = DATA_DIR + NOAA_DIR + "indices/%(type)s/%(fn)s"%{
             "type":type,
             "fn":file_name}
+        
         
         # Download a file.
         utils.alert_message("Download %s."%(src))
@@ -213,10 +296,8 @@ def load_dgd(begindate,enddate=""):
         
         file_name = "%(y)04d_DGD.txt"%{"y":t1.year}
         
-        file_path = "%(dir)s/indices/DGD/%(fn)s"%{
-                    "dir":NOAA_DIR,
-                    "fn":file_name}
-        
+        file_path = DATA_DIR + NOAA_DIR + "indices/DGD/%(fn)s"%{"fn":file_name}
+    
         if os.path.exists(file_path) == False:
             print "File is not exist!"
             continue
@@ -340,10 +421,8 @@ def load_dsd(begindate,enddate=""):
     for t1 in dt.datetime_range(begin_dt, end_dt, years=1):
         file_name = "%(y)04d_DSD.txt"%{"y":t1.year}
         
-        file_path = "%(dir)s/indices/DSD/%(fn)s"%{
-                    "dir":NOAA_DIR,
-                    "fn":file_name}
-        
+        file_path = DATA_DIR + NOAA_DIR + "indices/DSD/%(fn)s"%{"fn":file_name}
+                
         if os.path.exists(file_path) == False:
             print "File is not exist!"
             continue
@@ -438,9 +517,7 @@ def load_dpd(begindate, enddate=""):
         #
         file_name = "%(y)04d_DPD.txt"%{"y":year_dt.year}
         
-        file_path = "%(dir)s/indices/DPD/%(fn)s"%{
-                    "dir":NOAA_DIR,
-                    "fn":file_name}
+        file_path = DATA_DIR + NOAA_DIR + "indices/DPD/%(fn)s"%{"fn":file_name}
         
         if os.path.exists(file_path) == False:
             print "File is not exist!"
@@ -507,5 +584,282 @@ def load_dpd(begindate, enddate=""):
     
     return data
 
+def load_events(begindate,enddate=''):
+    
+    begin_dt = dt.trim(begindate,3,'start')
+    if begin_dt < first_data['events']:
+        begin_dt = first_data['events']
+    
+    if enddate == '':
+        enddate = begindate
+        
+    end_dt = dt.trim(enddate,3,'end')
+    
+    vl = [[] for _ in range(16)]
+    
+    for t in dt.series(begin_dt, end_dt, days=1):
+        
+        #
+        file_name = "%(y)d%(m)02d%(d)02devents.txt"%{'y':t.year,'m':t.month,'d':t.day}
+        
+        file_path = DATA_DIR + NOAA_DIR + "events/%(y)4d/%(fn)s"%{"y":t.year,"fn":file_name}
+        
+        try :
+            f  = open(file_path,'r')
+            for line in f.readlines():
+                
+                if ':#'.find(line[0]) != -1:
+                    continue
+                
+                v  = ['' for _ in range(16)]
+                              
+                
+                try:
+                    v[0] = str(t.date())
+                    v[1] = int(line[0:4].replace(' ',''))
+                    v[2] = line[5]
+                    
+                    v[3] = line[10]
+                    strt = dt.parse_string("%H%M", line[11:15])
+                    if strt == None:    strt = ''
+                    else :    strt = str(strt.time())
+                    v[4] = strt
+                    
+                    v[5] = line[17]
+                    strt = dt.parse_string("%H%M", line[18:22])
+                    if strt == None:    strt = ''
+                    else :    strt = str(strt.time())
+                    v[6] = strt
+                    
+                    v[7] = line[27]
+                    strt = dt.parse_string("%H%M", line[28:32])
+                    if strt == None:    strt = ''
+                    else :    strt = str(strt.time())
+                    v[8] = strt
+                    
+                    v[9] = line[34:38].replace(' ','')
+                    v[10] = line[39]
+                    v[11] = line[43:47].replace(' ','')
+                    v[12] = line[47:58].replace(' ' ,'')
+                    
+                    i = 0      
+                    for l in line[58:76].split():
+                        v[13+i] = l
+                        i       += 1
+                        
+                    v[15] = line[76:80]
+                    
+                except:
+                    continue
+    
+                for i in range(16):
+                    vl[i].append(v[i])
+            
+        except IOError:
+            LOG.info("File is not exist. %s",file_path)
+            continue
+        finally:
+            f.close()
+    
+            
+    data = {'date':vl[0],'event:no':vl[1],'event:flag':vl[2],'begin:flag':vl[3],'begin:time':vl[4],\
+            'max:flag':vl[5],'max:time':vl[6],'end:flag':vl[7],'end:time':vl[8],'obs':vl[9],'quality':vl[10],\
+            'type':vl[11],'loc/frq':vl[12],'property:1':vl[13],'property:2':vl[14],'region':vl[15]}
+    return data   
+def load_srs(begindate,enddate=''):
+    
+    begin_dt = dt.trim(begindate,3,'start')
+    if enddate == '':
+        enddate = begindate
+        
+    end_dt = dt.trim(enddate,3,'end')
+    
+    
+    fmt = '(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\S+)'
+    
+    total_var =  9
+    vl = [[] for _ in range(total_var)]
+    
+    for now in dt.series(begin_dt, end_dt,days=1):
+        
+        filename = "%(yyyy)04d%(mm)02d%(dd)02dSRS.txt"%{"yyyy":now.year,"mm":now.month,"dd":now.day}
+        dirpath = DATA_DIR + NOAA_DIR + "SRS/%(yyyy)04d/"%{"yyyy":now.year}
+        filepath = dirpath + filename
+    
+                
+        text = ''
+        if os.path.exists(filepath) == False:
+            LOG.warn("File is not exist - %s"%(filepath))
+            continue
+        
+        with open(filepath,'rt') as f:
+            text = f.read()
+             
+        
+        cfmt = re.compile(fmt)
+        for line in text.splitlines():
+    #        if date is None:
+    #            date = match(':Issued: (\d+) (\S+) (\d+) 0030 UTC',line)
+            
+    #        if date is not None:
+    #        if (date is not None) and (time_key['MJD'] is ''):
+    #            jd = dbms.gc_to_jd(int(date.group(1)), int(dbms.month_number[date.group(2)]), int(date.group(3)), 0, 30, 0)
+    #            mjd = dbms.jd_to_mjd(jd)
+    #            time_key['MJD'] = str(mjd[0])
+    #            time_key['DATE'] = str('%s-%02d-%s'%(date.group(1),dbms.month_number[date.group(2)],date.group(3)))
+    #            root['ATTR']['DATE'] = str('%s-%02d-%s'%(date.group(1),dbms.month_number[date.group(2)],date.group(3)))
+    #            root['ATTR']['FILEID'] = str('SRS%s%02d%s' %(date.group(1),dbms.month_number[date.group(2)],date.group(3)))
+                
+            data = re.match(cfmt,line)
+            if data is not None:
+                vl[0].append(str(now.date()))
+                for i in range(1,total_var):
+                    vl[i].append(data.group(i))
+                    
+                
+    data = {'date':vl[0],'nmbr':vl[1],'loc':vl[2],'l0':vl[3],'area':vl[4],'z':vl[5],'ll':vl[6],'nn':vl[7],'mag':vl[8]}                
+                                     
+      
+
+    return data 
+    
+def draw_dpd(data, days=0, file_path="", color=""):
+    import matplotlib.pyplot as plt
+    #
+    if (color == ""):        color = color_list
+    
+    #
+    dt = data["t0"]
+    
+    
+    # Date list for X-Axis
+    tick_dt = []
+    if (days == 0):
+        days = (max(dt) - min(dt)).days + 1
+
+    #if (days > 7):
+    #       days = 7
+    
+    for i in range(0, days+1):
+        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + dt.timedelta(days=i))
+    
+    # Figure
+    fig = plt.figure(facecolor='white')
+
+    plt.clf()
+    
+    # ticks
+    plt.rc('xtick.major', pad=12);
+    plt.rc('xtick.major', size=6);
+    
+    plt.rc('ytick.major', pad=12);
+    plt.rc('ytick.major', size=8);
+    plt.rc('ytick.minor', size=4);
+
+    # Plot
+    plt.plot(dt, data['mev1'], color=color[0], marker="o", label="Proton (> 1 MeV)")
+    plt.plot(dt, data['mev10'], color=color[1], marker="*", label="Proton (> 10 MeV)")
+    plt.plot(dt, data['mev100'], color=color[2], marker="^", label="Proton (>100 MeV)")
+
+#plt.plot(dt, data['mev06'], color=color[3], marker="^", label="Electron (> .6 MeV)")
+    plt.plot(dt, data['mev20'], color=color[4], marker="^", label="Electron (> 2 MeV)")
+
+    plt.legend(loc='upper right')
+
+    
+    # Title
+    plt.title("NOAA Daily Proton Data")
+    
+    # Scale
+    plt.yscale('log')
+
+    # Limitation
+    plt.xlim(tick_dt[0], tick_dt[days-1])
+    plt.ylim([1.0e2, 1.0e10])
+
+    # Labels for X and Y axis 
+    plt.xlabel("%s $\sim$ %s [UTC]"% \
+               (tick_dt[0].strftime("%Y.%m.%d."),
+                tick_dt[days-1].strftime("%Y.%m.%d.")),
+               fontsize=14)
+    
+    plt.ylabel("Particles/cm$^{2}$ cm sr")
+
+    
+    # X-Axis tick
+    tick_dt = []
+    tick_str = []
+
+    for i in range(0, days+1, 5):
+        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + dt.timedelta(days=i))
+
+    for item in tick_dt:
+        tick_str.append(item.strftime("%b %d"))
+
+    plt.xticks(tick_dt, tick_str)
+    
+    # Grid
+    plt.grid(True)
+
+    # Show or Save
+    if (file_path == ""):
+        plt.show()
+    else:
+        fig.savefig(file_path)
+    
+    return
+
 if __name__ == '__main__':
-    pass
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+       
+    
+    now = dt.datetime.now()
+    
+    now_date_str = now.strftime("%Y%m%d")
+
+#     rv = download_events("1996",now_date_str)
+#     #print rv
+#     events = load_events("1996",now_date_str)
+#     tevents = da.Table(data=events,keys=events_keys)
+#     tevents.print_text()
+    
+    
+    download_srs("1996", now_date_str)
+    SRSs = load_srs("1996", now_date_str)
+    tSRSs = da.Table(data=SRSs,keys=SRS_keys)
+    tSRSs.print_text()
+
+    
+    # rv = download_dpd("1994",str(now.year))
+    # print rv
+    # data = load_dpd("1994",str(now.year))
+    # for key in data.keys():
+    #     sys.stdout.write(key+' ')
+    # sys.stdout.write('\n')
+    # 
+    # for key in data.keys():
+    #     sys.stdout.write(str(data[key][-1])+' ')
+    # sys.stdout.write('\n')
+    
+    
+            
+            
+    
+    #rv = noaa.download_dsd("1994",str(now.year))
+    #print rv
+    #dsd = load_dsd("1994",str(now.year))
+    #table = da.Table(data=dsd)
+    #table.print_summary()
+    
+    #rv = noaa.download_dgd("1994",str(now.year))
+    #print rv
+    #dgd = load_dgd("1994",str(now.year))
+    #table = da.Table(data=dgd)
+    #table.print_summary()
+    
+    #download_events("1996", "2013")
+    
+    #download_sgas("1996", "2013")
+    #download_rsga("1996", "2013")
+    #download_geoa("1996", "2013")    

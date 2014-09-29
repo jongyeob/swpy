@@ -76,4 +76,8 @@ def load_file(filepath):
 
 
     return energetic_events,proton_events,daily_indices
-            
+
+if __name__ == '__main__':
+    data = load_file("20120212")
+    data = load_file("20130312")
+    data = load_file("19970512")            

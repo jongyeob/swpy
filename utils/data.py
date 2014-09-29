@@ -301,7 +301,7 @@ class Table():
             key = last_key[j]
             line += fk%(key)
             
-            f.write(line+'|')
+            f.write(line+'|\n')
             
         
         num_line  = self.length()

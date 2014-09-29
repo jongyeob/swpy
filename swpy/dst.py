@@ -10,17 +10,29 @@ Author : Jongyeob Park (pjystar@gmail.com)
 ## Final Dst index :2009 - current
 ##
 
-import logging
-import swpy
+from swpy import utils
+from swpy.utils import Config,\
+                       date_time as dt,\
+                       download as dl
+                       
+DATA_DIR = 'data/'
+DST_DIR = DATA_DIR + "kyoto/dst/";
+DST_KEYS = ['datetime','version','dst']
+LOG = utils.get_logger(__name__)
+PACKAGES = ''
 
-import utils.date_time as dt
-import utils.download as dl
-from utils.utils import make_path, alert_message
+def initialize(config=Config()):
+    global DATA_DIR,PACKAGES
+    
+    config.set_sections(__name__)
+    
+    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
+    PACKAGES = config.load('PACKAGES',PACKAGES)
+    
+    for pkg in PACKAGES.split():
+        utils.import_all(pkg, globals())
 
-LOG = logging.getLogger('dst')
-DST_DIR = swpy.DATA_DIR + "/kyoto/dst/";
-DST_KEYS = ['datetime','version','dst'] 
-
+    
 def empty_data():
     return {'datetime':[],'dst':[],'version':[]}
 
@@ -54,7 +66,7 @@ def download_cgi(begindate, enddate=None,overwrite=False):
                         "ym":now_dt.strftime("%Y%m")}
         
         
-        rv = dl.download_http_file(url_cgi, make_path(file_path),overwrite=overwrite)
+        rv = dl.download_http_file(url_cgi, utils.make_path(file_path),overwrite=overwrite)
         
         if (rv == False):
             print "Fail to download %s."%(file_path)
@@ -121,7 +133,7 @@ def load_file(file_path):
         with open(file_path, "r") as f:
             contents = f.read()           
     except IOError as err:
-        alert_message("Can not find file or read data, %s,in load_dst_file()."%file_path)
+        LOG.error("Can not find file or read data, %s,in load_dst_file()."%file_path)
         raise err
 
 
@@ -199,7 +211,7 @@ def download_web(begindate, enddate="",overwrite=False):
             
             # write a new dst
 
-            fw = open(make_path(dst), "w")
+            fw = open(utils.make_path(dst), "w")
             fw.write(contents)
             fw.close()
 
@@ -325,7 +337,7 @@ def draw_dst(data, file_path=""):
 #     return
 
 if __name__ == '__main__':
-    print "Start"
+    
     data = load("20130901", "20130908")
     
     

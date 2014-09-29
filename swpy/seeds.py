@@ -9,27 +9,27 @@ import calendar
 import datetime
 import os
 import string
-import swpy
 import time
 
-import matplotlib.pyplot as plt
-import swgraph as swg
-import utilities as util
+from swpy import utils
+from swpy.utils import download as dl,\
+                       date_time as dt
 
-
+DATA_DIR = 'data/'
 # SpaeWeatherPy library
 seeds_url = "http://spaceweather.gmu.edu/seeds/"
-seeds_dir = swpy.data_dir + "gmu/seeds/"; 
+seeds_dir = DATA_DIR + "gmu/seeds/"; 
 
 
 def download_cme(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    if enddate == '': enddate = begindate
+    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
     
     
     
     #
     last_dt_file = "http://spaceweather.gmu.edu/seeds/detection/lastdet.check"
-    contents = util.download_http_file(last_dt_file)
+    contents = dl.download_http_file(last_dt_file)
     last_dt = datetime.datetime.strptime(contents[0:19], "%Y/%m/%d %H:%M:%S")
     
     
@@ -60,7 +60,7 @@ def download_cme(begindate, enddate=""):
 
         # Download a file.
         downloaded = True
-        rv = util.download_http_file(file_url, file_path, overwrite=True)
+        rv = dl.download_http_file(file_url, file_path, overwrite=True)
         if (rv == True):
             print "Download %s."%(file_path)
 
@@ -135,7 +135,7 @@ def download_cme(begindate, enddate=""):
                         "fn":cme_ql_file_name}
     
                 # Download CME
-                rv = util.download_http_file(file_url, file_path, overwrite=True)
+                rv = dl.download_http_file(file_url, file_path, overwrite=True)
                 if (rv == True):
                     print "Download %s."%(file_path)
                     
@@ -160,8 +160,8 @@ def download_cme(begindate, enddate=""):
     return True
 
 def load_cme(begindate, enddate=""):
-    #
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    if enddate == '': enddate = begindate
+    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
     
     #
     data = {"t0":[], "cpa":[], "w":[], "v":[], "a":[]}

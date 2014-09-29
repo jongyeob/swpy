@@ -26,29 +26,41 @@ import calendar
 import datetime
 import os
 import string
-import swpy
+
 import time
 
-from swpy.utils import utils as util
+from swpy import utils
+from swpy.utils import Config,\
+                       date_time as dt,\
+                       download as dl
 
-
+DATA_DIR = 'data/'
+GOES_DIR = DATA_DIR + "noaa/goes/"
+GOES_XRAY_DIR = DATA_DIR + "goes/xray/";
+LOG = utils.get_logger(__name__)
 # SpaeWeatherPy library
 ERROR_INT = -99999
 
-
 # GOES xray
 goes_xray_url = "http://www.swpc.noaa.gov/ftpdir/lists/xray/";
-goes_xray_dir = swpy.DATA_DIR + "goes/xray/";
-
 goes_url = "http://satdat.ngdc.noaa.gov/sem/goes/data/new_avg/"
-goes_url = "http://www.swpc.noaa.gov/ftpdir/"
-goes_dir = swpy.DATA_DIR + "noaa/goes/"
+
+
 
 color_list = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
-
+def initialize(config=Config()):
+    global DATA_DIR
+    
+    config.set_section(__name__)
+    
+    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
+    
+    
+    
 def download_xray_csv(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    if enddate == '': enddate = begindate
+    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
 
 
     # Monthly Loop
@@ -88,13 +100,13 @@ def download_xray_csv(begindate, enddate=""):
             "goes_no":goes_no,
             "fn":file_name}
 
-        dst = "%(dir)sxray/csv/%(y)04d/%(fn)s"%{"dir":goes_dir, "y":dt1.year, "fn":file_name}
+        dst = "%(dir)sxray/csv/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":dt1.year, "fn":file_name}
 
         print src
 
         # Download a file.
-        util.alert_message("Download %s."%(src))
-        rv = util.download_http_file(src, dst)
+        LOG.debug("Download %s"%(src))
+        rv = dl.download_http_file(src, dst)
         if (rv == False):
             continue
 
@@ -112,7 +124,7 @@ def download_xray_csv(begindate, enddate=""):
                 break;
 
         if (line == 0):
-            util.alert_message("The file format is not correct.\nThere is no 'data:' line.");
+            LOG.debug("The file format is not correct.\nThere is no 'data:' line.")
             continue
 
         line += 2
@@ -125,9 +137,9 @@ def download_xray_csv(begindate, enddate=""):
             
             # Open a file.
             file_name = "%(yyyymmdd)s_xrs_1m.txt"%{"yyyymmdd":day_dt.strftime("%Y%m%d")}
-            file_path = "%(dir)sxray/1min/%(y)04d/%(fn)s"%{"dir":goes_dir, "y":day_dt.year, "fn":file_name}
+            file_path = "%(dir)sxray/1min/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":day_dt.year, "fn":file_name}
 
-            util.make_directory(file_path)
+            utils.make_path(file_path)
 
             f = open(file_path, "w")
 
@@ -217,9 +229,9 @@ def download_xray_csv(begindate, enddate=""):
         month_dt = month_dt + datetime.timedelta(days=mr[1])
 
 def download_mag_csv(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
-    
-    
+    if enddate == '' : enddate = begindate
+    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
+        
     # Monthly Loop
     month_dt = begin_dt
     while ( month_dt <= end_dt ):
@@ -257,13 +269,13 @@ def download_mag_csv(begindate, enddate=""):
             "goes_no":goes_no,
             "fn":file_name}
         
-        dst = "%(dir)smagneto/csv/%(y)04d/%(fn)s"%{"dir":goes_dir, "y":dt1.year, "fn":file_name}
+        dst = "%(dir)smagneto/csv/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":dt1.year, "fn":file_name}
         
         print src
         
         # Download a file.
-        util.alert_message("Download %s."%(src))
-        rv = util.download_http_file(src, dst)
+        LOG.debug("Download %s."%(src))
+        rv = dl.download_http_file(src, dst)
         if (rv == False):
             continue
         
@@ -281,7 +293,7 @@ def download_mag_csv(begindate, enddate=""):
                 break;
         
         if (line == 0):
-            util.alert_message("The file format is not correct.\nThere is no 'data:' line.");
+            LOG.debug("The file format is not correct.\nThere is no 'data:' line.");
             continue
         
         line += 2
@@ -294,9 +306,9 @@ def download_mag_csv(begindate, enddate=""):
             
             # Open a file.
             file_name = "%(yyyymmdd)s_magneto_1m.txt"%{"yyyymmdd":day_dt.strftime("%Y%m%d")}
-            file_path = "%(dir)smagneto/1min/%(y)04d/%(fn)s"%{"dir":goes_dir, "y":day_dt.year, "fn":file_name}
+            file_path = "%(dir)smagneto/1min/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":day_dt.year, "fn":file_name}
             
-            util.make_directory(file_path)
+            utils.make_path(file_path)
             
             f = open(file_path, "w")
             
@@ -415,8 +427,9 @@ def download_mag_csv(begindate, enddate=""):
     return True
 
 
-def download_xray(begindate, enddate=0):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+def download_xray(begindate, enddate=''):
+    if enddate == '' : enddate = begindate
+    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
     
     now_dt = begin_dt
     while ( now_dt <= end_dt ):
@@ -424,9 +437,9 @@ def download_xray(begindate, enddate=0):
         src = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
             {"url":goes_xray_url, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
         dst = "%(dir)s%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
-            {"dir":goes_xray_dir, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+            {"dir":GOES_XRAY_DIR, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
 
-        rv = util.download_http_file(src, dst)
+        rv = dl.download_http_file(src, dst)
         if (rv == False):
             print ("Can not download %s."%src)
         else:
@@ -436,63 +449,15 @@ def download_xray(begindate, enddate=0):
         src = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
             {"url":goes_xray_url, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
         dst = "%(dir)s%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
-            {"dir":goes_xray_dir, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+            {"dir":GOES_XRAY_DIR, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
 
         #
         now_dt = now_dt + datetime.timedelta(days=1)
 
-def _download_xray_flare(begindate, enddate=0):
-    import os
-    import string
-    import datetime
-    
-    #
-    #
-    #
-    if (enddate == 0):
-        enddate = util.str2dt(begindate, last=True)
-    else:
-        enddate = util.str2dt(enddate, True)
-    
-    begindate = util.str2dt(begindate)
-
-    
-    #
-    # 1975 ~ 2010 : xrayyyyy
-    # 2011 ~ : XRAYyyyy
-    #
-    now = begindate
-    while ( now <= enddate ):
-        # url for realtime
-        src = "ftp://ftp.ngdc.noaa.gov/STP/SOLAR_DATA/SOLAR_FLARES/FLARES_XRAY/"\
-            + "%(yyyy)04d/xray%(yyyy)04d"%{"yyyy":now.year}
-        
-        if (now.year >= 2011):
-            src = "ftp://ftp.ngdc.noaa.gov/STP/SOLAR_DATA/SOLAR_FLARES/FLARES_XRAY/"\
-                + "%(yyyy)04d/XRAY%(yyyy)04d"%{"yyyy":now.year}
-
-        dst = cnf.PATH_GOES_XRAY_FLARE + "/xray%(yyyy)04d.txt"%{"yyyy":now.year}
-
-        print src
-        print dst
-
-        # download it to a tmp file
-        rv = util.download_ftp_file(src, dst)
-        if (rv == False):
-            print ("Can not download %s."%src)
-        else:
-            print ("Downloaded %s."%src)
-
-        #
-        now = now.replace(month=1, day=1)
-        now = now + datetime.timedelta(days=366)
-        now = now.replace(month=1, day=1)
-
-    return True
-
 
 def load_xray_1m(begindate, enddate=""):
-    begin_dt, end_dt = util.str2dt(begindate, enddate)
+    
+    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
     
     t0 = []
     t1 = []
@@ -503,7 +468,7 @@ def load_xray_1m(begindate, enddate=""):
     while ( now_dt <= end_dt ):
         # 1min : yyyymmdd_xrs_1m.txt
         file_path = "%(dir)sxray/1min/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_xrs_1m.txt"% \
-            {"dir":goes_dir, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+            {"dir":GOES_DIR, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
         
         
         f = open(file_path, "r")

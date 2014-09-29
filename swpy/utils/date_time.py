@@ -31,6 +31,15 @@ RE_NAMES = {'%Y': '?P<Y>',
                     '%S': '?P<S>',
                     '%f': '?P<f>',
                     '%b': '?P<b>'}
+DIC_NAMES = {'%Y': '%(Y)04d',
+             '%y': '%(y)02d',
+             '%m': '%(m)02d',
+             '%d': '%(d)02d',
+             '%H': '%(H)02d',
+             '%M': '%(M)02d',
+             '%S': '%(S)02d',
+             '%f': '%(f)06d',
+             '%b': '%(b)s'}
 DATE_FORMATS = [ "%Y-%m-%d","%d-%b-%Y","%d-%b-%y","%Y-%m","%Y"]
 TIME_FORMATS = [ "%H:%M:%S\.%f","%H:%M:%S","%H:%M","%H"]
 SEPS = ['_',' ','T']
@@ -331,11 +340,11 @@ def parse(*args,**kargs):
     return ret
 def move(current,period,start=None):
     '''
-    @summary: return move datetime from current with the period
-    @param current: current datetime
-    @param period: timedelta
-    @param start: start datetime
-    @return: datetime 
+    return move datetime from current with the period
+    :param current: current datetime
+    :param period: timedelta
+    :param start: start datetime
+    :return: datetime 
     '''
     
     next_datetime =  None
@@ -353,10 +362,10 @@ def move(current,period,start=None):
 
 def tuples(datetime_info,trim=None,fsecond=None):
     '''
-    @summary: Convert datetime tuples
-    @param trim: ['date','time']
-    @param second: None | integer 
-    @return: tuples | None
+    Convert datetime tuples
+    :param trim:        ['date','time']
+    :param second: None | integer 
+    :return: tuples | None
     '''
     dt = parsing(datetime_info)
     if (dt == None):
@@ -375,7 +384,44 @@ def tuples(datetime_info,trim=None,fsecond=None):
     elif trim == 'time':
         return ret[3:]
     
-    return ret    
+    return ret
+
+def replace(format_string,datetime_info=None,kw=None):
+    '''
+    Replace datetime format to a filled string with datetime
+    :param string format:
+    :param datetime datetime_info: 
+    '''
+    
+    
+    
+    dt = parse(datetime_info)
+    f = format_string
+    
+    if dt != None:
+        
+        for k in RE_FORMATS.iterkeys():
+            i = 0
+            while(i != -1): 
+                i = f.find(k) # i : index
+            
+                if i != -1: 
+                    f = f[:i] + dt.strftime(k) + f[i+2:]
+    
+    if kw != None:
+        
+        for k in kw.iterkeys():
+            i = f.find('%('+k+')') # i : index
+            while(i != -1): 
+                i2 = f.find('%',i+1) # i2 : next index before '%'
+                if i2 == -1: i2 = len(f)
+                v = f[i:i2]%{k:kw[k]}
+                f = f[:i] + v + f[i2:]
+                i = f.find('%('+k+')') 
+    
+        
+    return f    
+    
     
     
 def julian_day(datetime_info,reverse=False):
@@ -453,6 +499,9 @@ parsing = parse
 datetime_range = series
 
 if __name__ == '__main__':
+    print replace("%(abc)s%Y",parse("20140101"))
+    exit(0)
+    
     print parse_string("%Y%m%d","20140201")
     print parse_string("%y%m%d %H%M%S.%f","990201 030201.3")
     print parse_string("%Y-%b-%d","2014-Jul-01")

@@ -8,25 +8,24 @@
 import os
 import re
 
-import swpy
 
 from swpy.utils import utils
-from swpy.utils import date_time as dt
-from swpy.utils import download as dl
-from swpy.utils import data as da
+from swpy.utils import date_time as dt,\
+                       download as dl,\
+                       data as da,\
+                       Config
 
-import logging
 
 
 # SpaeWeatherPy library
 #noaa_url = "ftp://ftp.swpc.noaa.gov/pub/warehouse/"
+DATA_DIR = 'data/'
 NOAA_URL = "http://www.swpc.noaa.gov/ftpdir/"
-NOAA_DIR = swpy.DATA_DIR + "/noaa";
+NOAA_DIR = "noaa/"
+TEMP_DIR = 'temp/'
+PACKAGES = ''
+LOG = utils.get_logger(__name__)
 
-DATA_DIR = swpy.DATA_DIR
-TEMP_DIR = swpy.TEMP_DIR
-
-COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
 DGD_keys = ['date',\
             'mid_a', 'mid_k:0','mid_k:3','mid_k:6','mid_k:9','mid_k:12','mid_k:15','mid_k:18','mid_k:21',\
@@ -41,15 +40,20 @@ events_keys = ['date','event:no','event:flag','begin:flag','begin:time',\
                'type','loc/frq','property:1','property:2','region']
 SRS_keys = ['date','nmbr','loc','l0','area','z','ll','nn','mag']
 
-LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
+
 
 first_data = {'events':dt.parse(1996,07,31),\
               'SRS':dt.parse(1996,02,01)}
+color_list = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
-
-def initialize():
-    pass
+def initialize(config=Config()):
+    global DATA_DIR,PACKAGES
+    config.set_section(__name__)
+    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
+    PACKAGES = config.load('PACKAGES',PACKAGES)
+    
+    for pkg in PACKAGES.split():
+        utils.import_all(pkg, globals())
 
 def get_path(suffix,dateobj):
     
@@ -59,10 +63,10 @@ def get_path(suffix,dateobj):
         return path
     
         
-    dirpath = "%(dir)s/%(suffix)s/%(yyyy)04d/"%{"dir":NOAA_DIR, "yyyy":d.year, "suffix":suffix}
+    dirpath = DATA_DIR + NOAA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":d.year, "suffix":suffix}
     filename ="%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":d.year,"mm":d.month,"dd":d.day}
     
-    path = utils.path.normpath(dirpath + filename)
+    path = utils.path.normpath(DATA_DIR+ dirpath + filename)
     
         
     
@@ -77,10 +81,10 @@ def get_files(suffix,begindate='',enddate=''):
             
     files = []
             
-    dirpath = "%(dir)s/%(suffix)s/"%{"dir":NOAA_DIR, "suffix":suffix}
+    dirpath = DATA_DIR + NOAA_DIR + "%(suffix)s/"%{"suffix":suffix}
     file_pattern = "*%(suffix)s.txt"%{"suffix":suffix}
       
-    filepath = dirpath + file_pattern
+    filepath = DATA_DIR + dirpath + file_pattern
         
     for f  in utils.get_files(filepath):
         ft = dt.parse(f)
@@ -105,28 +109,28 @@ def download_events(begindate, enddate="",overwrite=False):
     if begindate < first_data['events']:
         begindate = first_data['events']
 
-    files = _download_template("events", begindate, enddate,overwrite)
-    return files
+    _download_template("events", begindate, enddate,overwrite)
+    
 
 def download_srs(begindate, enddate="",overwrite=False):
     begindate = dt.parse(begindate)
     if begindate < first_data['SRS']:
         begindate = first_data['SRS']
-    files = _download_template("SRS", begindate, enddate,overwrite)
-    return files
+    
+    _download_template("SRS", begindate, enddate,overwrite)
+    
 
 def download_sgas(begindate, enddate="",overwrite=False):
-    files = _download_template("SGAS", begindate, enddate,overwrite)
-    return files
+    _download_template("SGAS", begindate, enddate,overwrite)
+    
 
 def download_rsga(begindate, enddate="",overwrite=False):
-    files = _download_template("RSGA", begindate, enddate,overwrite)
-    return files
+    _download_template("RSGA", begindate, enddate,overwrite)
+    
 
 def download_geoa(begindate, enddate="",overwrite=False):
-    files = _download_template("GEOA", begindate, enddate,overwrite)
-    return files
-
+    _download_template("GEOA", begindate, enddate,overwrite)
+    
 
 def _download_template(suffix, begindate, enddate="",overwrite=False):
     
@@ -135,18 +139,18 @@ def _download_template(suffix, begindate, enddate="",overwrite=False):
         
     begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
             
-    downloaded_files = []
+    
     for now_dt in dt.datetime_range(begin_dt, end_dt, days=1):
 
         
         src_dir = "%(url)swarehouse/%(yyyy)04d/"%{"url":NOAA_URL,"yyyy":now_dt.year}        
-        dst_dir = "%(dir)s/%(suffix)s/%(yyyy)04d/"%{"dir":NOAA_DIR, "yyyy":now_dt.year, "suffix":suffix}
+        dst_dir = DATA_DIR + NOAA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":now_dt.year, "suffix":suffix}
         
         txt_file = "%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":now_dt.year,"mm":now_dt.month,"dd":now_dt.day}
         tar_file = "%04d_%s.tar.gz"%(now_dt.year,suffix)
         
         dst_path = utils.make_path(dst_dir + txt_file)
-        dst_tarpath = TEMP_DIR + '/'+  tar_file
+        dst_tarpath = TEMP_DIR +  tar_file
         
         prefix_events = ''
         if suffix == 'events':
@@ -185,7 +189,7 @@ def _download_template(suffix, begindate, enddate="",overwrite=False):
                     
                 
                 if name != '':
-                    tmp_dir = utils.make_path(TEMP_DIR + '/' + filename)
+                    tmp_dir = utils.make_path(TEMP_DIR + filename)
                     
                     tf.extractall(tmp_dir)
                     
@@ -193,10 +197,10 @@ def _download_template(suffix, begindate, enddate="",overwrite=False):
                     for filepath in utils.get_files(tmp_dir+'/*.txt'):
                         _,filename = os.path.split(filepath)
                         
-                        if os.path.exists(dst_dir +'/'+ filename) == True and overwrite == True:
+                        if os.path.exists(dst_dir + filename) == True and overwrite == True:
                             continue
                                                 
-                        shutil.copyfile(filepath, dst_dir+'/'+filename)
+                        shutil.copyfile(filepath, dst_dir + filename)
                 
                     # Remove a temp directory and a temp file.
                     shutil.rmtree(tmp_dir)
@@ -206,10 +210,7 @@ def _download_template(suffix, begindate, enddate="",overwrite=False):
         
         if rv != False:
             LOG.info("Donwloaded : %s"%(dst_path))
-            downloaded_files.append(dst_path)
-                    
-
-    return downloaded_files
+     
 
 def download_dsd(begindate, enddate="",overwrite=False):
     return _download_index(begindate, enddate, "DSD",overwrite=overwrite);
@@ -249,10 +250,10 @@ def _download_index(begindate, enddate="", type="",overwrite=False):
             "url":NOAA_URL,
                 "fn":file_name}
         
-        dst = "%(dir)s/indices/%(type)s/%(fn)s"%{
-            "dir":NOAA_DIR,
+        dst = DATA_DIR + NOAA_DIR + "indices/%(type)s/%(fn)s"%{
             "type":type,
             "fn":file_name}
+        
         
         # Download a file.
         utils.alert_message("Download %s."%(src))
@@ -295,10 +296,8 @@ def load_dgd(begindate,enddate=""):
         
         file_name = "%(y)04d_DGD.txt"%{"y":t1.year}
         
-        file_path = "%(dir)s/indices/DGD/%(fn)s"%{
-                    "dir":NOAA_DIR,
-                    "fn":file_name}
-        
+        file_path = DATA_DIR + NOAA_DIR + "indices/DGD/%(fn)s"%{"fn":file_name}
+    
         if os.path.exists(file_path) == False:
             print "File is not exist!"
             continue
@@ -422,10 +421,8 @@ def load_dsd(begindate,enddate=""):
     for t1 in dt.datetime_range(begin_dt, end_dt, years=1):
         file_name = "%(y)04d_DSD.txt"%{"y":t1.year}
         
-        file_path = "%(dir)s/indices/DSD/%(fn)s"%{
-                    "dir":NOAA_DIR,
-                    "fn":file_name}
-        
+        file_path = DATA_DIR + NOAA_DIR + "indices/DSD/%(fn)s"%{"fn":file_name}
+                
         if os.path.exists(file_path) == False:
             print "File is not exist!"
             continue
@@ -520,9 +517,7 @@ def load_dpd(begindate, enddate=""):
         #
         file_name = "%(y)04d_DPD.txt"%{"y":year_dt.year}
         
-        file_path = "%(dir)s/indices/DPD/%(fn)s"%{
-                    "dir":NOAA_DIR,
-                    "fn":file_name}
+        file_path = DATA_DIR + NOAA_DIR + "indices/DPD/%(fn)s"%{"fn":file_name}
         
         if os.path.exists(file_path) == False:
             print "File is not exist!"
@@ -607,10 +602,8 @@ def load_events(begindate,enddate=''):
         #
         file_name = "%(y)d%(m)02d%(d)02devents.txt"%{'y':t.year,'m':t.month,'d':t.day}
         
-        file_path = "%(dir)s/events/%(y)4d/%(fn)s"%{
-                    "dir":NOAA_DIR,
-                    "y":t.year,
-                    "fn":file_name}
+        file_path = DATA_DIR + NOAA_DIR + "events/%(y)4d/%(fn)s"%{"y":t.year,"fn":file_name}
+        
         try :
             f  = open(file_path,'r')
             for line in f.readlines():
@@ -690,11 +683,10 @@ def load_srs(begindate,enddate=''):
     for now in dt.series(begin_dt, end_dt,days=1):
         
         filename = "%(yyyy)04d%(mm)02d%(dd)02dSRS.txt"%{"yyyy":now.year,"mm":now.month,"dd":now.day}
-        dirpath = "%(dir)s/SRS/%(yyyy)04d/"%{"dir":NOAA_DIR, "yyyy":now.year}
-        filepath = dirpath + '/' + filename
+        dirpath = DATA_DIR + NOAA_DIR + "SRS/%(yyyy)04d/"%{"yyyy":now.year}
+        filepath = dirpath + filename
     
-        
-        
+                
         text = ''
         if os.path.exists(filepath) == False:
             LOG.warn("File is not exist - %s"%(filepath))
@@ -734,8 +726,7 @@ def load_srs(begindate,enddate=''):
 def draw_dpd(data, days=0, file_path="", color=""):
     import matplotlib.pyplot as plt
     #
-    if (color == ""):
-        color = COLOR_LIST
+    if (color == ""):        color = color_list
     
     #
     dt = data["t0"]
@@ -819,9 +810,9 @@ def draw_dpd(data, days=0, file_path="", color=""):
     return
 
 if __name__ == '__main__':
-    
-    #now = dt.datetime.now()
+    import logging
     logging.basicConfig(level=logging.DEBUG)
+       
     
     now = dt.datetime.now()
     
@@ -834,7 +825,7 @@ if __name__ == '__main__':
 #     tevents.print_text()
     
     
-    #download_srs("1996", now_date_str)
+    download_srs("1996", now_date_str)
     SRSs = load_srs("1996", now_date_str)
     tSRSs = da.Table(data=SRSs,keys=SRS_keys)
     tSRSs.print_text()

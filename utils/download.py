@@ -35,8 +35,6 @@ LOG.setLevel(10)
 
 _download_pools = []
 
-TEMP_DIR = swpy.TEMP_DIR
-
 
 class AutoTempFile():
     _filepath = None
@@ -47,7 +45,7 @@ class AutoTempFile():
         if self._filepath is None:
             now = datetime.datetime.now()
             print now
-            self._filepath = TEMP_DIR + '/' + now.strftime("%Y%m%d_%H%M%S_%f.temp")  
+            self._filepath = now.strftime("%Y%m%d_%H%M%S_%f.temp")  
             
     def get_path(self):
         return self._filepath
@@ -59,97 +57,6 @@ class AutoTempFile():
         except:
             LOG.error("File removing error!")
 
-class DownloadPool():
-    '''
-    Class for download file list. 
-    '''
-    def __init__(self,max_pool=10,iter_obj=None):
-        self.recieving = [False]
-        self._pool_thread = None
-        self._pool = []
-        self._max = max_pool
-                        
-        if iter_obj is not None:
-            self._pool.extend(iter_obj)
-            
-    def start(self,output_list,overwrite=False,trials=3,max_thread=8):
-        if self.recieving[0] == False : 
-            self.recieving[0] = True
-        else:
-            LOG.warn("Download Pool has been already started")
-            return False
-        
-        assert self._pool_thread == None, 'Thread is not normally terminated'
-        
-        self._pool_thread = threading.Thread(target=_pool_thread,\
-                                              args=(self.recieving,self._pool,output_list,overwrite,trials,max_thread))
-        self._pool_thread.start()
-        assert self._pool_thread != None, 'Thread is not created'
-        
-        return True        
-    def append(self,src,dst):
-        
-        while(len(self._pool) > self._max and self._pool_thread.isAlive() == True):
-            time.sleep(0.1)
-            
-        if(self._pool_thread.isAlive() == False):
-            return False
-        
-        self._pool.append((src,dst))
-               
-        
-    def close(self):
-        if self.recieving[0] == True:
-            self.recieving[0] = False
-            #print 'id(self.recieving) : %d'%(id(self.recieving))
-        else:
-            LOG.warn("Download Pool was not started")
-            return False
-        
-        assert self._pool_thread != None, 'Thread is not normally terminated before closing itself'
-        
-        while(self._pool_thread.isAlive() == True):
-            print ("Waiting to exit a thread")
-            self._pool_thread.join(1)
-        
-        self._pool_thread = None
-        #print ("pool_thread end")
-            
-        
-        return True
-def _pool_thread(r,input_pool,output_list=[],overwrite=False,trials=3,max_thread=3):
-    '''
-    Download files in pool class. when status of pool is end, pool count is 0
-    This function will be terminated. return number of download files
-    '''
-    assert type(input_pool) == list, 'Wrong input_pool type. must be download_pool'
-    
-    threads = []
-    
-    finish = False
-    while(not finish):
-        #print "r",r,'id',id(r)
-        try:
-            if r[0] == False and len(input_pool) == 0 and len(threads) == 0:
-                finish = True
-        
-            if len(threads) < max_thread and len(input_pool) > 0:
-                src,dst = input_pool.pop()
-                th = DownloadThread(src,dst,None,overwrite,trials)
-                threads.append(th)
-                th.start()
-                
-            for th in threads:
-                if(th.isAlive() == False):
-                    output_list.append((th.src,th.dst,th.rval)) 
-                    threads.remove(th)
-            
-        except:
-            #print ('parent(%s),this(%s),Threads(%d),Pool(%d)'%(r,finish,len(threads),len(input_pool)))
-            break
-                    
-        time.sleep(1)
-       
 class DownloadThread(threading.Thread):
     '''
     class for mulitthread of download_http_file
@@ -168,17 +75,6 @@ class DownloadThread(threading.Thread):
         
         self.rval = download_http_file(self.src, self.dst, self.post_args, self.overwrite, self.trials)
 
-
-def callback(blocks_read,block_size,total_size):
-    global g_callback_last_msg
-    if total_size < 0:
-    # Unknown size
-        g_callback_last_msg = '\rRead %d blocks (%d bytes)' % (blocks_read,blocks_read * block_size)    
-    else:
-        amount_read = blocks_read * block_size
-        g_callback_last_msg = '\rRead %d blocks, or %d/%d' %(blocks_read, amount_read, total_size)
-    
-    sys.stderr.write(g_callback_last_msg)
 
 def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,trials=3):
     '''
@@ -215,6 +111,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
    
     t = 0
     is_response = False
+
     while(not is_response and t < trials): 
         
         contents = ""
@@ -230,6 +127,9 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
 
             if r.status == 200:
                 contents = r.read()
+            elif r.status in [300, 301, 302, 303, 307]:
+                new_loc  = r.getheader('Location')
+                contents = download_http_file(new_loc,post_args,overwrite,trials-1)
             else:
                 LOG.error("HTTP response error : %d, %s"%(r.status, r.reason))
 
@@ -244,12 +144,12 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         if not is_response:
             LOG.debug("Re-trying...(%d/%d)"%(t,trials))
             time.sleep(5)
-           
+
+        
    
     # File saving... 
     if dst_path is not None:
-
-        if is_response == False:
+        if contents == '':
             return False
 
         dst_path2 = make_path(dst_path) + '.down'

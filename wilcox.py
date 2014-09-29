@@ -4,12 +4,11 @@ Created on 2013. 12. 9.
 @author: jongyeob
 '''
 
-import swpy
 
-import os.path
-import utils.date_time as dt
-import utils.download as dl
-from utils.utils import make_path
+from swpy import utils
+from swpy.utils import date_time as dt,\
+                       download as dl,\
+                       Config
 
 
 PROGRAM_PHOTOSPHERIC = 0
@@ -23,7 +22,7 @@ PROJECTION_LATITUDE          = 1
 PROJECTION_SINED_LATITUDE    = 0
 
 DATATYPE_PRELIM          = 0
-DATATYPE_FINAL          = 1
+DATATYPE_FINAL           = 1
 
 program_name = ['Photospheric','ClassicSS','Radial250','Radial325','Filled']
 program_filename =['p','ss','r250','r325','f']
@@ -32,7 +31,21 @@ projection_filename = ['sl','l']
 datatype_name = ['Prelim','Final']
 datatype_filename = ['prelim','final']
 
-DATA_DIR = swpy.DATA_DIR + '/wilcox/synoptic'
+DATA_DIR = 'data/'
+SUB_DIR = '/wilcox/synoptic'
+PACKAGES = ''
+LOG = utils.get_logger(__name__)
+
+def initialize(config=Config()):
+    global DATA_DIR,PACKAGES
+    
+    config.set_sections(__name__)
+    
+    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
+    PACKAGES = config.load('PACKAGES',PACKAGES)
+    
+    for pkg in PACKAGES.split():
+        utils.import_all(pkg, globals())
 
 def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJECTION_SINED_LATITUDE,datatype=DATATYPE_PRELIM,overwrite=False):
     '''
@@ -53,15 +66,15 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
     cgi = 'http://wso.stanford.edu/cgi-bin/wso_prsyn.pl'   
 
     args = 'center=%s&Type=%s&ProgName=%s&Projection=%s'%(input_dt.strftime("%Y_%m_%d_%H"),datatype_name[datatype],program_name[program],projection_name[projection])
-    print args
+    
     
     dstfile = '/wso_syn_%s_%s_%s_%s.txt'%(input_dt.strftime("%Y_%m_%d_%H"),\
                                        program_filename[program],projection_filename[projection],\
                                        datatype_filename[datatype])
-    dstpath = DATA_DIR + dstfile
-    print dstpath
+    dstpath = DATA_DIR + SUB_DIR + dstfile
     
-    if overwrite == False and os.path.exists(dstpath) == True:
+    
+    if overwrite == False and utils.path.exists(dstpath) == True:
         return dstpath
      
     contents = dl.download_http_file(cgi,post_args=args)
@@ -78,16 +91,12 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
     if contents[i1:i2].find("30 data points") == -1:
         return None 
     
-    with open(make_path(dstpath), "w") as fw:
+    with open(utils.make_path(dstpath), "w") as fw:
         fw.write(contents[i1:i2])
      
     return dstpath
 
-def path_local(datetime):
-    pass
-def path_wso(datetime):
-    pass
 
 if __name__ == '__main__':
-    print "TEST : WILCOX download"
-    print download_synoptic_file("2013-12-19")
+    
+    download_synoptic_file("2013-12-19")

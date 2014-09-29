@@ -24,10 +24,7 @@ from ctypes import *
 import os
 import string
 
-import swpy
-from swpy.utils import datetime as dt ,download as dl
-
-
+from swpy.utils import date_time as dt ,download as dl
 
 # SpaeWeatherPy library
 #import config as cnf
@@ -55,8 +52,8 @@ cactus_lasco_url = "http://sidc.oma.be/cactus/catalog/LASCO/"
 cactus_secchia_url = "http://secchi.nrl.navy.mil/cactus/SECCHI-A/"
 cactus_secchib_url = "http://secchi.nrl.navy.mil/cactus/SECCHI-B/"
 
-cactus_lasco_dir = swpy.DATA_DIR + "/sidc/cactus/lasco/";
-cactus_cor2_dir = swpy.DATA_DIR + "/sidc/cactus/cor2/";
+cactus_lasco_dir = "sidc/cactus/lasco/";
+cactus_cor2_dir = "sidc/cactus/cor2/";
 
 
 # monthly files

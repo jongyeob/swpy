@@ -11,6 +11,48 @@ from os import path
 import datetime
 import sys
 
+def replace(format_string,kw):
+    '''
+    Replace datetime format to a filled string with datetime
+    :param string format:
+    :param datetime datetime_info: 
+    '''
+    
+    f = format_string    
+
+    for k in kw.iterkeys():
+        i = f.find('%('+k+')') # i : index
+        while(i != -1): 
+            i2 = f.find('%',i+1) # i2 : next index before '%'
+            if i2 == -1: i2 = len(f)
+            v = f[i:i2]%{k:kw[k]}
+            f = f[:i] + v + f[i2:]
+            i = f.find('%('+k+')') 
+
+        
+    return f    
+def import_all(name,globals={},locals={}):
+    try:
+        pkg   = __import__(name)
+        for key in pkg.__all__:
+            globals[key] = getattr(pkg,key)
+            locals[key]  = getattr(pkg,key)
+            LOG.info('Import %s in %s'%(key,name))
+    except Exception as err:
+        LOG.error('Download package is not loaded : %s'%(str(err)))
+        return False
+    
+    return True
+
+def get_logger(name='',level=0,handler=logging.NullHandler()):
+    if name == '__main__':
+        name = ''
+        
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+    return logger
+    
 def print_out(msg):
     sys.stdout.write(msg+'\n')
 def print_err(msg):

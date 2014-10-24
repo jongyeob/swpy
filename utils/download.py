@@ -116,7 +116,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         
         contents = ""
         try:
-            conn = httplib.HTTPConnection(domain_name)
+            conn = httplib.HTTPConnection(domain_name,timeout=75)
             
             if(post_args != None):
                 conn.request("POST", file_path, post_args,headers)

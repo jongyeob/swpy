@@ -40,7 +40,6 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string):
     
        
     for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
-        
         ft = get_datetime_nasa(f)
         if ft == None:
             LOG.error("Wrong file : %s"%(f))

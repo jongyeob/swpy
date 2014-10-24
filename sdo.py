@@ -12,7 +12,6 @@ import utils.date_time as dt
 import utils.download as dl
 import utils.utils as utl
 from utils.config import Config 
-from utils.download import DownloadPool
 
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
@@ -27,7 +26,7 @@ def initialize():
     cnf.load('data_dir', DATA_DIR)
     
         
-def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
+def download_hmi_jp2(start_datetime,end_datetime,image_string):
     '''
     Downloads hmi jp2 files
     
@@ -39,31 +38,22 @@ def download_hmi_jp2(start_datetime,end_datetime,image_string,threads=8):
     
     dlist = []
     
-    pool = DownloadPool()    
-    pool.start(dlist,max_thread=threads)
-    
-    try:
        
-        for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
-     
-            ft = get_datetime_nasa(f)
-            if ft == None:
-                LOG.error("Wrong file : %s"%(f))
-                continue
-    
-            dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
-            print("JP2 Path(local) : %s"%(dst_filepath))
-                   
-            rv = pool.append(f,dst_filepath)
-                
-            if rv == False:
-                LOG.error("Download thread fail : %s->%s"%(f,dst_filepath))
-                break
-    except Exception as err: raise err
-    finally:
-        pool.close()
+    for f in hmi_jp2_iter_nasa(start_datetime, end_datetime,image_string):
         
-    dlist.sort()
+        ft = get_datetime_nasa(f)
+        if ft == None:
+            LOG.error("Wrong file : %s"%(f))
+            continue
+    
+        dst_filepath = DATA_DIR + hmi_jp2_path_local(ft,image_string)
+        print("JP2 Path(local) : %s"%(dst_filepath))
+                   
+        rv = dl.download_http_file(f,dst_filepath)
+                
+        if rv == False:
+            LOG.error("Download thread fail : %s->%s"%(f,dst_filepath))
+            break
             
     return dlist    
 

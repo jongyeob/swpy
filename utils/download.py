@@ -36,7 +36,6 @@ LOG.setLevel(10)
 _download_pools = []
 
 
-
 class AutoTempFile():
     _filepath = None
     
@@ -162,7 +161,6 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         except Exception as err:
             LOG.error("File Save error! - %s"%str(err))
             return False
-
 
     return contents
 

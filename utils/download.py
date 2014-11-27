@@ -360,10 +360,10 @@ def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, login_id="",
         # 1. The local file does not exist.
         # 2. OVERWRITE = TRUE
         # 3. The file sizes on a remote path and a local path are different.
-        fw = open(make_path(dst_path), "wb")
-		#with open(make_path(dst_path), 'wb') as fw:
-	    ftp.retrbinary("RETR " + remote_file_path, fw.write)
-		file.close()
+        #fw = open(make_path(dst_path), "wb")
+	with open(make_path(dst_path), 'wb') as fw:
+		ftp.retrbinary("RETR " + remote_file_path, fw.write)
+	#file.close()
         
         ftp.quit()
         print "Downloaded, %s."%(src_url)

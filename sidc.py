@@ -5,10 +5,8 @@ from swpy.utils import date_time as dt,\
                        download as dl
 
 LOG = utils.get_logger(__name__)
-DATA_DIR = 'data/'
+DATA_DIR = 'data/sidc/'
 SSN_URL = "http://sidc.oma.be/DATA/DAILYSSN/"
-SSN_DIR = "sidc/ssn/daily/"; 
-
 
 def download_ssn(begindate, enddate=""):
 
@@ -19,7 +17,8 @@ def download_ssn(begindate, enddate=""):
     while ( now_dt <= end_dt ):
         src = "%(url)sdssn%(yyyy)04d.dat"%{"url":SSN_URL, "yyyy":now_dt.year}
 
-        dst = DATA_DIR + SSN_DIR + "%(yyyy)04d.txt"%{"yyyy":now_dt.year}
+
+        dst = DATA_DIR + "ssn/daily/ssn_%(yyyy)04d.txt"%{"yyyy":now_dt.year}
 
 
         # download it to a tmp file

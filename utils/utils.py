@@ -11,6 +11,8 @@ from os import path
 import datetime
 import sys
 
+from config import Config
+
 def replace(format_string,kw):
     '''
     Replace datetime format to a filled string with datetime

@@ -57,7 +57,7 @@ class Config():
     def get_sections(self):
         return self._config.sections()
     
-    def set_section(self,section):
+    def set_section(self,section,ns=None):
         if section in [None,'','__main__']:
             self._section = 'DEFAULT'
             return
@@ -67,7 +67,21 @@ class Config():
             self._config.add_section(self._section)
             self._change = True
             
-    
+    def load_ns(self,option,ns,section=None):
+        default = ''
+        if ns.has_key(option) == True:
+            default = ns[option] 
+        value = self.load(option,default,section)
+        ns[option] = value
+        
+        return value
+    def get_option(self,option,value=None):
+        if value is not None:
+            value = str(value)
+            self._config.set(self._section,option,value)
+
+        return self._config.get(self._section,option)
+        
     def load(self,option,default,section=None):
         '''
         return option value (string)
@@ -89,6 +103,7 @@ class Config():
             self._change = True
         
         value = self._config.get(self._section, option)
+        
         
         return value
     

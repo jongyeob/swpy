@@ -15,11 +15,9 @@ from swpy import utils
 from swpy.utils import download as dl,\
                        date_time as dt
 
-DATA_DIR = 'data/'
+DATA_DIR = 'data/gmu/seeds'
 # SpaeWeatherPy library
 seeds_url = "http://spaceweather.gmu.edu/seeds/"
-seeds_dir = DATA_DIR + "gmu/seeds/"; 
-
 
 def download_cme(begindate, enddate=""):
     if enddate == '': enddate = begindate
@@ -41,10 +39,7 @@ def download_cme(begindate, enddate=""):
             "yyyy":now_dt.strftime("%Y"),
             "mm":now_dt.strftime("%m")}
 
-        file_path = "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme.txt"%{
-            "dir":seeds_dir,
-            "yyyy":now_dt.strftime("%Y"),
-            "mm":now_dt.strftime("%m")}
+        file_path = DATA_DIR + "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme.txt"%{"yyyy":now_dt.strftime("%Y"),"mm":now_dt.strftime("%m")}
         
         # Quick Look
         if (now_dt > last_dt):
@@ -52,10 +47,7 @@ def download_cme(begindate, enddate=""):
                 "yyyy":now_dt.strftime("%Y"),
                 "mm":now_dt.strftime("%m")}
 
-            file_path = "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme_ql.txt"%{
-                "dir":seeds_dir,
-                "yyyy":now_dt.strftime("%Y"),
-                "mm":now_dt.strftime("%m")}
+            file_path = DATA_DIR + "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme.txt"%{"yyyy":now_dt.strftime("%Y"),"mm":now_dt.strftime("%m")}
             
 
         # Download a file.
@@ -106,8 +98,7 @@ def download_cme(begindate, enddate=""):
                         "mm":yyyymmdd[4:6],
                         "fn":cme_file_name}
 
-                file_path = "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(fn)s"%{
-                    "dir":seeds_dir,
+                file_path = DATA_DIR + "%(yyyy)s/%(yyyy)s%(mm)s/%(fn)s"%{
                     "yyyy":yyyymmdd[0:4],
                     "mm":yyyymmdd[4:6],
                     "fn":cme_file_name}
@@ -128,8 +119,7 @@ def download_cme(begindate, enddate=""):
                         "mm":yyyymmdd[4:6],
                         "fn":cme_file_name}
 
-                    file_path = "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(fn)s"%{
-                        "dir":seeds_dir,
+                    file_path = DATA_DIR + "%(yyyy)s/%(yyyy)s%(mm)s/%(fn)s"%{
                         "yyyy":yyyymmdd[0:4],
                         "mm":yyyymmdd[4:6],
                         "fn":cme_ql_file_name}
@@ -171,15 +161,13 @@ def load_cme(begindate, enddate=""):
     now_dt = begin_dt.replace(day=1)
     while ( now_dt <= end_dt ):
 
-        file_path = "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme.txt"%{
-            "dir":seeds_dir,
+        file_path = DATA_DIR + "%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme.txt"%{
             "yyyy":now_dt.strftime("%Y"),
             "mm":now_dt.strftime("%m")}
         
         # Quick Look
         if (os.path.exists(file_path) == False):
-            file_path = "%(dir)s%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme_ql.txt"%{
-                "dir":seeds_dir,
+            file_path = DATA_DIR + "%(yyyy)s/%(yyyy)s%(mm)s/%(yyyy)s%(mm)s_seeds_cme_ql.txt"%{
                 "yyyy":now_dt.strftime("%Y"),
                 "mm":now_dt.strftime("%m")}
 

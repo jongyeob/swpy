@@ -52,8 +52,7 @@ cactus_lasco_url = "http://sidc.oma.be/cactus/catalog/LASCO/"
 cactus_secchia_url = "http://secchi.nrl.navy.mil/cactus/SECCHI-A/"
 cactus_secchib_url = "http://secchi.nrl.navy.mil/cactus/SECCHI-B/"
 
-cactus_lasco_dir = "sidc/cactus/lasco/";
-cactus_cor2_dir = "sidc/cactus/cor2/";
+DATA_DIR = 'data/sidc/cactus/'
 
 
 # monthly files
@@ -68,8 +67,8 @@ def download_cactus_lasco(begindate, enddate=""):
         # level0
         src1 = "%(url)s2_5_0/%(yyyy)04d/%(mm)02d/cmecat.txt"% \
             {"url":cactus_lasco_url, "yyyy":now_dt.year, "mm":now_dt.month}
-        dst1 = "%(dir)s%(yyyy)04d/cactus_lasco_l0_%(yyyy)04d%(mm)02d.txt"% \
-            {"dir":cactus_lasco_dir, "yyyy":now_dt.year, "mm":now_dt.month}
+        dst1 = DATA_DIR + "lasco/%(yyyy)04d/cactus_lasco_l0_%(yyyy)04d%(mm)02d.txt"% \
+            {"yyyy":now_dt.year, "mm":now_dt.month}
 
         rv = dl.download_http_file(src1, dst1,overwrite=True)
         if (rv == True):
@@ -79,8 +78,8 @@ def download_cactus_lasco(begindate, enddate=""):
         if (rv == False):
             src2 = "%(url)s2_5_0/qkl/%(yyyy)04d/%(mm)02d/cmecat.txt"% \
                 {"url":cactus_lasco_url, "yyyy":now_dt.year, "mm":now_dt.month}
-            dst2 = "%(dir)s%(yyyy)04d/cactus_lasco_ql_%(yyyy)04d%(mm)02d.txt"% \
-                {"dir":cactus_lasco_dir, "yyyy":now_dt.year, "mm":now_dt.month}
+            dst2 = DATA_DIR + "lasco/%(yyyy)04d/cactus_lasco_ql_%(yyyy)04d%(mm)02d.txt"% \
+                {"yyyy":now_dt.year, "mm":now_dt.month}
             
             rv = dl.download_http_file(src2, dst2,overwrite=True)
             if (rv == True):

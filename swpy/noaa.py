@@ -1,8 +1,3 @@
-##
-##
-## Real-tme Dst index : 1967 - 2008
-## Final Dst index :2009 - current
-##
 
 # standard library
 import os
@@ -15,17 +10,14 @@ from swpy.utils import date_time as dt,\
                        data as da,\
                        Config
 
-
-
 # SpaeWeatherPy library
 #noaa_url = "ftp://ftp.swpc.noaa.gov/pub/warehouse/"
-DATA_DIR = 'data/'
-NOAA_URL = "http://www.swpc.noaa.gov/ftpdir/"
-NOAA_DIR = "noaa/"
+LIB_NAME = 'NOAA'
+DATA_DIR = 'data/noaa/'
 TEMP_DIR = 'temp/'
+NOAA_URL = "http://www.swpc.noaa.gov/ftpdir/"
 PACKAGES = ''
-LOG = utils.get_logger(__name__)
-
+LOG = utils.get_logger(LIB_NAME)
 
 DGD_keys = ['date',\
             'mid_a', 'mid_k:0','mid_k:3','mid_k:6','mid_k:9','mid_k:12','mid_k:15','mid_k:18','mid_k:21',\
@@ -41,16 +33,18 @@ events_keys = ['date','event:no','event:flag','begin:flag','begin:time',\
 SRS_keys = ['date','nmbr','loc','l0','area','z','ll','nn','mag']
 
 
-
 first_data = {'events':dt.parse(1996,07,31),\
               'SRS':dt.parse(1996,02,01)}
 color_list = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
-def initialize(config=Config()):
-    global DATA_DIR,PACKAGES
-    config.set_section(__name__)
-    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
-    PACKAGES = config.load('PACKAGES',PACKAGES)
+def initialize(config=''):
+    if isinstance(config,str):
+        config = Config(config)
+        
+    config.set_section(LIB_NAME)
+    config.load_ns('DATA_DIR',globals())
+    config.load_ns('TEMP_DIR',globals())
+    config.load_ns('PACKAGES',globals())
     
     for pkg in PACKAGES.split():
         utils.import_all(pkg, globals())
@@ -61,14 +55,11 @@ def get_path(suffix,dateobj):
     d = dt.parse(dateobj)
     if d == None:
         return path
-    
         
-    dirpath = DATA_DIR + NOAA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":d.year, "suffix":suffix}
+    dirpath = DATA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":d.year, "suffix":suffix}
     filename ="%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":d.year,"mm":d.month,"dd":d.day}
     
-    path = utils.path.normpath(DATA_DIR+ dirpath + filename)
-    
-        
+    path = utils.path.normpath(dirpath + filename)
     
     return path
 
@@ -81,24 +72,20 @@ def get_files(suffix,begindate='',enddate=''):
             
     files = []
             
-    dirpath = DATA_DIR + NOAA_DIR + "%(suffix)s/"%{"suffix":suffix}
+    dirpath = "%(suffix)s/"%{"suffix":suffix}
     file_pattern = "*%(suffix)s.txt"%{"suffix":suffix}
       
     filepath = DATA_DIR + dirpath + file_pattern
         
     for f  in utils.get_files(filepath):
         ft = dt.parse(f)
-        if begindate == '' and enddate =='':
-            files.append(f)
+        if enddate != '' and enddate < ft:           
             continue
         
-        if begindate == '' and enddate >= ft:
-            files.append(f)
+        if begindate != '' and begindate > ft:
             continue
         
-        if enddate == '' and begindate <= ft:
-            files.append(f)
-            continue
+        files.append(f)
 
     
     return files
@@ -144,7 +131,7 @@ def _download_template(suffix, begindate, enddate="",overwrite=False):
 
         
         src_dir = "%(url)swarehouse/%(yyyy)04d/"%{"url":NOAA_URL,"yyyy":now_dt.year}        
-        dst_dir = DATA_DIR + NOAA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":now_dt.year, "suffix":suffix}
+        dst_dir = DATA_DIR + "%(suffix)s/%(yyyy)04d/"%{"yyyy":now_dt.year, "suffix":suffix}
         
         txt_file = "%(yyyy)04d%(mm)02d%(dd)02d%(suffix)s.txt"%{"suffix":suffix,"yyyy":now_dt.year,"mm":now_dt.month,"dd":now_dt.day}
         tar_file = "%04d_%s.tar.gz"%(now_dt.year,suffix)
@@ -250,7 +237,7 @@ def _download_index(begindate, enddate="", type="",overwrite=False):
             "url":NOAA_URL,
                 "fn":file_name}
         
-        dst = DATA_DIR + NOAA_DIR + "indices/%(type)s/%(fn)s"%{
+        dst = DATA_DIR + "indices/%(type)s/%(fn)s"%{
             "type":type,
             "fn":file_name}
         
@@ -296,7 +283,7 @@ def load_dgd(begindate,enddate=""):
         
         file_name = "%(y)04d_DGD.txt"%{"y":t1.year}
         
-        file_path = DATA_DIR + NOAA_DIR + "indices/DGD/%(fn)s"%{"fn":file_name}
+        file_path = DATA_DIR + "indices/DGD/%(fn)s"%{"fn":file_name}
     
         if os.path.exists(file_path) == False:
             print "File is not exist!"
@@ -421,7 +408,7 @@ def load_dsd(begindate,enddate=""):
     for t1 in dt.datetime_range(begin_dt, end_dt, years=1):
         file_name = "%(y)04d_DSD.txt"%{"y":t1.year}
         
-        file_path = DATA_DIR + NOAA_DIR + "indices/DSD/%(fn)s"%{"fn":file_name}
+        file_path = DATA_DIR + "indices/DSD/%(fn)s"%{"fn":file_name}
                 
         if os.path.exists(file_path) == False:
             print "File is not exist!"
@@ -517,7 +504,7 @@ def load_dpd(begindate, enddate=""):
         #
         file_name = "%(y)04d_DPD.txt"%{"y":year_dt.year}
         
-        file_path = DATA_DIR + NOAA_DIR + "indices/DPD/%(fn)s"%{"fn":file_name}
+        file_path = DATA_DIR + "indices/DPD/%(fn)s"%{"fn":file_name}
         
         if os.path.exists(file_path) == False:
             print "File is not exist!"
@@ -602,7 +589,7 @@ def load_events(begindate,enddate=''):
         #
         file_name = "%(y)d%(m)02d%(d)02devents.txt"%{'y':t.year,'m':t.month,'d':t.day}
         
-        file_path = DATA_DIR + NOAA_DIR + "events/%(y)4d/%(fn)s"%{"y":t.year,"fn":file_name}
+        file_path = DATA_DIR + "events/%(y)4d/%(fn)s"%{"y":t.year,"fn":file_name}
         
         try :
             f  = open(file_path,'r')
@@ -683,7 +670,7 @@ def load_srs(begindate,enddate=''):
     for now in dt.series(begin_dt, end_dt,days=1):
         
         filename = "%(yyyy)04d%(mm)02d%(dd)02dSRS.txt"%{"yyyy":now.year,"mm":now.month,"dd":now.day}
-        dirpath = DATA_DIR + NOAA_DIR + "SRS/%(yyyy)04d/"%{"yyyy":now.year}
+        dirpath = DATA_DIR + "SRS/%(yyyy)04d/"%{"yyyy":now.year}
         filepath = dirpath + filename
     
                 

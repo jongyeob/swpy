@@ -27,11 +27,12 @@ INST_KEYS = [MAG_KEYS,SWEPAM_KEYS,SIS_KEYS,LOC_KEYS]
 
 def initialize(config=Config()):
     global DATA_DIR,PACKAGES
-    config.set_section(__name__)
-    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
-    PACKAGES = config.load('PACKAGES',PACKAGES)
     
-    LOG = config.get_logger()
+    config.set_section(__name__)
+    config.load_ns('DATA_DIR',globals())
+    config.load_ns('PACKAGES',globals())
+    
+    LOG = utils.get_logger()
     for pkg in PACKAGES.split():
         utils.import_all(pkg, globals())
         

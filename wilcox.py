@@ -31,8 +31,7 @@ projection_filename = ['sl','l']
 datatype_name = ['Prelim','Final']
 datatype_filename = ['prelim','final']
 
-DATA_DIR = 'data/'
-SUB_DIR = '/wilcox/synoptic'
+DATA_DIR = 'data/wilcox/synoptic/'
 PACKAGES = ''
 LOG = utils.get_logger(__name__)
 
@@ -68,10 +67,10 @@ def download_synoptic_file(datetime,program=PROGRAM_PHOTOSPHERIC,projection=PROJ
     args = 'center=%s&Type=%s&ProgName=%s&Projection=%s'%(input_dt.strftime("%Y_%m_%d_%H"),datatype_name[datatype],program_name[program],projection_name[projection])
     
     
-    dstfile = '/wso_syn_%s_%s_%s_%s.txt'%(input_dt.strftime("%Y_%m_%d_%H"),\
+    dstfile = 'wso_syn_%s_%s_%s_%s.txt'%(input_dt.strftime("%Y_%m_%d_%H"),\
                                        program_filename[program],projection_filename[projection],\
                                        datatype_filename[datatype])
-    dstpath = DATA_DIR + SUB_DIR + dstfile
+    dstpath = DATA_DIR + dstfile
     
     
     if overwrite == False and utils.path.exists(dstpath) == True:

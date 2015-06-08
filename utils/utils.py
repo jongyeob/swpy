@@ -6,10 +6,12 @@ Created on 2013. 11. 9.
 import logging
 LOG = logging.getLogger(__name__)
 
-import os,glob,math
+import sys,os,glob,math
 from os import path
 import datetime
 import sys
+import date_time as dt
+from config import Config
 
 class NullHandler(logging.Handler): # Compatiable for > 2.7
     def emit(self,record): pass
@@ -17,26 +19,56 @@ class NullHandler(logging.Handler): # Compatiable for > 2.7
 if 'NullHandler' not in dir(logging):
     logging.NullHandler = NullHandler
 
-def replace(format_string,kw):
+def request_files(path_format,start_datetime,end_datetime='',cadence=0):
     '''
-    Replace datetime format to a filled string with datetime
-    :param string format:
-    :param datetime datetime_info: 
+    request files
+    
+    parameters:
+        path_format - string 
+        start_datetime - string
+    optional:
+        end_datetime   - string
+        cadence        - number, seconds
+    returns:
+        (list) filepath
+    '''
+        
+    start   = dt.parse(start_datetime)
+    end     = start 
+    dir_format,file_format = path.split(path_format)
+        
+    if end_datetime != '':
+        end = dt.parse(end_datetime)
+              
+    files = []
+
+    for _t in dt.series(start,end,**dt.get_least_delta(dir_format)):
+        data_dir = dt.replace(dir_format,_t)    
+        _files = get_files(data_dir+'/*')
+        files.extend(_files)
+
+    files.sort()
+    datetime_parser = lambda p:dt.parse_string(path_format,p)
+    ret = dt.filter(files,start_datetime,end_datetime,cadence,datetime_parser=datetime_parser)
+        
+    return ret
+
+def replace(format_string,**kwargs):
+    '''
+    Replace a string from formats defined as %(...)  
     '''
     
     f = format_string    
 
-    for k in kw.iterkeys():
-        i = f.find('%('+k+')') # i : index
+    for k in kwargs.iterkeys():
+        i = f.find('$('+k+')') # i : index
         while(i != -1): 
-            i2 = f.find('%',i+1) # i2 : next index before '%'
-            if i2 == -1: i2 = len(f)
-            v = f[i:i2]%{k:kw[k]}
-            f = f[:i] + v + f[i2:]
-            i = f.find('%('+k+')') 
-
+            i2 = i + len(k)+3
+            f = f[:i] + kwargs[k] + f[i2:]
+            i = f.find('$('+k+')') 
         
-    return f    
+    return f
+    
 def import_all(name,globals={},locals={}):
     try:
         pkg   = __import__(name)
@@ -70,6 +102,7 @@ def get_files(path_exp):
     file_list = []
     for dirname,_,_ in os.walk(arg_path[0]):
         for filepath in glob.glob(dirname+'/'+ arg_path[1]):
+            filepath = filepath.replace('\\','/')
             file_list.append(filepath)
         
     return file_list

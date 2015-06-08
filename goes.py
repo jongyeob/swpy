@@ -34,9 +34,7 @@ from swpy.utils import Config,\
                        date_time as dt,\
                        download as dl
 
-DATA_DIR = 'data/'
-GOES_DIR = DATA_DIR + "noaa/goes/"
-GOES_XRAY_DIR = DATA_DIR + "goes/xray/";
+DATA_DIR = 'data/noaa/goes/'
 LOG = utils.get_logger(__name__)
 # SpaeWeatherPy library
 ERROR_INT = -99999
@@ -50,11 +48,9 @@ goes_url = "http://satdat.ngdc.noaa.gov/sem/goes/data/new_avg/"
 color_list = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
 def initialize(config=Config()):
-    global DATA_DIR
-    
+       
     config.set_section(__name__)
-    
-    DATA_DIR = config.load('DATA_DIR',DATA_DIR)
+    config.load_ns('DATA_DIR',globals())
     
     
     
@@ -100,7 +96,7 @@ def download_xray_csv(begindate, enddate=""):
             "goes_no":goes_no,
             "fn":file_name}
 
-        dst = "%(dir)sxray/csv/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":dt1.year, "fn":file_name}
+        dst = DATA_DIR + "xray/csv/%(y)04d/%(fn)s"%{"y":dt1.year, "fn":file_name}
 
         print src
 
@@ -137,7 +133,7 @@ def download_xray_csv(begindate, enddate=""):
             
             # Open a file.
             file_name = "%(yyyymmdd)s_xrs_1m.txt"%{"yyyymmdd":day_dt.strftime("%Y%m%d")}
-            file_path = "%(dir)sxray/1min/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":day_dt.year, "fn":file_name}
+            file_path = DATA_DIR + "xray/1min/%(y)04d/%(fn)s"%{"y":day_dt.year, "fn":file_name}
 
             utils.make_path(file_path)
 
@@ -269,7 +265,7 @@ def download_mag_csv(begindate, enddate=""):
             "goes_no":goes_no,
             "fn":file_name}
         
-        dst = "%(dir)smagneto/csv/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":dt1.year, "fn":file_name}
+        dst = DATA_DIR + "magneto/csv/%(y)04d/%(fn)s"%{"y":dt1.year, "fn":file_name}
         
         print src
         
@@ -306,7 +302,7 @@ def download_mag_csv(begindate, enddate=""):
             
             # Open a file.
             file_name = "%(yyyymmdd)s_magneto_1m.txt"%{"yyyymmdd":day_dt.strftime("%Y%m%d")}
-            file_path = "%(dir)smagneto/1min/%(y)04d/%(fn)s"%{"dir":GOES_DIR, "y":day_dt.year, "fn":file_name}
+            file_path = DATA_DIR + "magneto/1min/%(y)04d/%(fn)s"%{"y":day_dt.year, "fn":file_name}
             
             utils.make_path(file_path)
             
@@ -436,8 +432,8 @@ def download_xray(begindate, enddate=''):
         # 1min
         src = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
             {"url":goes_xray_url, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
-        dst = "%(dir)s%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
-            {"dir":GOES_XRAY_DIR, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+        dst = DATA_DIR + "xray/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
+            {"yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
 
         rv = dl.download_http_file(src, dst)
         if (rv == False):
@@ -448,8 +444,8 @@ def download_xray(begindate, enddate=''):
         # 5 min
         src = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
             {"url":goes_xray_url, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
-        dst = "%(dir)s%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
-            {"dir":GOES_XRAY_DIR, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+        dst = DATA_DIR + "xray/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
+            {"yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
 
         #
         now_dt = now_dt + datetime.timedelta(days=1)
@@ -467,8 +463,8 @@ def load_xray_1m(begindate, enddate=""):
     now_dt = begin_dt
     while ( now_dt <= end_dt ):
         # 1min : yyyymmdd_xrs_1m.txt
-        file_path = "%(dir)sxray/1min/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_xrs_1m.txt"% \
-            {"dir":GOES_DIR, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+        file_path = DATA_DIR + "xray/1min/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_xrs_1m.txt"% \
+            {"yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
         
         
         f = open(file_path, "r")

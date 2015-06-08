@@ -11,6 +11,7 @@ import logging
 import threading
 
 import re
+import utils
 
 MONTH_NUMBERS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
 RE_FORMATS = {'%Y': '\d{4}',
@@ -23,14 +24,14 @@ RE_FORMATS = {'%Y': '\d{4}',
               '%f': '\d{1,6}',
               '%b': '[a-zA-Z]+'}
 RE_NAMES = {'%Y': '?P<Y>',
-                    '%y': '?P<y>',
-                    '%m': '?P<m>',
-                    '%d': '?P<d>',
-                    '%H': '?P<H>',
-                    '%M': '?P<M>',
-                    '%S': '?P<S>',
-                    '%f': '?P<f>',
-                    '%b': '?P<b>'}
+            '%y': '?P<y>',
+            '%m': '?P<m>',
+            '%d': '?P<d>',
+            '%H': '?P<H>',
+            '%M': '?P<M>',
+            '%S': '?P<S>',
+            '%f': '?P<f>',
+            '%b': '?P<b>'}
 DIC_NAMES = {'%Y': '%(Y)04d',
              '%y': '%(y)02d',
              '%m': '%(m)02d',
@@ -40,6 +41,7 @@ DIC_NAMES = {'%Y': '%(Y)04d',
              '%S': '%(S)02d',
              '%f': '%(f)06d',
              '%b': '%(b)s'}
+
 DATE_FORMATS = [ "%Y-%m-%d","%d-%b-%Y","%d-%b-%y","%Y-%m","%Y"]
 TIME_FORMATS = [ "%H:%M:%S\.%f","%H:%M:%S","%H:%M","%H"]
 SEPS = ['_',' ','T']
@@ -51,6 +53,28 @@ LOG = logging.getLogger(__name__)
 NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; NSECOND2 = 7
 
 lock_parsing = threading.Lock()
+
+def get_least_delta(format_string):
+    '''
+    return least datetime index 
+    '''
+    key = ''
+    ret = {}
+    if format_string.find('%Y') != -1 : key ='years'
+    if format_string.find('%y') != -1 : key ='years'
+    if format_string.find('%m') != -1 : key ='months'
+    if format_string.find('%b') != -1 : key ='months'
+    if format_string.find('%d') != -1 : key ='days'
+    if format_string.find('%H') != -1 : key ='hours'
+    if format_string.find('%M') != -1 : key ='minutes'
+    if format_string.find('%S') != -1 : key ='seconds'
+    if format_string.find('%f') != -1 : key ='fseconds'
+    
+    if key:
+        ret[key] = 1
+    
+    return ret
+     
 
 def parse_string(format_string,datetime_string,index=[]):
     '''
@@ -221,12 +245,13 @@ def trim(datetime_info,pos,init):
     @param num: can not exceed microseconds
     @parma init: can be string or iterable obj which is same number of num ['start','end']
     '''
-    if pos < 1 :
-        return None
-    
-    dt = parsing(datetime_info)
+       
+    dt = parse(datetime_info)
     if(dt == None):
         return None
+    
+    if pos < 1 :
+        return datetime_info
     
     if pos > 6:
         return dt
@@ -272,15 +297,21 @@ def series(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,m
 
     if start_datetime > end_datetime:
         t = end_datetime
+        end_datetime = start_datetime
     
     init_i = 0
     for i,td in zip([NYEAR,NMONTH,NWEEK,NDAY,NHOUR,NSECOND],[years,months,weeks,days,hours,seconds]):
         if td != 0: init_i = i
-      
+    
     while trim(t,init_i,'start') <= end_datetime :
         ret_list.append(t) 
         
-        t = t + timedelta(weeks=weeks,days=days,hours=hours,minutes=minutes,seconds=seconds,milliseconds=milliseconds,microseconds=microseconds)
+        t1 = t + timedelta(weeks=weeks,days=days,hours=hours,minutes=minutes,seconds=seconds,milliseconds=milliseconds,microseconds=microseconds)
+        if t1 == t:
+            break
+        else:
+            t = t1
+        
         m = t.month + months
         #print datetime_t.month,m,m%12
         m1,m2 = int(m/12),m%12
@@ -367,7 +398,7 @@ def tuples(datetime_info,trim=None,fsecond=None):
     :param second: None | integer 
     :return: tuples | None
     '''
-    dt = parsing(datetime_info)
+    dt = parse(datetime_info)
     if (dt == None):
         return None
     
@@ -386,15 +417,13 @@ def tuples(datetime_info,trim=None,fsecond=None):
     
     return ret
 
-def replace(format_string,datetime_info=None,kw=None):
+def replace(format_string,datetime_info=None,**kwargs):
     '''
     Replace datetime format to a filled string with datetime
     :param string format:
     :param datetime datetime_info: 
     '''
-    
-    
-    
+            
     dt = parse(datetime_info)
     f = format_string
     
@@ -406,19 +435,9 @@ def replace(format_string,datetime_info=None,kw=None):
                 i = f.find(k) # i : index
             
                 if i != -1: 
-                    f = f[:i] + dt.strftime(k) + f[i+2:]
-    
-    if kw != None:
+                    f = f[:i] + dt.strftime(k) + f[i+2:]   
         
-        for k in kw.iterkeys():
-            i = f.find('%('+k+')') # i : index
-            while(i != -1): 
-                i2 = f.find('%',i+1) # i2 : next index before '%'
-                if i2 == -1: i2 = len(f)
-                v = f[i:i2]%{k:kw[k]}
-                f = f[:i] + v + f[i2:]
-                i = f.find('%('+k+')') 
-    
+    f = utils.replace(f,**kwargs)
         
     return f    
     
@@ -494,14 +513,102 @@ def modified_julian_day(jd,reverse=False):
         
     return mjd
 
+def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
+    '''
+    filter list containing datetime.
+    
+    parameters:
+        datetime_list - iterable object, but 0th elements are date time string or object. 
+        start_datetime - string
+    optional:
+        end_datetime   - string
+        cadence        - number, seconds
+        datetime_format - string
+    returns:
+        list
+    '''
+    time_parser = kwargs.pop('time_parser',None)
+    allow_empty = kwargs.pop('allow_empty',False)
+    
+    ret = []
+    is_iterable = False
+    
+    records = datetime_list[:]
+    if len(records) <= 0:
+        return ret
+    
+    parse_func = time_parser
+    if parse_func == None:
+        parse_func = parse
+    
+    if hasattr(records[0], '__iter__'):
+        is_iterable = True
+            
+    for i,rec in enumerate(records):
+        try:
+            if is_iterable:
+                records[i].insert(0,parse_func(rec[0]))
+            else:
+                records[i] = [parse_func(rec),rec]
+        except :
+            LOG.debug("Can not convert time : %s"%())
+            continue
+               
+    start   = parse(start_datetime)
+    end     = start 
+    
+    if end_datetime != '':
+        end = parse(end_datetime)
+        
+    
+    LOG.debug("Time filter : %s, %s, %d"%(str(start),str(end),cadence))
+    
+
+             
+    cadence_delta = timedelta(seconds=cadence/2.)
+    for _t in series(start,end,seconds=cadence):
+        diffs = []
+        last_ft_min = _t - cadence_delta
+        last_ft_max = _t + cadence_delta
+        
+        f = ''
+        while(len(records) > 0):
+            f = records.pop(0)
+          
+            
+            if f[0] < last_ft_min:
+                continue
+            
+            if f[0] > last_ft_max:
+                records.insert(0,f)
+                break
+            
+            diff = abs((_t-f[0]).total_seconds())
+            diffs.append((diff,f))
+        
+        if len(diffs) > 0:
+            min_diff, _ = min(diffs)
+            for d,f in diffs:
+                if d == min_diff:
+                    ret.append(f[1:])
+                
+        elif allow_empty:
+            ret.append(None)
+            
+    LOG.debug("Number of filtered records : %d"%(len(ret)))
+    
+    return ret
+
+def total_seconds(days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
+    total = days*86400 + hours*3600 + minutes*60 + seconds + milliseconds*1e-3 + microseconds*1e-6
+    return total 
 # For compatibility
 parsing = parse 
 datetime_range = series
 
 if __name__ == '__main__':
-    print replace("%(abc)s%Y",parse("20140101"))
-    exit(0)
-    
+    print replace("$(abc)%Y",parse("20140101"),abc='123')
+        
     print parse_string("%Y%m%d","20140201")
     print parse_string("%y%m%d %H%M%S.%f","990201 030201.3")
     print parse_string("%Y-%b-%d","2014-Jul-01")
@@ -550,4 +657,4 @@ if __name__ == '__main__':
     text = '2-Jul-02'
     print parse('2-Jul-98')
 
-    print parse_string("/abcd/%Y/%Y%m%d","/abcd/2014/20140101")
+    print parse_string("/abcd/%Y/%Y%m%d","/abcd/2014/20140101") 

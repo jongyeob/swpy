@@ -11,6 +11,12 @@ from os import path
 import datetime
 import sys
 
+class NullHandler(logging.Handler): # Compatiable for > 2.7
+    def emit(self,record): pass
+
+if 'NullHandler' not in dir(logging):
+    logging.NullHandler = NullHandler
+
 def replace(format_string,kw):
     '''
     Replace datetime format to a filled string with datetime

@@ -13,7 +13,11 @@ import sys
 import date_time as dt
 from config import Config
 
+class NullHandler(logging.Handler): # Compatiable for > 2.7
+    def emit(self,record): pass
 
+if 'NullHandler' not in dir(logging):
+    logging.NullHandler = NullHandler
 
 def request_files(path_format,start_datetime,end_datetime='',cadence=0):
     '''

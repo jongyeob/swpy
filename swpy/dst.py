@@ -319,8 +319,6 @@ def draw_dst(data, file_path=""):
 if __name__ == '__main__':
     
     
-    
-    
     print download_web("19991011", "20141114")
     print download_cgi("20130901", "20131010")
     
@@ -329,7 +327,6 @@ if __name__ == '__main__':
     dt = [dt.datetime(2012, 01, 01, 0, 0, 0),
       dt.datetime(2012, 01, 02, 0, 0, 0),
       dt.datetime(2012, 01, 03, 0, 0, 0)]
-
     
 
     y = [-25, -32, -64]

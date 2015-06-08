@@ -116,7 +116,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         
         contents = ""
         try:
-            conn = httplib.HTTPConnection(domain_name)
+            conn = httplib.HTTPConnection(domain_name,timeout=75)
             
             if(post_args != None):
                 conn.request("POST", file_path, post_args,headers)
@@ -144,8 +144,6 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         if not is_response:
             LOG.debug("Re-trying...(%d/%d)"%(t,trials))
             time.sleep(5)
-
-        
    
     # File saving... 
     if dst_path is not None:
@@ -164,7 +162,6 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
         except Exception as err:
             LOG.error("File Save error! - %s"%str(err))
             return False
-
 
     return contents
 
@@ -260,9 +257,10 @@ def download_ftp_file(src_url, dst_path, overwrite=False, trials=5, login_id="",
         # 1. The local file does not exist.
         # 2. OVERWRITE = TRUE
         # 3. The file sizes on a remote path and a local path are different.
-        fw = open(make_path(dst_path), "wb")
-        ftp.retrbinary("RETR " + remote_file_path, fw.write)
-        file.close()
+        #fw = open(make_path(dst_path), "wb")
+	with open(make_path(dst_path), 'wb') as fw:
+		ftp.retrbinary("RETR " + remote_file_path, fw.write)
+	#file.close()
         
         ftp.quit()
         print "Downloaded, %s."%(src_url)

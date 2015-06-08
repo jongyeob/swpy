@@ -1,29 +1,29 @@
 '''
-@summary: 
-1. Make filepaths from local
-2. Save XML or TXT
+SDO Package for KASI
 
-@license:    GPLv2
-@author:     Jongyeob Park(pjystar@gmail.com)
-@version:    2013-08-06
-@note: Keywords[Time,Path]
+author : Jongyeob Park(pjystar@gmail.com)
 '''
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 import os
 import sys
+from sys import stderr,stdout
+
+import time
+import logging
+
+
 
 
 DEBUG = 0
+
+
+
+            
+
+    
+
 def main(argv=None):
-    '''
-    @summary:     catalog_hmi    
-    @param :     (swdt)start_date - year,month,day
-                 (swdt)end_date - year,month,day
-                 (str)inst - instrument ["continuum","magnetogram"] 
-    @return :    (list)localpath
-    @change:      2013-08-06 / Jongyeob Park(pjystar@gmail.com)
-                  New code
-    '''
+    
     if argv is None: argv = sys.argv
     else: sys.argv.extend(argv)
     
@@ -31,7 +31,6 @@ def main(argv=None):
     # keyword
     
     #config, argument
-    
     
     try:
         # Setup argument parser
@@ -44,10 +43,7 @@ def main(argv=None):
         parser.add_argument('--xml',dest='xml',action='store_true',help='Text for output format')
         parser.add_argument('--key',dest='key',help='Keywords for output')
      
-        args = parser.parse_args()
-        
-        
-        
+        args = parser.parse_args()      
                         
         return 0
     except KeyboardInterrupt:
@@ -66,9 +62,5 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    '''
-    @summary:     Main entry
-    @change:      2013-08-06 / Jongyeob Park(pjystar@gmail.com)
-                  Change code from eclipse
-    '''
+    
     sys.exit(main())

@@ -1,0 +1,25 @@
+'''
+Created on 2015. 5. 26.
+
+@author: jongyeob
+'''
+
+import logging
+from swpy.sdo import jsoc
+
+logging.basicConfig(level=logging.DEBUG,format="%(asctime)s %(message)s") 
+
+
+
+def test_hmi():
+    urls = jsoc.request('hmi','M_45s',"2015-04-01T00:00:00","2015-04-01T01:00:00")
+    print "# of data : %d"%(len(urls))
+    
+    urls = jsoc.request('hmi','M_45s',"2015-04-01T00:00:00","2015-04-01T01:00:00",90)
+    print "# of data : %d"%(len(urls))
+
+
+def test_aia():
+    urls = jsoc.request('aia','304',"2015-04-01T00:00:00","2015-04-01T01:00:00",3600)
+    print "# of data : %d"%(len(urls))
+        

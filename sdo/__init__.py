@@ -1,6 +1,6 @@
-import hmi_jp2
-from swpy.utils import Config
 
-## Initilize here
-def initialize(config=Config()): 
-    hmi_jp2.initialize(config)
+import hmi_nasa
+import jsoc
+import kasi
+import aia
+import hmi

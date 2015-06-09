@@ -130,7 +130,7 @@ def download_http_file(src_url,dst_path=None,post_args=None,overwrite=False,tria
                 new_loc  = r.getheader('Location')
                 contents = download_http_file(new_loc,None,post_args,overwrite,trials-1)
             else:
-                LOG.error("HTTP response error : %d, %s"%(r.status, r.reason))
+                LOG.error("%d, %s - %s"%(r.status, r.reason,file_path))
 
             is_response = True
  

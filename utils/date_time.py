@@ -531,69 +531,81 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
     allow_empty = kwargs.pop('allow_empty',False)
     
     ret = []
+    records = []
     is_iterable = False
     
-    records = datetime_list[:]
-    if len(records) <= 0:
+    if len(datetime_list) <= 0:
         return ret
+    
+    if hasattr(datetime_list[0], '__iter__'):
+        is_iterable = True
     
     parse_func = time_parser
     if parse_func == None:
         parse_func = parse
     
-    if hasattr(records[0], '__iter__'):
-        is_iterable = True
-            
-    for i,rec in enumerate(records):
-        try:
-            if is_iterable:
-                records[i].insert(0,parse_func(rec[0]))
-            else:
-                records[i] = [parse_func(rec),rec]
-        except :
-            LOG.debug("Can not convert time : %s"%())
-            continue
-               
+
+    
     start   = parse(start_datetime)
     end     = start 
     
     if end_datetime != '':
-        end = parse(end_datetime)
-        
+        end = parse(end_datetime)   
     
     LOG.debug("Time filter : %s, %s, %d"%(str(start),str(end),cadence))
     
-
-             
-    cadence_delta = timedelta(seconds=cadence/2.)
-    for _t in series(start,end,seconds=cadence):
-        diffs = []
-        last_ft_min = _t - cadence_delta
-        last_ft_max = _t + cadence_delta
+    for i,rec in enumerate(datetime_list):
+        time_record = None
+        record = []
         
-        f = ''
-        while(len(records) > 0):
-            f = records.pop(0)
-          
+        if is_iterable:
+            time_record = parse_func(rec[0])
+            record = rec[:]
+        else:
+            time_record = parse_func(rec)
+            record = [rec]
             
-            if f[0] < last_ft_min:
-                continue
-            
-            if f[0] > last_ft_max:
-                records.insert(0,f)
-                break
-            
-            diff = abs((_t-f[0]).total_seconds())
-            diffs.append((diff,f))
+        if time_record is None:
+            continue
+        record.insert(0,time_record)
         
-        if len(diffs) > 0:
-            min_diff, _ = min(diffs)
-            for d,f in diffs:
-                if d == min_diff:
-                    ret.append(f[1:])
+        if start <= time_record <= end:
+            records.append(record)
+           
+    
+    if cadence > 0:
+        cadence_delta = timedelta(seconds=cadence/2.)
+        for _t in series(start,end,seconds=cadence):
+            diffs = []
+            last_ft_min = _t - cadence_delta
+            last_ft_max = _t + cadence_delta
+            
+            f = ''
+            while(len(records) > 0):
+                f = records.pop(0)
+                if f[0] is None:
+                    LOG.debug("Time parse error : %s"%(f[0]))
+                    continue
                 
-        elif allow_empty:
-            ret.append(None)
+                if f[0] < last_ft_min:
+                    continue
+                
+                if f[0] > last_ft_max:
+                    records.insert(0,f)
+                    break
+                
+                diff = abs((_t-f[0]).total_seconds())
+                diffs.append((diff,f))
+            
+            if len(diffs) > 0:
+                min_diff, _ = min(diffs)
+                for d,f in diffs:
+                    if d == min_diff:
+                        ret.append(f[1:])
+                        break
+                    
+            elif allow_empty:
+                ret.append(None)
             
     LOG.debug("Number of filtered records : %d"%(len(ret)))
     

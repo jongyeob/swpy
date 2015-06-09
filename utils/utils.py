@@ -41,15 +41,17 @@ def request_files(path_format,start_datetime,end_datetime='',cadence=0):
         end = dt.parse(end_datetime)
               
     files = []
+    
+    least_delta = dt.get_least_delta(dir_format)
 
-    for _t in dt.series(start,end,**dt.get_least_delta(dir_format)):
+    for _t in dt.series(start,end,**least_delta):
         data_dir = dt.replace(dir_format,_t)    
         _files = get_files(data_dir+'/*')
         files.extend(_files)
 
     files.sort()
     datetime_parser = lambda p:dt.parse_string(path_format,p)
-    ret = dt.filter(files,start_datetime,end_datetime,cadence,datetime_parser=datetime_parser)
+    ret = dt.filter(files,start_datetime,end_datetime,cadence,time_parser=datetime_parser)
         
     return ret
 

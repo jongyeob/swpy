@@ -25,6 +25,7 @@ def request(start_datetime,wavelength,format,end_datetime='',cadence=0):
                                end_datetime=end_datetime,\
                               cadence=cadence)
 def download_synoptic(start,wave,end='',cadence=0,**kwargs):
+    pass
 def download_fits(start_datetime,wavelength,end_datetime='',cadence=0,**kwargs):
     '''
      Downloads hmi  files

@@ -293,16 +293,12 @@ def series(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,m
     #print 'Start/End : %s/%s'%(start_datetime,end_datetime)
     
     ret_list = []
-    t = start_datetime
-
-    if start_datetime > end_datetime:
-        t = end_datetime
-        end_datetime = start_datetime
     
     init_i = 0
     for i,td in zip([NYEAR,NMONTH,NWEEK,NDAY,NHOUR,NSECOND],[years,months,weeks,days,hours,seconds]):
         if td != 0: init_i = i
     
+    t = start_datetime
     while trim(t,init_i,'start') <= end_datetime :
         ret_list.append(t) 
         
@@ -573,40 +569,39 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
             records.append(record)
            
     
-    if cadence > 0:
-        cadence_delta = timedelta(seconds=cadence/2.)
-        for _t in series(start,end,seconds=cadence):
-            diffs = []
-            last_ft_min = _t - cadence_delta
-            last_ft_max = _t + cadence_delta
+    cadence_delta = timedelta(seconds=cadence/2.)
+    for _t in series(start,end,seconds=cadence):
+        diffs = []
+        last_ft_min = _t - cadence_delta
+        last_ft_max = _t + cadence_delta
+        
+        f = ''
+        while(len(records) > 0):
+            f = records.pop(0)
+            if f[0] is None:
+                LOG.debug("Time parse error : %s"%(f[0]))
+                continue
             
-            f = ''
-            while(len(records) > 0):
-                f = records.pop(0)
-                if f[0] is None:
-                    LOG.debug("Time parse error : %s"%(f[0]))
-                    continue
-                
-                if f[0] < last_ft_min:
-                    continue
-                
-                if f[0] > last_ft_max:
-                    records.insert(0,f)
+            if f[0] < last_ft_min:
+                continue
+            
+            if f[0] > last_ft_max:
+                records.insert(0,f)
+                break
+            
+            diff = abs((_t-f[0]).total_seconds())
+            diffs.append((diff,f))
+        
+        if len(diffs) > 0:
+            min_diff, _ = min(diffs)
+            for d,f in diffs:
+                if d == min_diff:
+                    ret.append(f[1:])
                     break
                 
-                diff = abs((_t-f[0]).total_seconds())
-                diffs.append((diff,f))
-            
-            if len(diffs) > 0:
-                min_diff, _ = min(diffs)
-                for d,f in diffs:
-                    if d == min_diff:
-                        ret.append(f[1:])
-                        break
-                    
-            elif allow_empty:
-                ret.append(None)
-            
+        elif allow_empty:
+            ret.append(None)
+        
     LOG.debug("Number of filtered records : %d"%(len(ret)))
     
     return ret

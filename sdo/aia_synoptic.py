@@ -52,24 +52,30 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
         wavelength     - string
         end            - string
     '''
-    
+    starttime = dt.parse(start)
+    endtime = starttime
+    if end != '':
+       endtime = dt.parse(end) 
+
     recent_time = dl.download_http_file(REMOTE_TIME_URL)
     recent_time = recent_time.split()[1]
     recent_time = dt.parse(recent_time)
-              
-    time_series = dt.series(start,end,seconds=cadence)
+
+    time_series = dt.series(starttime,endtime,seconds=cadence)
     archive_series = []
     nrt_series = []
     
-    starttime_archive = start
-    endtime_archive   = end
+    starttime_archive = starttime
+    endtime_archive   = endtime
     starttime_recent  = None
     endtime_recent = None
     
     if endtime_archive > recent_time:
         endtime_archive = recent_time
-        starttime_recent = dt.datetime.combine(recent_time.date(),starttime_archive.time())
-        endtime_recent = end
+        endtime_recent = endtime
+        starttime_recent = recent_time
+        if starttime > recent_time:
+            starttime_recent = starttime
         
     wave = str(wavelength).zfill(4)
     
@@ -86,7 +92,8 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
         archive_series.extend(files)
         
     LOG.info('%d files are found'%(len(archive_series)))
-    LOG.debug(archive_series[0] + ' ...')
+    if len(archive_series) > 0:
+        LOG.debug(archive_series[0] + ' ...')
     
     time_format = dt.replace(REMOTE_DATA_FILE,wavelength=wave)
     time_parser = lambda s:dt.parse_string(time_format, s)
@@ -114,7 +121,8 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
         
        
         LOG.info('%d files are found'%(len(nrt_series)))
-        LOG.debug(nrt_series[0] + ' ...')
+        if len(nrt_series) > 0:
+            LOG.debug(nrt_series[0] + ' ...')
         
         time_format = dt.replace(NRT_DATA_FILE,wavelength=wave)
         time_parser = lambda s:dt.parse_string(time_format, s)
@@ -128,5 +136,3 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
             url = dt.replace(NRT_DATA_DIR+NRT_DATA_FILE, t,wavelength=wave)
                   
             dl.download_http_file(url, dstpath,overwrite=overwrite)
-        
-    

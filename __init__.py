@@ -1,48 +1,36 @@
 ## standard library
-import logging
-from utils.config import Config
+import os
 from os import path
-from utils.utils import make_path
-
-## 3rd-party library
+import sys
+import logging
 
 
 ## included library
 import sdo
-import ace ,goes
+#import ace ,goes
 import noaa
 #import cactus,seeds
-#import dst
+import dst
 #import wilcox
 
 from swpy import utils
 
 
-DATA_ROOT  = 'data/'
-TEMP_DIR  = 'temp/'
-LOG_DIR   = 'logs/'
-LOG_LEVEL = logging.DEBUG
+LOG = logging.getLogger(__name__)
+LOG_LEVEL = 10
+CONFIG_FILE = 'swpy.ini'
 
 
-def initialize(config=''):
-    if isinstance(config,str):
-        config = Config(config)
+def initialize(**kwargs):
+    items = {}
+    try:
+        items = utils.config.load(CONFIG_FILE)
+    except IOError:
+        LOG.debug("Config file is not exist")
     
-    ## Initialize for default    
-    config.load_ns('DATA_ROOT', globals())
-    config.load_ns('TEMP_DIR', globals())
-    config.load_ns('LOG_DIR',  globals())
-    config.load_ns('LOG_LEVEL',globals())
-
-    make_path(DATA_ROOT) 
-    make_path(TEMP_DIR)
-    make_path(LOG_DIR)
-
-    ## Initialize for sub-library
-    ace.initialize(config)
-    goes.initialize(config)
-    sdo.initialize(config)
-    noaa.initialize(config)
+    utils.config.set(globals(),**items.pop(__name__,{}))
     
-    config.write()
-
+    sdo.initialize(**utils.config.get(items,sdo.__name__))
+    noaa.initialize(**utils.config.get(items,noaa.__name__))
+    dst.initialize(**utils.config.get(items,noaa.__name__))
+    

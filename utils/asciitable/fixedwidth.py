@@ -32,8 +32,8 @@ fixedwidth.py:
 
 import re
 import itertools
-import asciitable.core as core
-from asciitable.core import io, next, izip, any
+import core
+from core import io, next, izip, any, InconsistentTableError
 
 class FixedWidthSplitter(core.BaseSplitter):
     """Split line based on fixed start and end positions for each ``col`` in

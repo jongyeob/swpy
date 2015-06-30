@@ -7,12 +7,12 @@ Created on 2015. 5. 26.
 JSOC_REGISTERED_EMAIL = 'parkjy@kasi.re.kr'
 
 import logging
-
+from swpy import utils
 LOG = logging.getLogger(__name__)
 
 
 def initialize(**kwargs):
-    pass
+    utils.config.set(globals(),**kwargs)
 
 class _Downloader():
     urls = []

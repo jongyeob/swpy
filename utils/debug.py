@@ -9,8 +9,6 @@ stacktracer.start_trace("trace.html",interval=5,auto=True) # Set auto flag to al
 stacktracer.stop_trace()
 """
 
-
-
 import sys
 import traceback
 from pygments import highlight

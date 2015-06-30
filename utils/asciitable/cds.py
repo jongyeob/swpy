@@ -34,8 +34,8 @@ import fnmatch
 import itertools
 import re
 
-import asciitable.core as core
-import asciitable.fixedwidth as fixedwidth
+import core
+import fixedwidth
 
 class CdsHeader(core.BaseHeader):
     col_type_map = {'e': core.FloatType,

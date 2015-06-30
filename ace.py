@@ -9,8 +9,7 @@ import logging
 
 from swpy import utils
 from swpy.utils import date_time as dt,\
-                       download as dl,\
-                       Config
+                       download as dl
 
 DATA_DIR = 'data/'
 LOG = logging.getLogger(__name__); LOG.setLevel(0)
@@ -255,7 +254,7 @@ def download(start_date,instrument,end_date=None,overwrite=False):
 
 if __name__ == '__main__':
     logging.basicConfig(level=0)
-    from swpy.utils import data as da
+    from swpy.backup import _data as da
     
     start = (2014,01,01)
     end = (2014,01,02)

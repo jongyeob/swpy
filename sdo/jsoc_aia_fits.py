@@ -11,24 +11,19 @@ from swpy.utils import date_time as dt, download as dl
 
 LOG    = logging.getLogger(__name__)
 DATA_INFO = {'agency':'NASA','machine':'SDO','instrument':'AIA'}
-DATA_DIR  = 'data/$(agency)/$(machine)/$(instrument)/synoptic/$(wavelength)/%Y/%Y%m%d/'
-DATA_FILE = '%Y%m%d_%H%M%S_$(machine)_$(instrument)_$(wavelength)_synoptic.fits'
+DATA_DIR  = 'data/%(agency)/%(machine)/%(instrument)/synoptic/%(wavelength)/%Y/%Y%m%d/'
+DATA_FILE = '%Y%m%d_%H%M%S_%(machine)_%(instrument)_%(wavelength)_synoptic.fits'
 
 REMOTE_DATA_DIR = 'http://jsoc.stanford.edu/data/aia/synoptic/%Y/%m/%d/H%H00/'
-REMOTE_DATA_FILE = 'AIA%Y%m%d_%H%M_$(wavelength).fits'
+REMOTE_DATA_FILE = 'AIA%Y%m%d_%H%M_%(wavelength).fits'
 REMOTE_TIME_URL = 'http://jsoc.stanford.edu/data/aia/synoptic/image_times'
 
 NRT_DATA_DIR = 'http://jsoc.stanford.edu/data/aia/synoptic/nrt/%Y/%m/%d/H%H00/'
-NRT_DATA_FILE = 'AIA%Y%m%d_%H%M%S_$(wavelength).fits'
+NRT_DATA_FILE = 'AIA%Y%m%d_%H%M%S_%(wavelength).fits'
 NRT_TIME_URL = 'http://jsoc.stanford.edu/data/aia/synoptic/nrt/image_times'
 
 def initialize(**kwargs):
-    for key in kwargs:
-        if globals().has_key(key) == True:
-            globals()[key] = kwargs[key]
-        else:
-            raise KeyError(key)
-
+    utils.config.set(globals(),**kwargs)
 def get_path(wavelength,datetime=''):
     dir_format  = dt.replace(DATA_DIR,datetime,wavelength=wavelength,**DATA_INFO)
     file_format  = dt.replace(DATA_FILE,datetime,wavelength=wavelength,**DATA_INFO)
@@ -38,7 +33,7 @@ def get_path(wavelength,datetime=''):
 def request(start_datetime,wavelength,end_datetime='',cadence=0):
     path_format = get_path(wavelength)
         
-    return utils.request_files(path_format,\
+    return utils.filepath.request_files(path_format,\
                                start_datetime,\
                                end_datetime=end_datetime,\
                                cadence=cadence)

@@ -10,18 +10,14 @@ import logging
 
 LOG    = logging.getLogger(__name__)
 
-META_DIR = 'http://metadata.kasi.re.kr/metadata/nasa/sdo/$(format)/$(instrument)/$(type)/%Y/'
-META_FILE = '%Y%m%d_$(format)_$(type).txt'
+META_DIR = 'http://metadata.kasi.re.kr/metadata/nasa/sdo/%(format)/%(instrument)/%(type)/%Y/'
+META_FILE = '%Y%m%d_%(format)_%(type).txt'
 DATA_HOST = 'http://swc4.kasi.re.kr'
 
 TYPES = ['Ic_45s','Ld_45s','Lw_45s','M_45s','V_45s','Ic_720s','Ld_720s','Lw_720s','M_720s','S_720s']
 
 def initialize(**kwargs):
-    for key in kwargs:
-        if globals().has_key(key) == True:
-            globals()[key] = kwargs[key]
-        else:
-            raise KeyError(key)
+    utils.config.set(globals(),**kwargs)
             
 def request(format,instrument,type,start_datetime,end_datetime='',cadence=0,**kwargs):
     '''

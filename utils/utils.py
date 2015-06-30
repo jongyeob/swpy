@@ -4,56 +4,17 @@ Created on 2013. 11. 9.
 @author: Daniel
 '''
 import logging
-LOG = logging.getLogger(__name__)
 
-import sys,os,glob,math
-from os import path
+import sys,math
 import datetime
-import sys
-import date_time as dt
-from config import Config
+
 
 class NullHandler(logging.Handler): # Compatiable for > 2.7
     def emit(self,record): pass
 
 if 'NullHandler' not in dir(logging):
     logging.NullHandler = NullHandler
-
-def request_files(path_format,start_datetime,end_datetime='',cadence=0):
-    '''
-    request files
     
-    parameters:
-        path_format - string 
-        start_datetime - string
-    optional:
-        end_datetime   - string
-        cadence        - number, seconds
-    returns:
-        (list) filepath
-    '''
-        
-    start   = dt.parse(start_datetime)
-    end     = start 
-    dir_format,file_format = path.split(path_format)
-        
-    if end_datetime != '':
-        end = dt.parse(end_datetime)
-              
-    files = []
-    
-    least_delta = dt.get_least_delta(dir_format)
-
-    for _t in dt.series(start,end,**least_delta):
-        data_dir = dt.replace(dir_format,_t)    
-        _files = get_files(data_dir+'/*')
-        files.extend(_files)
-
-    files.sort()
-    datetime_parser = lambda p:dt.parse_string(path_format,p)
-    ret = dt.filter(files,start_datetime,end_datetime,cadence,time_parser=datetime_parser)
-        
-    return ret
 
 def replace(format_string,**kwargs):
     '''
@@ -63,11 +24,11 @@ def replace(format_string,**kwargs):
     f = format_string    
 
     for k in kwargs.iterkeys():
-        i = f.find('$('+k+')') # i : index
+        i = f.find('%('+k+')') # i : index
         while(i != -1): 
             i2 = i + len(k)+3
             f = f[:i] + kwargs[k] + f[i2:]
-            i = f.find('$('+k+')') 
+            i = f.find('%('+k+')') 
         
     return f
     
@@ -87,7 +48,7 @@ def import_all(name,globals={},locals={}):
 def get_logger(name='',level=0,handler=logging.NullHandler()):
     if name == '__main__':
         name = ''
-        
+    
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.addHandler(handler)
@@ -97,31 +58,6 @@ def print_out(msg):
     sys.stdout.write(msg+'\n')
 def print_err(msg):
     sys.stderr.write(msg+'\n')
-def get_files(path_exp):
-    # path_exp : expression of path
-    arg_path = path.split(path_exp)
-                
-    file_list = []
-    for dirname,_,_ in os.walk(arg_path[0]):
-        for filepath in glob.glob(dirname+'/'+ arg_path[1]):
-            filepath = filepath.replace('\\','/')
-            file_list.append(filepath)
-        
-    return file_list
-   
-def make_dirs(pathstr):
-    pathstr = path.normpath(pathstr+'/')
-    if path.exists(pathstr) == False:
-        os.makedirs(pathstr)
-
-def make_path(pathstr):    
-    pathstr = path.normpath(pathstr)
-    dirpath,filename = path.split(pathstr)
-
-    if len(dirpath) > 0 and path.exists(dirpath) == False:
-        os.makedirs(dirpath)
-        
-    return pathstr
 
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)
@@ -135,8 +71,7 @@ def great_circle_distance(lon,lat,lon2=0,lat2=0):
 
 def save_list(filepath, list):
     
-    
-    f = open(make_path(filepath), "w")
+    f = open(filepath, "w")
     for line in list:
         f.write(line + "\n")
     f.close()
@@ -146,9 +81,8 @@ def save_list(filepath, list):
 
 def save_list_2(filepath, list):
     
-
     list.sort()
-    f = open(make_path(filepath), "w")
+    f = open(filepath, "w")
     
     for line in list:
         f.write(get_filename(line) + "\n")
@@ -197,3 +131,6 @@ def num2str(num):
     else: str_num += "%d"%(num)
 
     return str_num
+
+
+LOG = get_logger(__name__)

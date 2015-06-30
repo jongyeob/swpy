@@ -13,6 +13,7 @@ import threading
 import re
 import utils
 
+
 MONTH_NUMBERS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
 RE_FORMATS = {'%Y': '\d{4}',
               '%y': '\d{2}',
@@ -303,18 +304,20 @@ def series(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,m
         ret_list.append(t) 
         
         t1 = t + timedelta(weeks=weeks,days=days,hours=hours,minutes=minutes,seconds=seconds,milliseconds=milliseconds,microseconds=microseconds)
-        if t1 == t:
-            break
-        else:
-            t = t1
         
-        m = t.month + months
+        
+        m = t1.month + months
         #print datetime_t.month,m,m%12
         m1,m2 = int(m/12),m%12
         m1,m2 = [(m1,m2),(m1-1,12)][m2==0]
     
         
-        t = t.replace(year=t.year + years + m1, month=m2)
+        t1 = t1.replace(year=t1.year + years + m1, month=m2)
+        
+        if t1 == t:
+            break
+        else:
+            t = t1
                       
        
     return ret_list 
@@ -523,7 +526,7 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
     returns:
         list
     '''
-    time_parser = kwargs.pop('time_parser',None)
+    time_parser = kwargs.pop('time_parser',parse)
     allow_empty = kwargs.pop('allow_empty',False)
     
     ret = []
@@ -535,12 +538,6 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
     
     if hasattr(datetime_list[0], '__iter__'):
         is_iterable = True
-    
-    parse_func = time_parser
-    if parse_func == None:
-        parse_func = parse
-    
-
     
     start   = parse(start_datetime)
     end     = start 
@@ -555,10 +552,10 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
         record = []
         
         if is_iterable:
-            time_record = parse_func(rec[0])
-            record = rec[:]
+            time_record = time_parser(rec[0])
+            record = rec
         else:
-            time_record = parse_func(rec)
+            time_record = time_parser(rec)
             record = [rec]
             
         if time_record is None:
@@ -567,8 +564,10 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
         
         if start <= time_record <= end:
             records.append(record)
-           
     
+    if cadence == 0:
+        return [rec[1:] for rec in records]
+               
     cadence_delta = timedelta(seconds=cadence/2.)
     for _t in series(start,end,seconds=cadence):
         diffs = []

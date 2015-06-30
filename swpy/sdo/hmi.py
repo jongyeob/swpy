@@ -5,16 +5,12 @@ from swpy.utils import date_time as dt, download as dl
 
 LOG    = logging.getLogger(__name__)
 DATA_INFO = {'agency':'NASA','machine':'SDO','instrument':'HMI'}
-DATA_DIR  = 'data/$(agency)/$(machine)/$(instrument)/$(type)/$(format)/%Y/%Y%m%d/'
-DATA_FILE = '%Y%m%d_%H%M%S_$(machine)_$(instrument)_$(type).$(format)'
+DATA_DIR  = 'data/%(agency)/%(machine)/%(instrument)/%(type)/%(format)/%Y/%Y%m%d/'
+DATA_FILE = '%Y%m%d_%H%M%S_%(machine)_%(instrument)_%(type).%(format)'
 CADENCE   = 45
 
 def initialize(**kwargs):
-    for key in kwargs:
-        if globals().has_key(key) == True:
-            globals()[key] = kwargs[key]
-        else:
-            raise KeyError(key)
+    utils.config.set(globals(),**kwargs)
 
 def get_path(type,format,datetime=''):
     dir_format  = dt.replace(DATA_DIR,datetime,type=type,format=format,**DATA_INFO)
@@ -28,7 +24,7 @@ def request(start_datetime,type,format,end_datetime='',cadence=0):
     if cadence == 0:
         cadence = CADENCE
         
-    return utils.request_files(path_format,\
+    return utils.filepath.request_files(path_format,\
                                start_datetime,\
                                end_datetime=end_datetime,\
                                cadence=cadence)

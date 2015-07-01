@@ -11,7 +11,7 @@ import shutil
  
 import tempfile
 
-__all__ = ['glob','path','make_dirs','make_path','get_files','request_files']
+__all__ = ['glob','path','make_dirs','make_path','get_files','request_files','mkpath','mkdirs']
 
 class AutoPath(str):
     def __del__(self):
@@ -77,7 +77,7 @@ def request_files(path_format,start_datetime,end_datetime='',cadence=0):
 
     files.sort()
     datetime_parser = lambda p:dt.parse_string(path_format,p)
-    ret = dt.filter(files,start_datetime,end_datetime,cadence,time_parser=datetime_parser)
+    ret = [f[0] for f in dt.filter(files,start_datetime,end_datetime,cadence,time_parser=datetime_parser)]
         
     return ret
 

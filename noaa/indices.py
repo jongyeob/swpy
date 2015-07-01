@@ -419,6 +419,9 @@ def _download_index(begindate, enddate="", suffix="",overwrite=False):
                 continue
             
             for line in data.splitlines():
+                if not line:
+                    continue
+            
                 if line[0] == ':' or line[0] =='#':
                     header += line + '\n'
                     continue

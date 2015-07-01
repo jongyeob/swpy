@@ -9,7 +9,6 @@ from swpy import utils
 from swpy.utils import config,\
                        date_time as dt,\
                        download as dl
-from PIL.FontFile import WIDTH
                                               
 DATA_DIR  = 'data/kyoto/dst/%Y/'
 DATA_FILE = 'dst_%Y%m.txt'

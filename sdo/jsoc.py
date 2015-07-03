@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 def initialize(**kwargs):
     utils.config.set(globals(),**kwargs)
 
-class _Downloader():
+class _URLFetch():
     urls = []
     def download(self,url,**kwargs):
         LOG.debug(url)
@@ -77,7 +77,7 @@ def request(instrument,type,start_datetime,end_datetime='',cadence=0,**kwargs):
                 
     client = jsoc.JSOCClient()
     res = client.query(*query_args)
-    downloader = _Downloader()
+    downloader = _URLFetch()
     if len(res) > 0:
         client.get(res,downloader=downloader,overwrite=True)
         

@@ -3,11 +3,13 @@ Created on 2015. 5. 26.
 
 @author: jongyeob
 '''
+from __future__ import absolute_import
 
 JSOC_REGISTERED_EMAIL = 'parkjy@kasi.re.kr'
 
 import logging
-from swpy import utils
+from .. import utils
+from .. import jsoc_api
 LOG = logging.getLogger(__name__)
 
 

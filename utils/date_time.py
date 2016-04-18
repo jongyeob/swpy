@@ -539,6 +539,7 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
     if hasattr(datetime_list[0], '__iter__'):
         is_iterable = True
     
+        
     start   = parse(start_datetime)
     end     = start 
     

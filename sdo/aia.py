@@ -3,7 +3,6 @@ from swpy.utils import date_time as dt, download as dl
 import logging
 
 LOG    = logging.getLogger(__name__)
-
 DATA_INFO = {'agency':'NASA','machine':'SDO','instrument':'AIA'}
 DATA_DIR  = 'data/%(agency)/%(machine)/%(instrument)/%(wavelength)/%(format)/%Y/%Y%m%d/'
 DATA_FILE = '%Y%m%d_%H%M%S_%(machine)_%(instrument)_%(wavelength).%(format)'

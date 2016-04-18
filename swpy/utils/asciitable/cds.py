@@ -37,7 +37,6 @@ import re
 import core
 import fixedwidth
 
-
 class CdsHeader(core.BaseHeader):
     col_type_map = {'e': core.FloatType,
                     'f': core.FloatType,

@@ -143,8 +143,6 @@ def load_dsd(begin,end=""):
     end_dt = begin_dt
     if end != "":
         end_dt = dt.trim(end,3,'end')
-    
-    
     data = []
 
     for t1 in dt.datetime_range(begin_dt, end_dt, years=1):

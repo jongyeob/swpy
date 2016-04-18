@@ -1,28 +1,19 @@
 from __future__ import absolute_import
 
 ## standard library
-import logging
-import sys
 import os
-import os.path as path
+from os import path
+import sys
 
-from . import dst
-from . import noaa
-from . import sdo
-from .utils import config
+_root,_ = path.split(__path__[0])
+SWPY_ROOT = _root
+print "# SWPY_ROOT = {}".format(SWPY_ROOT)
 
-## included library
-#import ace ,goes
-#import cactus,seeds
-#import wilcox
+## User configuration import
+try:
+    from swpy_config import *
+    print("# User config imported")
 
-LOG = logging.getLogger(__name__)
-LOG_LEVEL = 10
-CONFIG_FILE = 'swpy.ini'
+except:
+    print("# User config not imported")
 
-# __items = {}
-# try:
-#     __items = config.load(CONFIG_FILE)
-# except IOError:
-#     LOG.debug("Config file is not exist")
-    

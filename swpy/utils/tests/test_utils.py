@@ -46,4 +46,3 @@ bar3=hello
     assert pop.has_key('bar1')
     
     
-    

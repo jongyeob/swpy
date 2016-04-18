@@ -15,6 +15,9 @@ import ftplib
 import httplib
 import os
 import socket
+import ftplib
+import httplib
+
 import string
 import sys
 import threading
@@ -244,7 +247,6 @@ def download_ftp_file(src_url, dst_path='', overwrite=False, trials=5, login_id=
         os.rename(dst_path2, dst_path)
 
         return True
-
             
     return contents
 
@@ -312,5 +314,4 @@ def get_ftp_conn(domain,*args,**kwargs):
     ftp = ftplib.FTP(domain,*args,**kwargs)
     ftp.login(login_id, login_pw)
     return ftp
-    
     

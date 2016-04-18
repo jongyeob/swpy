@@ -59,6 +59,20 @@ def import_all(name,globals={},locals={}):
     
     return True
 
+def get_logger(name='',level=0,handler=logging.NullHandler()):
+    if name == '__main__':
+        name = ''
+    
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+    return logger
+    
+def print_out(msg):
+    sys.stdout.write(msg+'\n')
+def print_err(msg):
+    sys.stderr.write(msg+'\n')
+
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)
     

@@ -9,7 +9,6 @@ from swpy import utils
 from swpy.utils import config, download as dl
 from swpy.utils import datetime as dt
 
-
 DATA_DIR  = 'data/kyoto/dst/%Y/'
 DATA_FILE = 'dst_%Y%m.txt'
 
@@ -222,8 +221,6 @@ def load_cgifile(file_path):
             records.append([v1,v2,v3])
             
     return records
-
-
 
 def draw(dstdata,file_path=""):
     from  matplotlib import pyplot as plt

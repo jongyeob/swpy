@@ -3,7 +3,6 @@ Created on 2015. 5. 26.
 
 @author: jongyeob
 '''
-
 from __future__ import absolute_import
 import logging
 
@@ -13,7 +12,7 @@ from astropy import units
 JSOC_REGISTERED_EMAIL = 'parkjy@kasi.re.kr'
 LOG = logging.getLogger(__name__)
 
-class _Downloader():
+class _URLFetch():
     urls = []
     def download(self,url,**kwargs):
         LOG.debug(url)
@@ -73,8 +72,11 @@ def download(instrument,type,start_datetime,end_datetime='',cadence=0,**kwargs):
                 
     client = jsoc.JSOCClient()
     res = client.query(*query_args)
-    downloader = _Downloader()
+    downloader = _URLFetch()
     if len(res) > 0:
         client.get(res,downloader=downloader,overwrite=True)
         
     return downloader.urls
+
+def download():
+    pass

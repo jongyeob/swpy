@@ -1,35 +1,50 @@
-import logging
+from __future__ import absolute_import
 
-from swpy import utils
-from swpy.utils import date_time as dt, download as dl
+import logging
+from .. import utils
+from ..utils import datetime as dt
+from ..utils import download as dl
+from ..utils import filepath as fp
+
+from . import kasi, jsoc
 
 LOG    = logging.getLogger(__name__)
-DATA_INFO = {'agency':'NASA','machine':'SDO','instrument':'HMI'}
-DATA_DIR  = 'data/%(agency)/%(machine)/%(instrument)/%(type)/%(format)/%Y/%Y%m%d/'
-DATA_FILE = '%Y%m%d_%H%M%S_%(machine)_%(instrument)_%(type).%(format)'
-CADENCE   = 45
 
-def initialize(**kwargs):
-    utils.config.set(globals(),**kwargs)
+VALID_KEYS = ['type','format']
+DATA_DIR  = 'data/NASA/SDO/HMI/%(format)/%(type)/%Y/%Y%m%d/'
+DATA_FILE = '%Y%m%d_%H%M%S_SDO_HMI_%(type).%(ext)'
+TYPES      = ['Ic','Ld','Lw','M','V','S',
+              'Ic_45s','Ld_45s','Lw_45s','M_45s','V_45s',
+              'Ic_720s','Ld_720s','Lw_720s','M_720s','S_720s',
+              'M_synoptic','continuum','magnetogram']
+FORMATS = ['jp2','jpg_512','jpg_1024','jpg_4096','fits']
 
-def get_path(type,format,datetime=''):
-    dir_format  = dt.replace(DATA_DIR,datetime,type=type,format=format,**DATA_INFO)
-    file_format  = dt.replace(DATA_FILE,datetime,type=type,format=format,**DATA_INFO)
+__all__ = ['get_path','request','download_fits']
+
+def get_path(type,format,time=''):
+    if not type in TYPES:
+        raise TypeError("Invalid type : {}".format(type))
+        
+    dir_format  = dt.replace(DATA_DIR,time,type=type,format=format)
+    ext = ''
+    if format in FORMATS:
+        ext = format.split('_')[0]
+    else:
+        raise TypeError("Invalid format : {}".format(format))
+    
+    file_format  = dt.replace(DATA_FILE,time,type=type,format=format,ext=ext)
     
     return dir_format + file_format
 
-def request(start_datetime,type,format,end_datetime='',cadence=0):
+def request(type,format,start_datetime,end_datetime='',cadence=0):
     path_format = get_path(type,format)
-    
-    if cadence == 0:
-        cadence = CADENCE
         
-    return utils.filepath.request_files(path_format,\
-                               start_datetime,\
-                               end_datetime=end_datetime,\
-                               cadence=cadence)
+    return fp.request_files(path_format,\
+                            start_datetime,\
+                            end_datetime=end_datetime,\
+                            cadence=cadence)
 
-def download_fits(start_datetime,type,end_datetime='',cadence=0,overwrite=False):
+def download_fits(type,start_datetime,end_datetime='',cadence=0,overwrite=False):
     '''
      Downloads hmi  files
     
@@ -39,7 +54,6 @@ def download_fits(start_datetime,type,end_datetime='',cadence=0,overwrite=False)
         end_datetime   - string
         
     '''
-    import kasi, jsoc
        
     
     time_series = dt.series(start_datetime,end_datetime,seconds=cadence)

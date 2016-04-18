@@ -31,9 +31,11 @@ memory.py:
 ## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS  
 ## SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import core
 import basic
 from core import io, next, izip, any
+import core
+
+
 if core.has_numpy:
     import numpy
 

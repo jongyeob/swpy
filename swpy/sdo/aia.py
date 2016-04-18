@@ -1,34 +1,59 @@
-from swpy import utils
-from swpy.utils import date_time as dt, download as dl
+from __future__ import absolute_import
+
 import logging
 
+from .. import utils
+from ..utils import download as dl
+from ..utils import datetime as dt
+
+
 LOG    = logging.getLogger(__name__)
-DATA_INFO = {'agency':'NASA','machine':'SDO','instrument':'AIA'}
-DATA_DIR  = 'data/%(agency)/%(machine)/%(instrument)/%(wavelength)/%(format)/%Y/%Y%m%d/'
-DATA_FILE = '%Y%m%d_%H%M%S_%(machine)_%(instrument)_%(wavelength).%(format)'
-CADENCE   = 12
 
-def initialize(**kwargs):
-    utils.config.set(globals(),**kwargs)
+DATA_DIR      = 'data/NASA/SDO/AIA/%(wavelength)/%(format)/%Y/%Y%m%d/'
+DATA_FILE     = '%Y%m%d_%H%M%S_SDO_AIA_%(wavelength).%(ext)'
+WAVELENGTHS   = ['131','1600','1700','171','193','211','304','335','4500','94']
+FORMATS       = ['jp2',
+                 'jpg_512','jpg_1024','jpg_2048','jpg_4096',
+                 'fits','fits_synoptic']
 
-def get_path(wavelength,format,datetime=''):
-    dir_format  = dt.replace(DATA_DIR,datetime,wavelength=wavelength,format=format,**DATA_INFO)
-    file_format  = dt.replace(DATA_FILE,datetime,wavelength=wavelength,format=format,**DATA_INFO)
-   
-    return dir_format + file_format
 
-def request(start_datetime,wavelength,format,end_datetime='',cadence=0):
-    path_format = get_path(wavelength,format)
+__all__ = ['get_path','request','download_fits']
+
+
+def get_path(wavelength,format,time=''):
+    if not wavelength in WAVELENGTHS:
+        raise TypeError("Invalid wavelength : {}".format(wavelength))
     
-    if cadence == 0:
-        cadence = CADENCE
+    ext        = ''
+    file_wavelength = wavelength
+    dir_wavelength  = wavelength
+    if format in FORMATS:
+        ext = format.split('_')[0]
+        if format == 'fits_synoptic':
+            file_wavelength = wavelength + '_synoptic'
+            dir_wavelength  = 'synoptic/'+wavelength
+    else:
+        raise TypeError("Invalid format : {}".format(format))
+        
+    dir_format  = dt.replace(DATA_DIR,time,
+                             wavelength=dir_wavelength,
+                             format=format)
+    file_format  = dt.replace(DATA_FILE,time,
+                              wavelength=file_wavelength,
+                              format=format,ext=ext)
+    
+    return dir_format + file_format
+    
+
+def request(wavelength,format,start_datetime,end_datetime='',cadence=0):
+    path_format = get_path(wavelength,format)
         
     return utils.filepath.request_files(path_format,\
                                start_datetime,\
                                end_datetime=end_datetime,\
                               cadence=cadence)
 
-def download_fits(start_datetime,wavelength,end_datetime='',cadence=0,overwrite=False):
+def download_fits(wavelength,start_datetime,end_datetime='',cadence=0,overwrite=False):
     '''
      Downloads hmi  files
     
@@ -38,7 +63,7 @@ def download_fits(start_datetime,wavelength,end_datetime='',cadence=0,overwrite=
         end_datetime   - string
         
     '''
-    import kasi, jsoc
+    from . import kasi, jsoc
        
     time_series = dt.series(start_datetime,end_datetime,seconds=cadence)
     kasi_series = kasi.request('fits', 'aia', wavelength, start_datetime, end_datetime, cadence)

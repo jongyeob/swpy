@@ -3,13 +3,14 @@ Created on 2015. 6. 11.
 
 @author: jongyeob
 '''
-import os
-import logging
 import datetime
-from swpy.noaa import indices,reports
+import logging
+import os
 from swpy import utils
+from swpy.noaa import indices, reports
 from swpy.utils import data
 import tempfile
+
 
 logging.basicConfig(level=10,format="%(asctime)s [%(name)s:%(lineno)s] %(message)s")
 

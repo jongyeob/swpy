@@ -4,16 +4,33 @@ Created on 2015. 4. 26.
 @author: jongyeob
 '''
 
-import os
 import logging
-from swpy.utils import date_time as dt
+import os
 from swpy import utils
-from swpy.sdo.hmi_nasa import *
-    
+from swpy.sdo import hv_hmi_jp2 as hv
+from swpy.utils import datetime as dt
+import pytest
+
+
 logging.basicConfig(level=10,format=("%(asctime)s %(message)s"))
 
-     
-print get_path('Ic', "2010-10-31 00:02:00.101")
-print get_path('Ic', "2010-10-31 00:02:00.10")
-print len(request("20121003",'Ic',end_datetime="20121005"))
-print len(request("20121003",'Ic',end_datetime="20121005",cadence=90))
+test_starttime = '20121003'
+test_endtime   = '20121005'
+test_cadence   = 6*3600
+
+def test_make_url():
+    for type in hv.TYPES:
+        for time in dt.iseries(test_starttime,test_endtime,days=1):
+            url = hv.make_url(type, time)
+            print url
+        
+@pytest.mark.online
+def test_request():
+    for type in hv.TYPES:
+        hv.request(type,test_starttime,end=test_endtime)
+
+@pytest.mark.online
+def test_download():
+    for type in hv.TYPES:
+        hv.download(type,test_starttime, end=test_endtime, cadence=test_cadence)
+    

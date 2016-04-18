@@ -3,16 +3,18 @@ Created on 2015. 6. 8.
 
 @author: jongyeob
 '''
+from __future__ import absolute_import
 
 import logging
 
-from swpy import utils
-from swpy.utils import date_time as dt, download as dl
+from ..utils import datetime as dt
+from ..utils import download as dl
+
+from . import aia
+
+__all__ = []
 
 LOG    = logging.getLogger(__name__)
-DATA_INFO = {'agency':'NASA','machine':'SDO','instrument':'AIA'}
-DATA_DIR  = 'data/%(agency)/%(machine)/%(instrument)/synoptic/%(wavelength)/%Y/%Y%m%d/'
-DATA_FILE = '%Y%m%d_%H%M%S_%(machine)_%(instrument)_%(wavelength)_synoptic.fits'
 
 REMOTE_DATA_DIR = 'http://jsoc.stanford.edu/data/aia/synoptic/%Y/%m/%d/H%H00/'
 REMOTE_DATA_FILE = 'AIA%Y%m%d_%H%M_%(wavelength).fits'
@@ -22,23 +24,10 @@ NRT_DATA_DIR = 'http://jsoc.stanford.edu/data/aia/synoptic/nrt/%Y/%m/%d/H%H00/'
 NRT_DATA_FILE = 'AIA%Y%m%d_%H%M%S_%(wavelength).fits'
 NRT_TIME_URL = 'http://jsoc.stanford.edu/data/aia/synoptic/nrt/image_times'
 
-def initialize(**kwargs):
-    utils.config.set(globals(),**kwargs)
-def get_path(wavelength,datetime=''):
-    dir_format  = dt.replace(DATA_DIR,datetime,wavelength=wavelength,**DATA_INFO)
-    file_format  = dt.replace(DATA_FILE,datetime,wavelength=wavelength,**DATA_INFO)
-    
-    return dir_format + file_format
+WAVELENGTHS   = ['131','1600','1700','171','193','211','304','335','4500','94']
+FORMAT = 'fits_synoptic'
 
-def request(start_datetime,wavelength,end_datetime='',cadence=0):
-    path_format = get_path(wavelength)
-        
-    return utils.filepath.request_files(path_format,\
-                               start_datetime,\
-                               end_datetime=end_datetime,\
-                               cadence=cadence)
-
-def download(start,wavelength,end='',cadence=0,overwrite=False):
+def download(wavelength,start,end='',cadence=0,overwrite=False):
     '''
     downloads aia synotic from JSOCs
     
@@ -47,10 +36,11 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
         wavelength     - string
         end            - string
     '''
+    
     starttime = dt.parse(start)
     endtime = starttime
     if end != '':
-       endtime = dt.parse(end) 
+        endtime = dt.parse(end) 
 
     recent_time = dl.download_http_file(REMOTE_TIME_URL)
     recent_time = recent_time.split()[1]
@@ -92,15 +82,15 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
     
     time_format = dt.replace(REMOTE_DATA_FILE,wavelength=wave)
     time_parser = lambda s:dt.parse_string(time_format, s)
-    archive_series = dt.filter(archive_series,start,end_datetime=end,cadence=cadence,time_parser=time_parser)
+    index = map(time_parser,archive_series)
+    archive_series = dt.filter(zip(index,archive_series),start,end_datetime=end,cadence=cadence)
     
     LOG.info('#(time), #(archive) = %d, %d'%(len(time_series), len(archive_series)))
     
-    for f in archive_series:
-        t = time_parser(f[0])
-        dstpath = get_path(wavelength,t)
+    for t,f in archive_series:
         url = dt.replace(REMOTE_DATA_DIR+REMOTE_DATA_FILE, t,wavelength=wave)
-              
+        dstpath = aia.get_path(wavelength,FORMAT,t)
+        
         dl.download_http_file(url, dstpath,overwrite=overwrite)
     
             
@@ -121,13 +111,13 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
         
         time_format = dt.replace(NRT_DATA_FILE,wavelength=wave)
         time_parser = lambda s:dt.parse_string(time_format, s)
-        nrt_series = dt.filter(nrt_series,start,end_datetime=end,cadence=cadence,time_parser=time_parser)
+        index = map(time_parser,nrt_series)
+        nrt_series = dt.filter(zip(index,nrt_series),start,end_datetime=end,cadence=cadence)
         
         LOG.info('#(time), #(nrt) = %d, %d'%(len(time_series), len(nrt_series)))
         
-        for f in nrt_series:
-            t = time_parser(f[0])
-            dstpath = get_path(wavelength,t)
+        for t, f in nrt_series:
+            dstpath = aia.get_path(wavelength,FORMAT,t)
             url = dt.replace(NRT_DATA_DIR+NRT_DATA_FILE, t,wavelength=wave)
                   
             dl.download_http_file(url, dstpath,overwrite=overwrite)

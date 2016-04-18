@@ -3,9 +3,10 @@ Created on 2015. 6. 15.
 
 @author: jongyeob
 '''
-import tempfile
 import copy
 from swpy import utils
+import tempfile
+
 
 def test_config():
     test_ini = \

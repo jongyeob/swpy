@@ -6,7 +6,10 @@ Created on 2013. 12. 9.
 
 
 from swpy import utils
-from swpy.utils import date_time as dt,\
+from swpy.utils import datetime as dt
+from swpy.utils import download as dl, Config
+
+
                        download as dl,\
                        Config
 

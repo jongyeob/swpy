@@ -3,21 +3,23 @@ Created on 2015. 6. 16.
 
 @author: jongyeob
 '''
-import os
+from __future__ import absolute_import
+
 import glob
-import date_time as dt
 from os import path
+import os
 import shutil
- 
 import tempfile
 
-__all__ = ['glob','path','make_dirs','make_path','get_files','request_files']
+from . import datetime as dt
+
+
+__all__ = ['glob','path','mkdirs','mkpath','get_files','request_files']
 
 class AutoPath(str):
     def __del__(self):
         if path.exists(self):
             shutil.rmtree(self)
-        
 
 def mkdirs(pathstr):
     pathstr = path.normpath(pathstr+'/')
@@ -76,8 +78,9 @@ def request_files(path_format,start_datetime,end_datetime='',cadence=0):
         files.extend(_files)
 
     files.sort()
-    datetime_parser = lambda p:dt.parse_string(path_format,p)
-    ret = dt.filter(files,start_datetime,end_datetime,cadence,time_parser=datetime_parser)
+    time_parser = lambda p:dt.parse_string(path_format,p)
+    index = map(time_parser,files)
+    ret = dt.filter(zip(index,files),start_datetime,end_datetime,cadence)
         
     return ret
 

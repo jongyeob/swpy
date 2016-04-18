@@ -1,17 +1,13 @@
 import os
 import re
-import tempfile
-import tarfile
 import shutil
-
-
 from swpy import utils 
 from swpy.utils import config
+from swpy.utils import datetime as dt
+from swpy.utils import download as dl, data as da
 from swpy.utils import filepath
-from swpy.utils import download as dl,\
-                       data as da, \
-                       date_time as dt
-                       
+import tarfile
+import tempfile
 
 
 DATA_DIR  = 'data/noaa/indices/%(suffix)/'
@@ -32,29 +28,29 @@ def initialize(**kwargs):
 def get_path(suffix,date=None):
     return dt.replace(DATA_DIR + DATA_FILE,date,suffix=suffix)
     
-def request(suffix,begindate,enddate=''):
+def request(suffix,begin,end=''):
     
     path = get_path(suffix)
-    files = filepath.request_files(path, begindate, end_datetime=enddate)
+    files = filepath.request_files(path, begin, end_datetime=end)
     
     return files   
     
-def download_dsd(begindate, enddate="",overwrite=False):
-    return _download_index(begindate, enddate, "DSD",overwrite=overwrite);
+def download_dsd(begin, end="",overwrite=False):
+    return _download_index(begin, end, "DSD",overwrite=overwrite);
 
-def download_dpd(begindate, enddate="",overwrite=False):
-    return _download_index(begindate, enddate, "DPD",overwrite=overwrite);
+def download_dpd(begin, end="",overwrite=False):
+    return _download_index(begin, end, "DPD",overwrite=overwrite);
 
-def download_dgd(begindate, enddate="",overwrite=False):
-    return _download_index(begindate, enddate, "DGD",overwrite=overwrite);
+def download_dgd(begin, end="",overwrite=False):
+    return _download_index(begin, end, "DGD",overwrite=overwrite);
 
 
-def load_dgd(begindate,enddate=""):
-    begin_dt =  dt.trim(begindate,3,'start')
+def load_dgd(begin,end=""):
+    begin_dt =  dt.trim(begin,3,'start')
     
     end_dt = begin_dt
-    if enddate != "":
-        end_dt = dt.trim(enddate,3,'end')
+    if end != "":
+        end_dt = dt.trim(end,3,'end')
     
     data_a = []
     data_k = []
@@ -141,12 +137,12 @@ def load_dgd(begindate,enddate=""):
               
     return data_a,data_k 
         
-def load_dsd(begindate,enddate=""):
-    begin_dt =  dt.trim(begindate,3,'start')
+def load_dsd(begin,end=""):
+    begin_dt =  dt.trim(begin,3,'start')
     
     end_dt = begin_dt
-    if enddate != "":
-        end_dt = dt.trim(enddate,3,'end')
+    if end != "":
+        end_dt = dt.trim(end,3,'end')
     
     
     data = []
@@ -201,12 +197,12 @@ def load_dsd(begindate,enddate=""):
     return data
 
 
-def load_dpd(begindate, enddate=""):
+def load_dpd(begin, end=""):
     
-    begin_dt = dt.trim(begindate,3,'start')
+    begin_dt = dt.trim(begin,3,'start')
     end_dt = begin_dt
-    if enddate != "":
-        end_dt = dt.trim(enddate,3,'end') 
+    if end != "":
+        end_dt = dt.trim(end,3,'end') 
 
    
     data = []
@@ -380,8 +376,8 @@ def draw_dpd(coldata,days=0, file_path=""):
     return
 
 
-def _download_index(begindate, enddate="", suffix="",overwrite=False):
-    begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
+def _download_index(begin, end="", suffix="",overwrite=False):
+    begin_dt, end_dt = dt.trim(begin,3,'start'), dt.trim(end,3,'end')
     if end_dt == None:
         end_dt = begin_dt
     if suffix not in ["DSD","DPD","DGD"]:

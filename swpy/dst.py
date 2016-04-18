@@ -3,14 +3,13 @@ Author : Jongyeob Park (pjystar@gmail.com)
          Seonghwan Choi (shchoi@kasi.re.kr)
 '''
 
-import re
 import os
+import re
 from swpy import utils
-from swpy.utils import config,\
-                       date_time as dt,\
-                       download as dl
-from PIL.FontFile import WIDTH
-                                              
+from swpy.utils import config, download as dl
+from swpy.utils import datetime as dt
+
+
 DATA_DIR  = 'data/kyoto/dst/%Y/'
 DATA_FILE = 'dst_%Y%m.txt'
 
@@ -32,14 +31,14 @@ def request(start,end=''):
 def download(start,end='',overwrite=False):
     download_web(start,end,overwrite)
     
-def download_web(begindate, enddate="",overwrite=False):
+def download_web(begin, end="",overwrite=False):
     '''
     Download from kyoto web pages
     '''
-    begin_dt = dt.trim(begindate,3,'start')
+    begin_dt = dt.trim(begin,3,'start')
     end_dt = begin_dt
-    if enddate != '':
-        end_dt =  dt.trim(enddate,3,'end')
+    if end != '':
+        end_dt =  dt.trim(end,3,'end')
         #
     now_dt = begin_dt
     while ( now_dt <= end_dt ):
@@ -90,14 +89,14 @@ def download_web(begindate, enddate="",overwrite=False):
         mr = dt.monthrange(now_dt.year, now_dt.month)
         now_dt = now_dt + dt.timedelta(days=mr[1])
 
-def download_cgi(begindate, enddate='',overwrite=False):
+def download_cgi(begin, end='',overwrite=False):
     '''
     Download dst data from cgi
     '''
-    if not enddate:
-        enddate = begindate
+    if not end:
+        end = begin
         
-    begin_dt, end_dt = dt.trim(begindate,3,'start'),dt.trim(enddate,3,'end')
+    begin_dt, end_dt = dt.trim(begin,3,'start'),dt.trim(end,3,'end')
     
     now_dt = begin_dt
     
@@ -127,11 +126,11 @@ def download_cgi(begindate, enddate='',overwrite=False):
         now_dt = now_dt + dt.timedelta(days=mr[1])
         
 
-def load(begindate, enddate=""):
-    if enddate == "":
-        enddate = begindate
+def load(begin, end=""):
+    if end == "":
+        end = begin
         
-    begin_dt,end_dt = dt.parse(begindate),dt.parse(enddate)
+    begin_dt,end_dt = dt.parse(begin),dt.parse(end)
     records = []
     for t in dt.datetime_range(begin_dt, end_dt, months=1):
 

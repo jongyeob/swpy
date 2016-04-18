@@ -33,6 +33,7 @@ ipac.py:
 import core
 import fixedwidth
 
+
 class Ipac(core.BaseReader):
     """Read an IPAC format table:
     http://irsa.ipac.caltech.edu/applications/DDGEN/Doc/ipac_tbl.html::

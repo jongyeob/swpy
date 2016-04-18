@@ -26,6 +26,12 @@
 ## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS  
 ## SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from basic import (Basic, BasicReader,
+                              Rdb, RdbReader,
+                              Tab, TabReader,
+                              NoHeader, NoHeaderReader,
+                              CommentedHeader, CommentedHeaderReader)
+from cds import Cds, CdsReader
 from core import (has_numpy,
                              InconsistentTableError,
                              NoType, StrType, NumType, FloatType, IntType, AllType,
@@ -34,23 +40,18 @@ from core import (has_numpy,
                              BaseHeader,
                              BaseData,
                              BaseOutputter, NumpyOutputter, DictLikeNumpy,
-                             BaseReader, 
+                             BaseReader,
                              BaseSplitter, DefaultSplitter, WhitespaceSplitter,
                              convert_list, convert_numpy,
                              )
-from basic import (Basic, BasicReader,
-                              Rdb, RdbReader,
-                              Tab, TabReader,
-                              NoHeader, NoHeaderReader,
-                              CommentedHeader, CommentedHeaderReader)
-from cds import Cds, CdsReader
-from latex import Latex, LatexReader, AASTex, AASTexReader, latexdicts
-from ipac import Ipac, IpacReader
 from daophot import Daophot, DaophotReader
-from memory import Memory, MemoryReader
 from fixedwidth import (FixedWidth, FixedWidthNoHeader,
                                    FixedWidthTwoLine, FixedWidthSplitter,
                                    FixedWidthHeader, FixedWidthData)
+from ipac import Ipac, IpacReader
+from latex import Latex, LatexReader, AASTex, AASTexReader, latexdicts
+from memory import Memory, MemoryReader
 from ui import (set_guess, get_reader, read, get_writer, write)
-
 from version import version as __version__
+
+

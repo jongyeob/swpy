@@ -8,15 +8,20 @@ stacktracer.start_trace("trace.html",interval=5,auto=True) # Set auto flag to al
 ....
 stacktracer.stop_trace()
 """
+from __future__ import absolute_import
 
+import os
 import sys
+import threading
+import time
 import traceback
+
 from pygments import highlight
-from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
- 
+from pygments.lexers import PythonLexer
+
+
  # Taken from http://bzimmer.ziclix.com/2008/12/17/python-thread-dumps/
- 
 def stacktraces():
     code = []
     for threadId, stack in sys._current_frames().items():
@@ -34,9 +39,6 @@ def stacktraces():
 
 
 # This part was made by nagylzs
-import os
-import time
-import threading
 
 class TraceDumper(threading.Thread):
     """Dump stack traces into a given file periodically."""

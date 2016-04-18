@@ -3,15 +3,21 @@ Created on 2013. 5. 7.
 
 @author: kasi
 '''
+from __future__ import absolute_import
 
 from calendar import monthrange
-from datetime import datetime, timedelta,date,time
-
+from datetime import datetime, timedelta, date, time
 import logging
+import re
 import threading
 
-import re
-import utils
+from . import utils
+
+
+__all__ = ['datetime''date','time','timedelta',
+           'parse_string','parse_date','parse_time','parse_datetime',
+           'trim','iseries','series','parse','move','tuples','replace',
+           'julian_day','filter','total_seconds']
 
 
 MONTH_NUMBERS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}
@@ -51,11 +57,9 @@ TIME_SEPS = ['','_',' ']
 
 LOG = logging.getLogger(__name__)
 
-NYEAR = 1; NMONTH = 2; NWEEK =3; NDAY = 3; NHOUR = 4; NMINUTE = 5; NSECOND = 6; NSECOND2 = 7
-
 lock_parsing = threading.Lock()
 
-def get_least_delta(format_string):
+def least_delta(format_string):
     '''
     return least datetime index 
     '''
@@ -248,15 +252,28 @@ def trim(datetime_info,pos,init):
     '''
        
     dt = parse(datetime_info)
-    if(dt == None):
+    if not dt:
         return None
     
-    if pos < 1 :
+    _pos = pos
+    if isinstance(pos, str):
+        pos_ = pos.lower()
+        
+        if pos_ in ['date']:
+            _pos = 3
+        elif pos_ in ['hour']:
+            _pos = 4
+        elif pos_ in ['minute']:
+            _pos = 5
+        elif pos_ in ['second']:
+            _pos = 6
+            
+    if _pos < 1 :
         return datetime_info
     
-    if pos > 6:
+    if _pos > 6:
         return dt
-    
+
     max_len = 7
     start =[1,1,1,0,0,0,0]
     end = [9999,12,31,23,59,59,999999]
@@ -265,43 +282,39 @@ def trim(datetime_info,pos,init):
     if isinstance(init, str):
         s = init.lower()
         if s == 'start':
-            init = start[pos:max_len]
+            init = start[_pos:max_len]
         elif s == 'end':
-            init = end[pos:max_len]
+            init = end[_pos:max_len]
         else:
             return dt
         
     
     replaces = list(tuples(dt))
     
-    for i in range(pos,max_len):
-        replaces[i] = init[i-pos]
+    for i in range(_pos,max_len):
+        replaces[i] = init[i-_pos]
     
     
     return dt.replace(*replaces)
 
-def series(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
+def iseries(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
     '''
     @param - start_datetime
     @param - end_datetime
     @param - time frequency
     '''
-    start_datetime = parsing(start_datetime)
-    end_datetime = parsing(end_datetime)
-    if(start_datetime == None or end_datetime == None):
-        return []
+    start_datetime = parse(start_datetime)
+    end_datetime = parse(end_datetime)
     
-    #print 'Start/End : %s/%s'%(start_datetime,end_datetime)
-    
-    ret_list = []
-    
+    assert start_datetime or end_datetime,"Datetime parsing error!"
+        
     init_i = 0
-    for i,td in zip([NYEAR,NMONTH,NWEEK,NDAY,NHOUR,NSECOND],[years,months,weeks,days,hours,seconds]):
+    for i,td in zip([1,2,3,3,4,6],[years,months,weeks,days,hours,seconds]):
         if td != 0: init_i = i
     
     t = start_datetime
     while trim(t,init_i,'start') <= end_datetime :
-        ret_list.append(t) 
+        yield t 
         
         t1 = t + timedelta(weeks=weeks,days=days,hours=hours,minutes=minutes,seconds=seconds,milliseconds=milliseconds,microseconds=microseconds)
         
@@ -318,10 +331,18 @@ def series(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,m
             break
         else:
             t = t1
-                      
-       
-    return ret_list 
-
+                     
+def series(start_datetime,end_datetime,years=0,months=0,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
+    '''
+    @param - start_datetime
+    @param - end_datetime
+    @param - time frequency
+    '''
+    return [t for t in iseries(start_datetime,end_datetime,
+                               years=years,months=months,weeks=weeks,days=days,
+                               hours=hours,minutes=minutes,seconds=seconds,
+                               milliseconds=milliseconds,microseconds=microseconds)]
+    
 def parse(*args,**kargs):
     '''
     Make datatime object with args
@@ -442,29 +463,23 @@ def replace(format_string,datetime_info=None,**kwargs):
     
     
     
-def julian_day(datetime_info,reverse=False):
+def julian_day(time,reverse=False,modified=False):
         
     ret =   None
     if reverse == False:
-        
-        dt = parsing(datetime_info)
-        if dt != None:
-            ret = gc_to_jd(*tuples(dt, 'datetimef'))
-            
+        ret = _gc2jd(*tuples(time, 'datetimef'))
+        if modified:
+            ret += 2400000.5
+
     else:
-        try:
-            datetime = float(dt)
-        
-            ret = jd_to_gc(dt)
-            ret = datetime(ret)
-            
-            
-        except Exception as err:
-            print err
+        time = float(time)
+        if modified:
+            time += 2400000.5
+        ret = _jd2gc(float(time))            
         
     return ret
 
-def gc_to_jd(year,month=1,day=1,hour=0,minute=0,second=0.0):
+def _gc2jd(year,month=1,day=1,hour=0,minute=0,second=0.0):
     a = (14-month)/12
     y = year + 4800 - a
     m = month + 12*a - 3
@@ -474,7 +489,7 @@ def gc_to_jd(year,month=1,day=1,hour=0,minute=0,second=0.0):
 
     return jdn+time
 
-def jd_to_gc(jd):
+def _jd2gc(jd):
     jj = jd + 0.5
     j = int(jj) + 32044
     g = divmod(j,146097)
@@ -499,20 +514,9 @@ def jd_to_gc(jd):
        
     return (int(yy),int(mm),int(dd),hour,minute,sec)
 
-def modified_julian_day(jd,reverse=False):
-    '''
-    Modified Julian Day
-    @param    (float)jd : Julian day
-    @return   (float) : Modified Julian Day
-    '''
-    if reverse == False:
-        mjd = jd - 2400000.5
-    else:
-        mjd = jd + 2400000.5
-        
-    return mjd
 
-def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
+
+def filter(datetime_list,start_datetime,end_datetime='',cadence=0):
     '''
     filter list containing datetime.
     
@@ -522,24 +526,13 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
     optional:
         end_datetime   - string
         cadence        - number, seconds
-        datetime_format - string
+        allow_empty    - boolean
     returns:
         list
     '''
-    time_parser = kwargs.pop('time_parser',parse)
-    allow_empty = kwargs.pop('allow_empty',False)
     
     ret = []
-    records = []
-    is_iterable = False
-    
-    if len(datetime_list) <= 0:
-        return ret
-    
-    if hasattr(datetime_list[0], '__iter__'):
-        is_iterable = True
-    
-        
+
     start   = parse(start_datetime)
     end     = start 
     
@@ -548,26 +541,11 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
     
     LOG.debug("Time filter : %s, %s, %d"%(str(start),str(end),cadence))
     
-    for i,rec in enumerate(datetime_list):
-        time_record = None
-        record = []
-        
-        if is_iterable:
-            time_record = time_parser(rec[0])
-            record = rec
-        else:
-            time_record = time_parser(rec)
-            record = [rec]
+    records = [rec for rec in datetime_list if rec[0] and start <= rec[0] <= end]
+    records.sort()
             
-        if time_record is None:
-            continue
-        record.insert(0,time_record)
-        
-        if start <= time_record <= end:
-            records.append(record)
-    
     if cadence == 0:
-        return [rec[1:] for rec in records]
+        return records
                
     cadence_delta = timedelta(seconds=cadence/2.)
     for _t in series(start,end,seconds=cadence):
@@ -578,9 +556,6 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
         f = ''
         while(len(records) > 0):
             f = records.pop(0)
-            if f[0] is None:
-                LOG.debug("Time parse error : %s"%(f[0]))
-                continue
             
             if f[0] < last_ft_min:
                 continue
@@ -593,75 +568,18 @@ def filter(datetime_list,start_datetime,end_datetime='',cadence=0, **kwargs):
             diffs.append((diff,f))
         
         if len(diffs) > 0:
-            min_diff, _ = min(diffs)
-            for d,f in diffs:
-                if d == min_diff:
-                    ret.append(f[1:])
-                    break
+            _, f = min(diffs)
+            ret.append(f)
                 
-        elif allow_empty:
-            ret.append(None)
-        
     LOG.debug("Number of filtered records : %d"%(len(ret)))
     
     return ret
 
 def total_seconds(days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
     total = days*86400 + hours*3600 + minutes*60 + seconds + milliseconds*1e-3 + microseconds*1e-6
-    return total 
+    return total
+ 
 # For compatibility
 parsing = parse 
 datetime_range = series
-
-if __name__ == '__main__':
-    print replace("$(abc)%Y",parse("20140101"),abc='123')
-        
-    print parse_string("%Y%m%d","20140201")
-    print parse_string("%y%m%d %H%M%S.%f","990201 030201.3")
-    print parse_string("%Y-%b-%d","2014-Jul-01")
-    print parse_string("%H:%M:%S","20:01:03")
-    index = []
-    print parse_string("%H:%M:%S","20130103/20:01:03",index=index)
-    print index
-    
-    index = []
-    print parse_date("20130303",index=index)
-    print index
-    
-    index = []
-    print parse_time("130303",index=index)
-    print index
-    
-    print parse_datetime('2013')
-    print parse_datetime('2013',prior='time')
-    print parse_datetime("asdf/20130101 010101")
-    print parse_datetime("130303")
-    print parse_datetime("130303",prior='time')
-    print parse_datetime("20140101")
-    print parse_datetime("010101 20140313")
-    print parse_datetime("010101 20140401",prior='time')
-       
-    
-    
-    print "datetime_range()"
-    print len(datetime_range((2000,01,01),(2002,02,28),years=1)) == 3
-    print len(datetime_range((2000,01,01),(2001,02,28),months=1)) == 14
-    
-    
-    print "parse()"
-    print parse(2010) == datetime(2010,1,1)
-    print datetime(2010,2,27) == parsing(2010,2,27)== \
-                                 parsing((2010,2,27))== \
-                                 parsing("20100227")
-    print datetime(1999,12,31,11,22,33,444000)
-    print parse(1999,12,31,11,22,33.444)
-    print parse("19991231_112233.444")
-    
-    text = "abcd/abcdef/2013/20140202/2014-02-02_002233" # Multiple detect
-    dt = parse(text)
-    print dt
-      
-    text = '2-Jul-02'
-    print parse('2-Jul-98')
-
-    print parse_string("/abcd/%Y/%Y%m%d","/abcd/2014/20140101") 
+get_least_delta = least_delta

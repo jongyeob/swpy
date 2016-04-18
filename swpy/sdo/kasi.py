@@ -3,10 +3,12 @@ HMI FITS at KASI
 
 Created by Jongyeob (parkjy@kasi.re.kr)
 '''
+from __future__ import absolute_import
 
-from swpy import utils
-from swpy.utils import date_time as dt, download as dl
 import logging
+
+from ..utils import datetime as dt
+from ..utils import download as dl
 
 LOG    = logging.getLogger(__name__)
 
@@ -16,8 +18,6 @@ DATA_HOST = 'http://swc4.kasi.re.kr'
 
 TYPES = ['Ic_45s','Ld_45s','Lw_45s','M_45s','V_45s','Ic_720s','Ld_720s','Lw_720s','M_720s','S_720s']
 
-def initialize(**kwargs):
-    utils.config.set(globals(),**kwargs)
             
 def request(format,instrument,type,start_datetime,end_datetime='',cadence=0,**kwargs):
     '''
@@ -54,57 +54,19 @@ def request(format,instrument,type,start_datetime,end_datetime='',cadence=0,**kw
         list = dl.download_http_file(url)
         for line in list.split('\n'):
             if len(line) > 0:
-                records.append(line.split())
+                t,p = line.split()
+                records.append((dt.parse(t),p))
       
     
     LOG.debug('Number of records : %d'%(len(records)))
     
     urls = []
-    records = dt.filter(records, start_datetime, end_datetime, cadence,**kwargs)
-    for r in records:
-        data_path = r[1].replace(replaced_text,'')
+    records = dt.filter(records, start_datetime, end_datetime, cadence)
+    for t,p in records:
+        data_path = p.replace(replaced_text,'')
         data_url = DATA_HOST + data_path  
         
         urls.append(data_url)
         
     
     return urls
-    
-# def request_fits(start_datetime,end_datetime='',cadence=0,**kwargs):
-#     
-#     type = kwargs['type']
-#     
-#     meta_time_list = dt.series(start_datetime,end_datetime,days=1)
-#     records = []
-#     for t in meta_time_list:
-#         url = dt.replace(META_DIR + META_FILE,t,instrument='hmi',format='fits',type=type)
-#         LOG.debug(url)
-#         
-#         list = dl.download_http_file(url)
-#         for line in list.split('\n'):
-#             if len(line) > 0:
-#                 records.append(line.split())
-#       
-#     
-#     LOG.debug('Number of records : %d'%(len(records)))
-#     
-#     urls = []
-#     records = dt.filter(records, start_datetime, end_datetime, cadence)
-#     for r in records:
-#         data_path = r[1].replace('/NAS/emc01','')
-#         data_url = DATA_HOST + data_path  
-#         
-#         urls.append(data_url)
-#         
-#     
-#     return urls
-    
-        
-        
-        
-
-    
-    
-    
-    
-    

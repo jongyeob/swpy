@@ -29,11 +29,12 @@ core.py:
 ## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ## SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import sys
-import re
 import csv
 import itertools
+import os
+import re
+import sys
+
 
 try:
     import numpy

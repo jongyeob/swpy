@@ -1,5 +1,13 @@
 #!/usr/bin/python
-
+'''
+__author__ = "Seonghwan Choi"
+__copyright__ = "Copyright 2012, Korea Astronomy and Space Science"
+__credits__ = ["Seonghwan Choi", "Jihye Baek"]
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "Seonghwan Choi"
+__email__ = "shchoi@kasi.re.kr"
+__status__ = "Production"
 ##
 #
 # Developed by Seonghwan Choi (shchoi@kasi.re.kr, http://www.choi.pro)
@@ -10,49 +18,32 @@
 # data : from 1975
 #
 ##
-
-
-__author__ = "Seonghwan Choi"
-__copyright__ = "Copyright 2012, Korea Astronomy and Space Science"
-__credits__ = ["Seonghwan Choi", "Jihye Baek"]
-__license__ = "GPL"
-__version__ = "1.0.1"
-__maintainer__ = "Seonghwan Choi"
-__email__ = "shchoi@kasi.re.kr"
-__status__ = "Production"
+'''
+from __future__ import absolute_import
 
 # standard library
+import os
 import calendar
 import datetime
-import os
-import string
-
 import time
 
-from swpy import utils
-from swpy.utils import Config,\
-                       date_time as dt,\
-                       download as dl
+from . import utils
+from .utils import datetime as dt
+from .utils import download as dl
+from .utils import filepath
 
-DATA_DIR = 'data/noaa/goes/'
+
+
 LOG = utils.get_logger(__name__)
-# SpaeWeatherPy library
+DATA_DIR = 'data/noaa/goes/'
 ERROR_INT = -99999
-
-# GOES xray
-goes_xray_url = "http://www.swpc.noaa.gov/ftpdir/lists/xray/";
-goes_url = "http://satdat.ngdc.noaa.gov/sem/goes/data/new_avg/"
-
+GOES_XRAY_URL = "ftp://ftp.swpc.noaa.gov/pub/lists/xray/";
+GOES_URL = "http://satdat.ngdc.noaa.gov/sem/goes/data/new_avg/"
+COLOR_LIST = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
 
 
-color_list = ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099']
-
-def initialize(config=Config()):
-       
-    config.set_section(__name__)
-    config.load_ns('DATA_DIR',globals())
-    
-    
+def initialize():
+    pass
     
 def download_xray_csv(begindate, enddate=""):
     if enddate == '': enddate = begindate
@@ -90,7 +81,7 @@ def download_xray_csv(begindate, enddate=""):
             "m2":dt2.month,
             "d2":dt2.day}
         
-        src = "%(url)s%(y)04d/%(m)02d/goes%(goes_no)02d/csv/%(fn)s"%{"url":goes_url,
+        src = "%(url)s%(y)04d/%(m)02d/goes%(goes_no)02d/csv/%(fn)s"%{"url":GOES_URL,
             "y":dt1.year,
             "m":dt1.month,
             "goes_no":goes_no,
@@ -135,7 +126,7 @@ def download_xray_csv(begindate, enddate=""):
             file_name = "%(yyyymmdd)s_xrs_1m.txt"%{"yyyymmdd":day_dt.strftime("%Y%m%d")}
             file_path = DATA_DIR + "xray/1min/%(y)04d/%(fn)s"%{"y":day_dt.year, "fn":file_name}
 
-            utils.make_path(file_path)
+            filepath.mkpath(file_path)
 
             f = open(file_path, "w")
 
@@ -259,7 +250,7 @@ def download_mag_csv(begindate, enddate=""):
             "m2":dt2.month,
             "d2":dt2.day}
         
-        src = "%(url)s%(y)04d/%(m)02d/goes%(goes_no)02d/csv/%(fn)s"%{"url":goes_url,
+        src = "%(url)s%(y)04d/%(m)02d/goes%(goes_no)02d/csv/%(fn)s"%{"url":GOES_URL,
             "y":dt1.year,
             "m":dt1.month,
             "goes_no":goes_no,
@@ -304,33 +295,11 @@ def download_mag_csv(begindate, enddate=""):
             file_name = "%(yyyymmdd)s_magneto_1m.txt"%{"yyyymmdd":day_dt.strftime("%Y%m%d")}
             file_path = DATA_DIR + "magneto/1min/%(y)04d/%(fn)s"%{"y":day_dt.year, "fn":file_name}
             
-            utils.make_path(file_path)
+            filepath.mkpath(file_path)
             
             f = open(file_path, "w")
             
             # Write a header.
-            '''
-            f.write(":Data_list: %s\r\n"%(file_name))
-            f.write(":Created: %s UTC\r\n"%(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())))
-            f.write("# Prepared by SpaceWeatherPy\r\n")
-            f.write("# The data source is from NOAA, Space Weather Prediction Center.\r\n")
-            f.write("# \r\n")
-            f.write("# Label: Short = 0.05- 0.4 nanometer\r\n")
-            f.write("# Label: Long  = 0.1 - 0.8 nanometer\r\n")
-            f.write("# Units: Short = Watts per meter squared\r\n")
-            f.write("# Units: Long  = Watts per meter squared\r\n")
-            f.write("# Source: GOES-%02d\r\n"%(goes_no))
-            f.write("# Location: W105\r\n")
-            f.write("# Missing data: -1.00e+05\r\n")
-            f.write("#\r\n")
-            f.write("#                         GOES-%d Solar X-ray Flux\r\n"%(goes_no))
-            f.write("# \r\n")
-            f.write("#                 Modified Seconds\r\n")
-            f.write("# UTC Date  Time   Julian  of the\r\n")
-            f.write("# YR MO DA  HHMM    Day     Day       Short       Long        Ratio\r\n")
-            f.write("#-------------------------------------------------------------------\r\n")
-            '''
-
             f.write(":Data_list: %s\r\n"%(file_name))
             f.write(":Created: %s UTC\r\n"%(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())))
             f.write("# Prepared by SWPy.org\r\n")
@@ -423,37 +392,41 @@ def download_mag_csv(begindate, enddate=""):
     return True
 
 
-def download_xray(begindate, enddate=''):
+def download_xray(begindate, enddate='',overwrite=False):
     if enddate == '' : enddate = begindate
-    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
+    begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
     
     now_dt = begin_dt
     while ( now_dt <= end_dt ):
         # 1min
-        src = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
-            {"url":goes_xray_url, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
-        dst = DATA_DIR + "xray/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
+        src1 = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_1m.txt"% \
+             {"url":GOES_XRAY_URL, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+        src2 = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gs_xr_1m.txt"% \
+             {"url":GOES_XRAY_URL, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+        srcs = [src1,src2]
+        
+        dst = DATA_DIR + "xray/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_GOES_XRAY_1m.txt"% \
             {"yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+        
 
-        rv = dl.download_http_file(src, dst)
-        if (rv == False):
-            print ("Can not download %s."%src)
-        else:
-            print ("Downloaded %s."%src)
+        for src in srcs:
+            dl.download_ftp_file(src, dst,overwrite=overwrite)
+            if os.path.exists(dst):
+                break
 
-        # 5 min
-        src = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
-            {"url":goes_xray_url, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
-        dst = DATA_DIR + "xray/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
-            {"yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+#         # 5 min
+#         src = "%(url)s%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
+#             {"url":GOES_XRAY_URL, "yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
+#         dst = DATA_DIR + "xray/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_Gp_xr_5m.txt"% \
+#             {"yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
 
         #
         now_dt = now_dt + datetime.timedelta(days=1)
 
 
 def load_xray_1m(begindate, enddate=""):
-    
-    begin_dt, end_dt = dt.trim(enddate,3,'start'), dt.trim(enddate,3,'end')
+    from swpy.utils import datetime as dt
+    begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
     
     t0 = []
     t1 = []
@@ -463,69 +436,77 @@ def load_xray_1m(begindate, enddate=""):
     now_dt = begin_dt
     while ( now_dt <= end_dt ):
         # 1min : yyyymmdd_xrs_1m.txt
-        file_path = DATA_DIR + "xray/1min/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_xrs_1m.txt"% \
+        file_path = DATA_DIR + "xray/%(yyyy)04d/%(yyyy)04d%(mm)02d%(dd)02d_GOES_XRAY_1m.txt"% \
             {"yyyy":now_dt.year, "mm":now_dt.month, "dd":now_dt.day}
         
+        try:
+             
+            with open(file_path, "r") as f:    
+                
+                # Skip header
+                for line in f:
+                    if (line[0:5] == "#----"):
+                        break
         
-        f = open(file_path, "r")
-        
-        # Skip header
-        for line in f:
-            if (line[0:5] == "#----"):
-                break
-
-        for line in f:
-            column = line.split(' ')
-            
-            column = filter(None, column)
-            
-            if (len(column) != 9):
-                break
+                for line in f:
+                    column = line[:-1].split(' ')
                     
-            #
-            dt = datetime.datetime( int(column[0]), int(column[1]), int(column[2]), int(column[3][0:2]), int(column[3][2:4]))
-
-            t0.append(dt)
-            xshort.append(column[6])
-            xlong.append(column[7])
-
-        f.close()
+                    column = filter(None, column)
+                    
+                    if (len(column) != 8):
+                        break
+                            
+                    #
+                    dt = datetime.datetime( int(column[0]), int(column[1]), int(column[2]), int(column[3][0:2]), int(column[3][2:4]))
+        
+                    t0.append(dt)
+                    xshort.append(column[6])
+                    xlong.append(column[7])
+        except:
+            
+            LOG.warn("File open error")
+                    
         
         #
         now_dt = now_dt + datetime.timedelta(days=1)
 
     return {"t0":t0, "xshort":xshort, "xlong":xlong}
 
-def draw_goes_xray(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
+def draw_goes_xray(dt0=[], v0=[], v1=[], v2=[], days=3, file_path="", color=(),*args,**kwargs):
     import matplotlib.pyplot as plt
-        #
-    global color_list
-    if (color == ""):
-        color = color_list
-
+    if not color:
+        color = COLOR_LIST
+        
     # Date list for X-Axis
     tick_dt = []
+    tick_t0 = None
+    if not dt0:
+        tick_t0 = dt.datetime.now()
+    else:
+        tick_t0 = dt0[0]
+         
     for i in range(0, days+1):
-        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
+        tick_dt.append(tick_t0.replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
     
     # Figure
-    fig = plt.figure(facecolor='white')
+    facecolor = kwargs.pop('facecolor','white')
+    fig = plt.figure(facecolor=facecolor)
     plt.clf()
       
     # Plot
-    plt.plot(dt, v0, color=color[0])
+    plt.plot(dt0, v0, color=color[0])
     if (v1 != 0):
-        plt.plot(dt, v1, color=color[1])
+        plt.plot(dt0, v1, color=color[1])
 
     # Title
     plt.title("GOES X-ray Flux (1 minute data)")
 
     # X-Axis
-    plt.xlim(tick_dt[0], tick_dt[3])
-    plt.xlabel("%s $\sim$ %s [UTC]"% \
-               (tick_dt[0].strftime("%Y.%m.%d."),
-                tick_dt[days-1].strftime("%Y.%m.%d.")),
-                fontsize=14)
+    #plt.xlim(tick_dt[0], tick_dt[3])
+    #plt.xlabel("%s $\sim$ %s [UTC]"% \
+    #           (tick_dt[0].strftime("%Y.%m.%d."),
+    #            tick_dt[days-1].strftime("%Y.%m.%d.")),
+    #            fontsize=14)
     
     # Y-Axis
     plt.yscale('log')
@@ -560,24 +541,21 @@ def draw_goes_xray(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
     fig.text(0.93, 0.35, "GOES-15 0.5-4.0 $\AA$", fontsize=12, ha='left', va='center', rotation='vertical', color=color[0])
 
     # Show or Save
-    if (file_path == ""):
-        plt.show()
-    else:
+    if file_path:
         fig.savefig(file_path)
 
-    return
+    return fig
 
-def draw_goes_mag(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
+def draw_goes_mag(dt0, v0, v1=0, v2=0, days=3, file_path="", color=""):
     import matplotlib.pyplot as plt
-    #
-    global color_list
+    
     if (color == ""):
-        color = color_list
+        color = COLOR_LIST
     
     # Date list for X-Axis
     tick_dt = []
     for i in range(0, days+1):
-        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
+        tick_dt.append(dt0[0].replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
     
     # Figure
     fig = plt.figure(facecolor='white')
@@ -626,26 +604,23 @@ def draw_goes_mag(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
     
 
     # Plot, and Show or Save
-    plt.plot(dt, v0, color=color[0])
+    plt.plot(dt0, v0, color=color[0])
     
-    if (file_path == ""):
-        plt.show()
-    else:
+    if file_path:
         fig.savefig(file_path)
     
-    return
+    return fig
 
-def draw_goes_proton(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
+def draw_goes_proton(dt0, v0, v1=0, v2=0, days=3, file_path="", color=""):
     import matplotlib.pyplot as plt
-    #
-    global color_list
+    
     if (color == ""):
-        color = color_list
+        color = COLOR_LIST
     
     # Date list for X-Axis
     tick_dt = []
     for i in range(0, days+1):
-        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
+        tick_dt.append(dt0[0].replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
     
     # Figure
     fig = plt.figure(facecolor='white')
@@ -692,28 +667,26 @@ def draw_goes_proton(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
     fig.text(0.93, 0.35, '$\ge$100 MeV', fontsize=12, ha='left', va='center', rotation='vertical', color=color[0])
     
     # Plot, and Show or Save
-    plt.plot(dt, v0, color=color[0])
+    plt.plot(dt0, v0, color=color[0])
     
-    if (file_path == ""):
-        plt.show()
-    else:
+    if file_path:
         fig.savefig(file_path)
 
     
-    return
+    return fig
 
 
-def draw_goes_electron(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
+def draw_goes_electron(dt0, v0, v1=0, v2=0, days=3, file_path="", color=""):
     import matplotlib.pyplot as plt
     #
-    global color_list
+
     if (color == ""):
-        color = color_list
+        color = COLOR_LIST
     
     # Date list for X-Axis
     tick_dt = []
     for i in range(0, days+1):
-        tick_dt.append(dt[0].replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
+        tick_dt.append(dt0[0].replace(hour=0, minute=0, second=0) + datetime.timedelta(days=i))
     
     # Figure
     fig = plt.figure(facecolor='white')
@@ -760,34 +733,10 @@ def draw_goes_electron(dt, v0, v1=0, v2=0, days=3, file_path="", color=""):
     fig.text(0.93, 0.35, '$\ge$100 MeV', fontsize=12, ha='left', va='center', rotation='vertical', color=color[0])
     
     # Plot, and Show or Save
-    plt.plot(dt, v0, color=color[0])
+    plt.plot(dt0, v0, color=color[0])
     
-    if (file_path == ""):
-        plt.show()
-    else:
+    if file_path:
         fig.savefig(file_path)
     
     
-    return
-
-if __name__=='__main__':
-    dt = [datetime.datetime(2012, 01, 01, 0, 0, 0),
-          datetime.datetime(2012, 01, 02, 0, 0, 0),
-          datetime.datetime(2012, 01, 03, 0, 0, 0)]
-    
-    
-    y = [2.0e-5, 2.0e-5, 2.0e-5]
-    draw_goes_xray(dt, y, days=3)
-    #draw_goes_xray(dt, y, file_path='xray.png')
-    
-    y = [10, 20, 30]
-    draw_goes_mag(dt, y, days=3)
-    #draw_goes_mag(dt, y, file_path='mag.png')
-    
-    y = [2.0e2, 2.0e1, 2.0e3]
-    draw_goes_proton(dt, y, days=3)
-    #draw_goes_proton(dt, y, file_path='proton.png')
-    
-    y = [2.0e2, 2.0e1, 2.0e3]
-    draw_goes_electron(dt, y, days=3)
-    #draw_goes_proton(dt, y, file_path='proton.png')
+    return fig

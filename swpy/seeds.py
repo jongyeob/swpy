@@ -9,11 +9,11 @@ import calendar
 import datetime
 import os
 import string
+from swpy import utils
+from swpy.utils import datetime as dt
+from swpy.utils import download as dl
 import time
 
-from swpy import utils
-from swpy.utils import download as dl,\
-                       date_time as dt
 
 DATA_DIR = 'data/gmu/seeds'
 # SpaeWeatherPy library

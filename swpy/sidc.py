@@ -1,8 +1,9 @@
 # SpaeWeatherPy library
 
 from swpy import utils
-from swpy.utils import date_time as dt,\
-                       download as dl
+from swpy.utils import datetime as dt
+from swpy.utils import download as dl
+
 
 LOG = utils.get_logger(__name__)
 DATA_DIR = 'data/sidc/'

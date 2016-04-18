@@ -2,6 +2,8 @@
     @author: Seonghwan Choi (shchoi@kasi.re.kr)
              Jongyeob Park (pjystar@gmail.com)
 '''
+from __future__ import absolute_import
+
 
 binary_score_keywords= ['yy','yn','ny','nn','acc', 'pody', 'podn', 'far', 'bias', 'csi', 'tss', 'hss', 'gss']
 

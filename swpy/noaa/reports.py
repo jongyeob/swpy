@@ -1,17 +1,13 @@
 import os
 import re
-import tempfile
-import tarfile
 import shutil
-
-
 from swpy import utils 
 from swpy.utils import config
+from swpy.utils import datetime as dt
+from swpy.utils import download as dl, data as da
 from swpy.utils import filepath
-from swpy.utils import download as dl,\
-                       data as da, \
-                       date_time as dt
-                       
+import tarfile
+import tempfile
 
 
 DATA_DIR  = 'data/noaa/reports/%(suffix)/%Y/'
@@ -37,53 +33,53 @@ def initialize(**kwargs):
 def get_path(suffix,date=None):
     return dt.replace(DATA_DIR + DATA_FILE,date,suffix=suffix)
     
-def request(suffix,begindate='',enddate=''):
+def request(suffix,begin='',end=''):
     
     path = get_path(suffix)
-    files = filepath.request_files(path, begindate, end_datetime=enddate)
+    files = filepath.request_files(path, begin, end_datetime=end)
     
     return files
     
    
-def download_events(begindate, enddate="",overwrite=False):
-    begindate = dt.parse(begindate)
-    if begindate < _FIRST_DATA['events']:
-        begindate = _FIRST_DATA['events']
+def download_events(begin, end="",overwrite=False):
+    begin = dt.parse(begin)
+    if begin < _FIRST_DATA['events']:
+        begin = _FIRST_DATA['events']
 
-    _download_template("events", begindate, enddate,overwrite)
+    _download_template("events", begin, end,overwrite)
     
 
-def download_srs(begindate, enddate="",overwrite=False):
-    begindate = dt.parse(begindate)
-    if begindate < _FIRST_DATA['SRS']:
-        begindate = _FIRST_DATA['SRS']
+def download_srs(begin, end="",overwrite=False):
+    begin = dt.parse(begin)
+    if begin < _FIRST_DATA['SRS']:
+        begin = _FIRST_DATA['SRS']
     
-    _download_template("SRS", begindate, enddate,overwrite)
-    
-
-def download_sgas(begindate, enddate="",overwrite=False):
-    _download_template("SGAS", begindate, enddate,overwrite)
+    _download_template("SRS", begin, end,overwrite)
     
 
-def download_rsga(begindate, enddate="",overwrite=False):
-    _download_template("RSGA", begindate, enddate,overwrite)
+def download_sgas(begin, end="",overwrite=False):
+    _download_template("SGAS", begin, end,overwrite)
     
 
-def download_geoa(begindate, enddate="",overwrite=False):
-    _download_template("GEOA", begindate, enddate,overwrite)
+def download_rsga(begin, end="",overwrite=False):
+    _download_template("RSGA", begin, end,overwrite)
+    
+
+def download_geoa(begin, end="",overwrite=False):
+    _download_template("GEOA", begin, end,overwrite)
     
 
 
-def load_events(begindate,enddate=''):
+def load_events(begin,end=''):
     
-    begin_dt = dt.trim(begindate,3,'start')
+    begin_dt = dt.trim(begin,3,'start')
     if begin_dt < _FIRST_DATA['events']:
         begin_dt = _FIRST_DATA['events']
     
-    if enddate == '':
-        enddate = begindate
+    if end == '':
+        end = begin
         
-    end_dt = dt.trim(enddate,3,'end')
+    end_dt = dt.trim(end,3,'end')
     
     vl = []
     
@@ -149,13 +145,13 @@ def load_events(begindate,enddate=''):
         
     return vl   
 
-def load_srs(begindate,enddate=''):
+def load_srs(begin,end=''):
     
-    begin_dt = dt.trim(begindate,3,'start')
-    if enddate == '':
-        enddate = begindate
+    begin_dt = dt.trim(begin,3,'start')
+    if end == '':
+        end = begin
         
-    end_dt = dt.trim(enddate,3,'end')
+    end_dt = dt.trim(end,3,'end')
         
     fmt = re.compile('(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+(\d+)\s+(\S+)')
     
@@ -188,12 +184,12 @@ def load_srs(begindate,enddate=''):
 
     return data 
     
-def _download_template(suffix, begindate, enddate="",overwrite=False):
+def _download_template(suffix, begin, end="",overwrite=False):
     
-    if enddate == "":
-        enddate = begindate
+    if end == "":
+        end = begin
         
-    begin_dt, end_dt = dt.trim(begindate,3,'start'), dt.trim(enddate,3,'end')
+    begin_dt, end_dt = dt.trim(begin,3,'start'), dt.trim(end,3,'end')
             
     host = 'ftp://ftp.swpc.noaa.gov/'
     src_dir  = "pub/warehouse/%Y/"

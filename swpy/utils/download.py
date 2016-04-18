@@ -8,23 +8,25 @@ __maintainer__ = "Seonghwan Choi"
 __email__ = "shchoi@kasi.re.kr"
 __status__ = "Production"
 '''
+from __future__ import absolute_import 
 
-import sys
-import os
-import socket
+import datetime
 import ftplib
 import httplib
-
+import os
+import socket
 import string
-import datetime
-import time
-import urllib2
+import sys
 import threading
+import time
+import urllib
+import urllib2
 
 import cStringIO as StringIO
 
-import utils
-from swpy.utils import filepath
+
+from . import filepath
+from . import utils
 
 g_callback_last_msg = ''
 LOG = utils.get_logger(__name__)
@@ -51,13 +53,13 @@ class DownloadThread(threading.Thread):
         self.rval = download_http_file(self.src, self.dst, self.post_args, self.overwrite, self.trials)
 
 
-def download_http_file(src_url,dst_path='',post_args=None,overwrite=False,trials=3):
+def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn=None):
     '''
     Download a file on internet. return when a file saved to loacl is existed.
     
     :param string src_url: URL
     :param string dst_path: local path
-    :param string post_args: arguments for POST method
+    :param string post: arguments for POST method
     :param bool overwrite: if ture, local file will be overwritten.
     :param int trials: method will be terminated in trails number
 
@@ -69,53 +71,68 @@ def download_http_file(src_url,dst_path='',post_args=None,overwrite=False,trials
             print('Already exist, %s'%(dst_path))
             return True
    
-
-    i = src_url.find("/", 7)
-    if (src_url.find("http://") != 0 and i < 9 ):
-        raise ValueError("Url is invalid, " + src_url)
     
-    
-    domain_name = src_url[7:i]
-    file_path = src_url[i:]
+    domain_name,file_path = split_url(src_url)
     
     headers = {"Content-type": "application/x-www-form-urlencoded",\
                "Accept": "text/plain"}
    
     t = 0
     is_response = False
-
+    
+    http = None
+    if conn:
+        http = conn
+    else:
+        http = get_http_conn(domain_name)
+        
+        
     while(not is_response and t < trials): 
         
         contents = ""
         try:
-            conn = httplib.HTTPConnection(domain_name,timeout=75)
-            
-            if(post_args != None):
-                conn.request("POST", file_path, post_args,headers)
+            if post:
+                encoded = urllib.urlencode(post)
+                http.request("POST", file_path,body=encoded,headers=headers)
             else:
-                conn.request("GET", file_path)
+                http.request("GET", file_path)
             
-            r = conn.getresponse()
+            r = http.getresponse()
 
             if r.status == 200:
                 contents = r.read()
-            elif r.status in [300, 301, 302, 303, 307]:
-                new_loc  = r.getheader('Location')
-                contents = download_http_file(new_loc,None,post_args,overwrite,trials-1)
+            elif r.status in [301,302,303,307,308]:
+                new_loc = r.getheader('Location')
+                new_host,_ = split_url(new_loc)
+                
+                _conn = None
+                if http.host == new_host:
+                    _conn = http
+                
+                contents = download_http_file(new_loc,
+                                              post=post,
+                                              overwrite=overwrite,
+                                              trials=trials-1,
+                                              conn=_conn)
             else:
                 LOG.error("%d, %s - %s"%(r.status, r.reason,file_path))
+                
 
             is_response = True
+            r.close()
  
-        except Exception as err:
-            LOG.error("Error : %s"%str(err))
+        except Exception as err:               
+            LOG.error("Error : {} {}".format(repr(err),file_path))
+            http.close()
             t += 1
-        finally:
-            conn.close()
+    
         
         if not is_response:
             print("Re-trying...(%d/%d)"%(t,trials))
             time.sleep(5)
+            
+    if http and not conn:
+        http.close()
    
     # File saving... 
     if dst_path:
@@ -181,31 +198,25 @@ def get_list_from_html(contents, ext_list = None):
     return strList
 
 
-def download_ftp_file(src_url, dst_path='', overwrite=False, trials=5, login_id="", login_pw=""):
+def download_ftp_file(src_url, dst_path='', overwrite=False, trials=5, login_id="", login_pw="",conn=None):
 
    
     if dst_path:
-        if os.path.exists(dst_path) == True and not overwrite:
+        if os.path.exists(dst_path) and not overwrite:
             print("The file already exists, %s"%dst_path)
             return True
 
     
-    if (src_url.find("ftp://") != 0):
-        raise ValueError("src_url is invalid url, " + src_url + ".")
-    
-    i = src_url.find("/", 6)
-    if (i < 8):
-        raise ValueError("src_url is invalid url, " + src_url + ".")
-
-    remote_domain_name = src_url[6:i]
-    remote_file_path = src_url[i:]
-
     ftp = None
+    remote_domain,remote_file_path = split_url(src_url)
+    if conn:
+        ftp = conn
+    else:
+
+        ftp = get_ftp_conn(remote_domain,login_id,login_pw)
+        
     contents = ''
     try:
-        ftp = ftplib.FTP(remote_domain_name)
-        ftp.login(login_id, login_pw)
-        
         out = StringIO.StringIO()
         ftp.retrbinary("RETR " + remote_file_path, out.write)
         contents = out.getvalue()
@@ -214,9 +225,9 @@ def download_ftp_file(src_url, dst_path='', overwrite=False, trials=5, login_id=
     except Exception as e:
         print e
         
-    finally:
-        if ftp:
-            ftp.quit()
+    
+    if ftp and not conn:
+        ftp.quit()
     
  
     if dst_path:
@@ -224,7 +235,7 @@ def download_ftp_file(src_url, dst_path='', overwrite=False, trials=5, login_id=
             return False
 
         dst_path2 = filepath.make_path(dst_path) + '.down'
-        with open(dst_path2, "w") as f:
+        with open(dst_path2, "wb") as f:
             f.write(contents)
             
         if os.path.exists(dst_path) == True:
@@ -243,21 +254,28 @@ MODE_ALL = 0
 MODE_DIRECTORY = 1
 MODE_FILE = 2
 
-def get_list_from_ftp(ftp_domain, ftp_id, ftp_pw, ftp_dir, mode=MODE_ALL):
+def get_list_from_ftp(ftp_url,login_id='',login_pw='',mode=MODE_ALL,conn=None):
 
     li = []
+    ftp_domain,ftp_dir = split_url(ftp_url)
+    
+    ftp = None
+    if conn:
+        ftp = conn
+    else:
+        ftp = get_ftp_conn(ftp_domain,login_id,login_pw)
 
     try:
-        ftp = ftplib.FTP(ftp_domain, ftp_id, ftp_pw)        
-        ftp.login(ftp_id, ftp_pw)
         ftp.cwd(ftp_dir)
         ftp.retrlines("LIST", li.append) #, list.append)
-        ftp.quit()
     except ftplib.all_errors, e:
         err_string = str(e).split(None, 1)
         print err_string
 
         return [], []
+    
+    if ftp and not conn:
+        ftp.quit()
     
     #
     file_names = []
@@ -273,3 +291,26 @@ def get_list_from_ftp(ftp_domain, ftp_id, ftp_pw, ftp_dir, mode=MODE_ALL):
 
     return file_names, file_size
 
+def split_url(url):
+    i1 = url.find("://")
+    if i1 == -1 : i1 = 0
+        
+    i2 = url.find("/", i1+3)
+    if i2 == -1 : i2 = len(url)
+    
+    remote_domain_name = url[i1+3:i2]
+    remote_file_path = url[i2:]
+    
+    return remote_domain_name,remote_file_path
+
+def get_http_conn(domain,*args,**kwargs):
+    http = httplib.HTTPConnection(domain,timeout=75,*args,**kwargs)
+    return http
+def get_ftp_conn(domain,*args,**kwargs):
+    login_id = kwargs.pop('login_id','anonymous')
+    login_pw = kwargs.pop('login_pw','guest@anonymous.com')
+    ftp = ftplib.FTP(domain,*args,**kwargs)
+    ftp.login(login_id, login_pw)
+    return ftp
+    
+    

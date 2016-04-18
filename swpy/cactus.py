@@ -20,11 +20,11 @@ __status__ = "Production"
 # standard library
 import calendar
 from ctypes import *
-
 import os
 import string
+from swpy.utils import datetime as dt
+from swpy.utils import download as dl
 
-from swpy.utils import date_time as dt ,download as dl
 
 # SpaeWeatherPy library
 #import config as cnf

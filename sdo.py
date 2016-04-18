@@ -4,14 +4,11 @@ SDO Package for KASI
 author : Jongyeob Park(pjystar@gmail.com)
 '''
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-import os
-import sys
-from sys import stderr,stdout
-
-import time
 import logging
-
-
+import os
+from sys import stderr, stdout
+import sys
+import time
 
 
 DEBUG = 0

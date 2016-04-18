@@ -32,18 +32,19 @@ ui.py:
 ## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS  
 ## SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import re
 import os
+import re
 import sys
 
-import core
 import basic
 import cds
+from core import next, izip, any
+import core
 import daophot
 import ipac
-import memory
-from core import next, izip, any
 import latex as latex
+import memory
+
 
 # Default setting for guess parameter in read()
 _GUESS = True

@@ -3,18 +3,32 @@ Created on 2013. 11. 9.
 
 @author: Daniel
 '''
-import logging
+from __future__ import absolute_import
 
-import sys,math
 import datetime
+import logging
+import sys, math
 
 
-class NullHandler(logging.Handler): # Compatiable for > 2.7
+__all__ = ['get_logger','replace','import_all','alert_message',
+           'great_circle_distance','save_list','save_list_2',
+           'get_filename','num2str']
+
+class _NullHandler(logging.Handler): # Compatiable for > 2.7
     def emit(self,record): pass
 
 if 'NullHandler' not in dir(logging):
-    logging.NullHandler = NullHandler
+    logging.NullHandler = _NullHandler
+
+
+def get_logger(name='',level=0,handler=logging.NullHandler()):
+    if name == '__main__':
+        name = ''
     
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+    return logger    
 
 def replace(format_string,**kwargs):
     '''
@@ -44,20 +58,6 @@ def import_all(name,globals={},locals={}):
         return False
     
     return True
-
-def get_logger(name='',level=0,handler=logging.NullHandler()):
-    if name == '__main__':
-        name = ''
-    
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.addHandler(handler)
-    return logger
-    
-def print_out(msg):
-    sys.stdout.write(msg+'\n')
-def print_err(msg):
-    sys.stderr.write(msg+'\n')
 
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)

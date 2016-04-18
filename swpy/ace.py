@@ -3,13 +3,17 @@ Created on 2014. 9. 26.
 
 @author: jongyeob
 '''
-import re
+from __future__ import absolute_import
+
 import sys
 import logging
+import re
 
-from swpy import utils
-from swpy.utils import date_time as dt,\
-                       download as dl
+from . import utils
+from .utils import datetime as dt
+from .utils import download as dl
+
+
 
 DATA_DIR = 'data/'
 LOG = logging.getLogger(__name__); LOG.setLevel(0)

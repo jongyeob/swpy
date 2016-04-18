@@ -32,8 +32,10 @@ basic.py:
 ## SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
-import core as core
+
 from core import io, next, izip, any
+import core as core
+
 
 class Basic(core.BaseReader):
     """Read a character-delimited table with a single header line at the top

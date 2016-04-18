@@ -3,6 +3,8 @@ Created on 2015. 6. 15.
 
 @author: jongyeob
 '''
+from __future__ import absolute_import
+
 from ConfigParser import SafeConfigParser
 
 __all__ = ['load','set','get']

@@ -29,9 +29,6 @@ def get_path(wavelength,format,time=''):
     dir_wavelength  = wavelength
     if format in FORMATS:
         ext = format.split('_')[0]
-        if format == 'fits_synoptic':
-            file_wavelength = wavelength + '_synoptic'
-            dir_wavelength  = 'synoptic/'+wavelength
     else:
         raise TypeError("Invalid format : {}".format(format))
         

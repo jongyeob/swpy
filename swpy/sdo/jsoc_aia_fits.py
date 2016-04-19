@@ -7,7 +7,7 @@ Created on 2015. 6. 8.
 import logging
 
 from swpy import utils
-from swpy.utils import date_time as dt, download as dl
+from swpy.utils import datetime as dt, download as dl
 
 LOG    = logging.getLogger(__name__)
 DATA_INFO = {'agency':'NASA','machine':'SDO','instrument':'AIA'}
@@ -92,14 +92,14 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
     
     time_format = dt.replace(REMOTE_DATA_FILE,wavelength=wave)
     time_parser = lambda s:dt.parse_string(time_format, s)
-    archive_series = dt.filter(archive_series,start,end_datetime=end,cadence=cadence,time_parser=time_parser)
+    index = [(i,) for i in map(time_parser,archive_series) if i]
+    indexf = dt.filter(index,start,end_datetime=end,cadence=cadence)
     
-    LOG.info('#(time), #(archive) = %d, %d'%(len(time_series), len(archive_series)))
+    LOG.info('#(time), #(archive) = %d, %d'%(len(time_series), len(indexf)))
     
-    for f in archive_series:
-        t = time_parser(f[0])
-        dstpath = get_path(wavelength,t)
-        url = dt.replace(REMOTE_DATA_DIR+REMOTE_DATA_FILE, t,wavelength=wave)
+    for i, in indexf:
+        dstpath = get_path(wavelength,i)
+        url = dt.replace(REMOTE_DATA_DIR+REMOTE_DATA_FILE, i,wavelength=wave)
               
         dl.download_http_file(url, dstpath,overwrite=overwrite)
     
@@ -121,13 +121,13 @@ def download(start,wavelength,end='',cadence=0,overwrite=False):
         
         time_format = dt.replace(NRT_DATA_FILE,wavelength=wave)
         time_parser = lambda s:dt.parse_string(time_format, s)
-        nrt_series = dt.filter(nrt_series,start,end_datetime=end,cadence=cadence,time_parser=time_parser)
+        index  = [(i,) for i in map(time_parser,nrt_series) if i]
+        indexf  = dt.filter(index,start,end_datetime=end,cadence=cadence)
         
-        LOG.info('#(time), #(nrt) = %d, %d'%(len(time_series), len(nrt_series)))
+        LOG.info('#(time), #(nrt) = %d, %d'%(len(time_series), len(indexf)))
         
-        for f in nrt_series:
-            t = time_parser(f[0])
-            dstpath = get_path(wavelength,t)
-            url = dt.replace(NRT_DATA_DIR+NRT_DATA_FILE, t,wavelength=wave)
+        for i, in indexf:
+            dstpath = get_path(wavelength,i)
+            url = dt.replace(NRT_DATA_DIR+NRT_DATA_FILE, i,wavelength=wave)
                   
             dl.download_http_file(url, dstpath,overwrite=overwrite)

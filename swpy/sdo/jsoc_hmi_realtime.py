@@ -61,14 +61,14 @@ def download(start,end='',cadence=0,overwrite=False):
     if len(archive_series) > 0:
         LOG.debug(archive_series[0] + ' ...')
     
-    time_format = dt.replace(REMOTE_DATA_FILE)
+    time_format = dt.replace(REMOTE_NRT_FILE)
     time_parser = lambda s:dt.parse_string(time_format,s)
     index = map(time_parser,archive_series)
     archive_series = dt.filter(zip(index,archive_series),start,end_datetime=end,cadence=cadence)
 
     
     for t,f in archive_series:
-        dstpath = hmi.get_path(t)
+        dstpath = hmi.get_path('M','fits_synoptic',t)
         url = dt.replace(REMOTE_DATA_DIR, t) + f
         
         ret.append((t,url,dstpath))

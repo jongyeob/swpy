@@ -29,8 +29,8 @@ if 'doc' in sys.argv[1:]:
         ret = os.system('make html')
     os.chdir(old)
 
-
-print "# Write package path in python directory = {}".format(sys.path[0])
+file_path = os.getcwd() + os.path.split(sys.argv[0])[0]
+print "# Write package path in python directory = %s"%(file_path)
 
 if os_type == 'win':
     file_path = "%s/lib/site-packages/swpy.pth"%(sys.prefix)

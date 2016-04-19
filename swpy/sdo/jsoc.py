@@ -4,13 +4,12 @@ Created on 2015. 5. 26.
 @author: jongyeob
 '''
 from __future__ import absolute_import
-import logging
-
-from sunpy.net import jsoc
-from astropy import units
 
 JSOC_REGISTERED_EMAIL = 'parkjy@kasi.re.kr'
+
+import logging
 LOG = logging.getLogger(__name__)
+
 
 class _URLFetch():
     urls = []
@@ -20,13 +19,16 @@ class _URLFetch():
     def stop(self):
         pass
     
-def download(instrument,type,start_datetime,end_datetime='',cadence=0,**kwargs):
+def request(instrument,type,start_datetime,end_datetime='',cadence=0,**kwargs):
     '''
         instrument : aia hmi
         type : aia = 131  1600  1700  171  193  211  304  335  4500  94
                hmi = Ic_45s   Ld_45s   Lw_45s   M_45s   V_45s   
                      Ic_720s  Ld_720s  Lw_720s  M_720s  V_720s  S_720s
     '''
+    
+    from sunpy.net import jsoc
+    from astropy import units
             
     query_args = []
     

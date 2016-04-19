@@ -16,8 +16,8 @@ DATA_FILE = '%Y%m%d_%H%M%S_SDO_HMI_%(type).%(ext)'
 TYPES      = ['Ic','Ld','Lw','M','V','S',
               'Ic_45s','Ld_45s','Lw_45s','M_45s','V_45s',
               'Ic_720s','Ld_720s','Lw_720s','M_720s','S_720s',
-              'M_synoptic','continuum','magnetogram']
-FORMATS = ['jp2','jpg_512','jpg_1024','jpg_4096','fits']
+              'continuum','magnetogram']
+FORMATS = ['jp2','jpg_512','jpg_1024','jpg_4096','fits','fits_synoptic']
 
 __all__ = ['get_path','request','download_fits']
 

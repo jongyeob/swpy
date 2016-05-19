@@ -16,7 +16,7 @@ from . import utils
 
 __all__ = ['datetime''date','time','timedelta',
            'parse_string','parse_date','parse_time','parse_datetime',
-           'trim','iseries','series','parse','move','tuples','replace',
+           'trim','iseries','series','parse','move','tuples','replace','sample'
            'julian_day','filter','total_seconds']
 
 
@@ -390,7 +390,7 @@ def parse(*args,**kargs):
     
 
     return ret
-def move(current,period,start=None):
+def move(current,period,start=''):
     '''
     return move datetime from current with the period
     :param current: current datetime
@@ -399,11 +399,11 @@ def move(current,period,start=None):
     :return: datetime 
     '''
     
-    next_datetime =  None
-    if start is not None:
-        next_datetime = parsing(start)
-    
-    current_datetime = parsing(current)
+    current_datetime = parse(current)
+    next_datetime =  current
+    if start:
+        next_datetime = parse(start)
+        
     
     while next_datetime <= current_datetime:
         next_datetime += period
@@ -517,60 +517,64 @@ def _jd2gc(jd):
 
 
 
-def filter(datetime_list,start_datetime,end_datetime='',cadence=0):
+def filter(datetime_list,start_datetime,end_datetime,sample_rate=0,cadence=0):
     '''
     filter list containing datetime.
     
     parameters:
         datetime_list - iterable object, but 0th elements are date time string or object. 
         start_datetime - string
-    optional:
         end_datetime   - string
+    optional:
         cadence        - number, seconds
-        allow_empty    - boolean
     returns:
         list
     '''
+    if cadence and not sample_rate:
+        sample_rate = cadence
     
     ret = []
 
     start   = parse(start_datetime)
-    end     = start 
+    end     = parse(end_datetime) 
+        
     
-    if end_datetime != '':
-        end = parse(end_datetime)   
-    
-    LOG.debug("Time filter : %s, %s, %d"%(str(start),str(end),cadence))
+    LOG.debug("Time filter : %s, %s, %d"%(str(start),str(end),sample_rate))
     
     records = [rec for rec in datetime_list if rec[0] and start <= rec[0] <= end]
     records.sort()
-            
-    if cadence == 0:
-        return records
-               
-    cadence_delta = timedelta(seconds=cadence/2.)
-    for _t in series(start,end,seconds=cadence):
-        diffs = []
-        last_ft_min = _t - cadence_delta
-        last_ft_max = _t + cadence_delta
+    
+    if sample_rate:
+        records = sample(records,sample_rate,ref_time=start)
         
-        f = ''
-        while(len(records) > 0):
-            f = records.pop(0)
-            
-            if f[0] < last_ft_min:
-                continue
-            
-            if f[0] > last_ft_max:
-                records.insert(0,f)
-                break
-            
-            diff = abs((_t-f[0]).total_seconds())
-            diffs.append((diff,f))
+    return records
+       
+    
+
+def sample(datetime_list,sample_rate,ref_time=''):  
+    
+    datetime_list.sort()
+    
+    input_ref_time = datetime_list[0]
+    if ref_time: 
+        input_ref_time = parse(ref_time)
+         
+    margin = timedelta(seconds=sample_rate/2.)
+    tx = datetime_list
+    
+    diff_tx = [(ty[0]-input_ref_time).total_seconds() for ty in tx]
+    dtx = zip(diff_tx,tx)
+       
+    
+    ret = []
+    iter_num = 0  
+    while dtx:
+        diff_ty,ty = dtx.pop(0)
         
-        if len(diffs) > 0:
-            _, f = min(diffs)
-            ret.append(f)
+        if 0<= diff_ty - iter_num*sample_rate + margin <= sample_rate:
+            ret.append(ty)
+
+        iter_num += 1      
                 
     LOG.debug("Number of filtered records : %d"%(len(ret)))
     

@@ -23,8 +23,7 @@ def set(ns,**kwargs):
         ns - dict : namespace
     '''
     for key in kwargs:     
-        option_type = type(ns[key])
-        ns[key] = option_type(kwargs[key])
+        ns[key] = kwargs[key]
         
 def get(items,start):
     return dict([ (key,items[key]) for key in items if key.startswith(start)] )

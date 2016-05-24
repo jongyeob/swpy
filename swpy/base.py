@@ -7,6 +7,7 @@ import logging
 from collections import deque
 from swpy.utils import datetime as swdt
 from swpy.utils import filepath as swfp
+from urllib import urlretrieve
 
 
 LOG = logging.getLogger(__name__)
@@ -50,17 +51,25 @@ class TimedClientBase(ClientBase):
         return swdt.replace(self.format,time)
     
     def request(self,time):
-        raise NotImplemented
+        ti = swdt.parse(time)
+        path = self.get_url(ti)
+        
+        return (ti,path)
                 
 
 class LocalTimedClient(TimedClientBase):
-    def __init__(self,format,cache_size=100):
+    def __init__(self,format,margin=0,cache_size=100):
         TimedClientBase.__init__(self, format)
         self.cache  = TimedCache(size=cache_size)
+        self.margin = margin
 
-    def request(self,time,margin=0):
+    def request(self,time,margin=None):
         
-        ret = self.cache.request(time,margin=margin)
+        input_margin = self.margin
+        if margin is not None:
+            input_margin = margin
+                
+        ret = self.cache.request(time,margin=input_margin)
         if ret:  return ret
                 
         format = self.get_url()

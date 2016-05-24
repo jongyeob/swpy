@@ -47,7 +47,7 @@ def get_files(path_exp):
         
     return file_list
    
-def request_files(path_format,start_datetime,end_datetime,sample_rate=0,cadence=0):
+def request_files(path_format,start_datetime,end_datetime='',sample_rate=0,cadence=0):
     '''
     request files
     
@@ -65,7 +65,9 @@ def request_files(path_format,start_datetime,end_datetime,sample_rate=0,cadence=
         sample_rate = cadence
         
     start   = dt.parse(start_datetime)
-    end     = dt.parse(end_datetime)
+    end     = start
+    if end_datetime:
+        end     = dt.parse(end_datetime)
     
     path_format = path_format.replace('\\','/')
     dir_format,file_format = path.split(path_format)

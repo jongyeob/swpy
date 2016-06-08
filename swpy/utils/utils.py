@@ -11,7 +11,7 @@ import sys, math
 
 
 __all__ = ['get_logger','replace','import_all','alert_message',
-           'great_circle_distance','save_list','save_list_2',
+           'save_list','save_list_2',
            'get_filename','num2str']
 
 class _NullHandler(logging.Handler): # Compatiable for > 2.7
@@ -76,11 +76,6 @@ def print_err(msg):
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)
     
-def great_circle_distance(lon,lat,lon2=0,lat2=0):
-    dlon,dlat = (lon2-lon)/2.,(lat2-lat)/2.
-    
-    sindis = math.sqrt(math.sin(dlat)*math.sin(dlat)+math.cos(lon)*math.cos(lon2)*math.sin(dlon)*math.sin(dlon))
-    return 2.0*math.asin(sindis)
 
 
 def save_list(filepath, list):

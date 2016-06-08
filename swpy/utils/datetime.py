@@ -468,7 +468,7 @@ def julian_day(time,reverse=False,modified=False):
         
     ret =   None
     if reverse == False:
-        ret = _gc2jd(*tuples(time, 'datetimef'))
+        ret = _gc2jd(*tuples(time,fsecond=True))
         if modified:
             ret += 2400000.5
 
@@ -480,6 +480,13 @@ def julian_day(time,reverse=False,modified=False):
         
     return ret
 
+JD_19000101_120000 = 2415021.0
+
+def julian_centuries(t):
+    DAYS_IN_YEAR = 36525.0
+    jc = (julian_day(t) - JD_19000101_120000)/DAYS_IN_YEAR
+    return jc
+    
 def _gc2jd(year,month=1,day=1,hour=0,minute=0,second=0.0):
     a = (14-month)/12
     y = year + 4800 - a

@@ -11,6 +11,9 @@ from .base import LocalTimedClient,TimedClientBase,TimedCache
 from .utils import datetime as swdt
 from .utils import download as swdl
 
+from swpy.dataproc.image import SolarImage 
+import pyfits
+
  
 
 LOG    = logging.getLogger(__name__)
@@ -88,3 +91,12 @@ class RemoteNoRH10minClient(TimedClientBase):
         ret = self.request(time,margin=margin)
         
         return ret
+    
+class NORHFitsImage(SolarImage):
+    def load(self,filepath):
+        self.size = (512,512)
+        self.fov = (0,512,0,512)
+        hdulist = pyfits.open(filepath)
+        self.rawdata = hdulist[0].data[::-1]
+        hdulist.close()
+        

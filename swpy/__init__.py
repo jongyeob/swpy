@@ -6,9 +6,16 @@ from os import path
 import sys
 import logging
 
+from swpy.swpy import  get_logger
+
 
 SWPY_ROOT,_ = path.split(__path__[0])
 SWPY_ROOT = SWPY_ROOT.replace('\\','/')
+RESOURCE_DIR = SWPY_ROOT + '/res'
+SCRIPT_DIR = SWPY_ROOT +'/scripts'
+DOCUMENT_DIR = SWPY_ROOT + '/doc'
+DATA_DIR = SWPY_ROOT +'/data'
+TEMP_DIR = SWPY_ROOT +'/temp'
 
 ## User configuration
 LOG_FILE  = 'swpy.log'
@@ -28,22 +35,8 @@ LOG = logging.getLogger('swpy')
 LOG.addHandler(_log_handle)
 LOG.setLevel(LOG_LEVEL)
 
-## User configuration overwrite
-try:
-    from swpy_config import *
-    LOG.deubug("# User config imported")
-
-except:
-    LOG.debug("# User config not imported")
-    
 
 LOG.debug("# SWPY_ROOT = {}".format(SWPY_ROOT))
 
-def get_logger(name):
-    if not name.startswith('swpy.'):
-        name = 'swpy.' + name
-    
-    logger = logging.getLogger(name)
-    logger.setLevel(0)
-    
-    return logger
+
+

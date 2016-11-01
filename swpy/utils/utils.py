@@ -58,16 +58,7 @@ def import_all(name,globals={},locals={}):
         return False
     
     return True
-
-def get_logger(name='',level=0,handler=logging.NullHandler()):
-    if name == '__main__':
-        name = ''
-    
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.addHandler(handler)
-    return logger
-    
+   
 def print_out(msg):
     sys.stdout.write(msg+'\n')
 def print_err(msg):
@@ -76,7 +67,6 @@ def print_err(msg):
 def alert_message(message):
     print (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "    " + message)
     
-
 
 def save_list(filepath, list):
     
@@ -140,6 +130,3 @@ def num2str(num):
     else: str_num += "%d"%(num)
 
     return str_num
-
-
-LOG = get_logger(__name__)

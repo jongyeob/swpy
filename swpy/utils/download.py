@@ -316,25 +316,27 @@ def get_ftp_conn(domain,*args,**kwargs):
     ftp.login(login_id, login_pw)
     return ftp
 
-def download_by_wget(url,dst_path,overwrite=False):
-    _, download_path = tempfile.mkstemp()
+def download_by_wget(url,dst_path='',overwrite=False):
     
-    file_exist = os.path.exists(dst_path)
+    if dst_path:
+        file_exist = os.path.exists(dst_path)
     
-    if not overwrite and file_exist:
-        LOG.debug("File already exists!: {}".format(dst_path))
-        return
+        if not overwrite and file_exist:
+            LOG.debug("File already exists!: {}".format(dst_path))
+            return
+    
+    download_path = '-'
+    if dst_path:
+        download_path = dst_path
 
-    ret = subprocess.check_call(['wget','-q','-O',download_path,url])
+    output = subprocess.check_output(['wget','-qO',download_path,url])
    
-    if ret == 0:
-        
-        if file_exist:
-            os.remove(dst_path)
-     
-        os.rename(download_path, dst_path)
+    if dst_path:
         LOG.debug("Download complete! {}".format(dst_path))
+        return 
 
+ 
+    return output
 
 
        

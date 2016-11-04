@@ -11,8 +11,6 @@ __status__ = "Production"
 from __future__ import absolute_import 
 
 import datetime
-import ftplib
-import httplib
 import os
 import socket
 import ftplib
@@ -26,6 +24,8 @@ import urllib
 import urllib2
 
 import cStringIO as StringIO
+import tempfile
+import subprocess
 
 
 from . import filepath
@@ -306,7 +306,7 @@ def split_url(url):
     return remote_domain_name,remote_file_path
 
 def get_http_conn(domain,*args,**kwargs):
-    http = httplib.HTTPConnection(domain,timeout=75,*args,**kwargs)
+    http = httplib.HTTPConnection(domain,timeout=10,*args,**kwargs)
     return http
 def get_ftp_conn(domain,*args,**kwargs):
     login_id = kwargs.pop('login_id','anonymous')
@@ -314,4 +314,27 @@ def get_ftp_conn(domain,*args,**kwargs):
     ftp = ftplib.FTP(domain,*args,**kwargs)
     ftp.login(login_id, login_pw)
     return ftp
+
+def download_by_wget(url,dst_path,overwrite=False):
+    _, download_path = tempfile.mkstemp()
     
+    file_exist = os.path.exists(dst_path)
+    
+    if not overwrite and file_exist:
+        LOG.debug("File already exists!: {}".format(dst_path))
+        return
+
+    ret = subprocess.check_call(['wget','-q','-O',download_path,url])
+   
+    if ret == 0:
+        
+        if file_exist:
+            os.remove(dst_path)
+     
+        os.rename(download_path, dst_path)
+        LOG.debug("Download complete! {}".format(dst_path))
+
+
+
+       
+        

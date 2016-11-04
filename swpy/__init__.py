@@ -6,8 +6,9 @@ from os import path
 import sys
 
 _root,_ = path.split(__path__[0])
-SWPY_ROOT = _root
-print "# SWPY_ROOT = {}".format(SWPY_ROOT)
+ROOT = "{}/".format(_root)
+
+print "# SWPY_ROOT = {}".format(ROOT)
 
 ## User configuration import
 try:

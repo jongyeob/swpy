@@ -76,6 +76,7 @@ def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn
    
     
     domain_name,file_path = split_url(src_url)
+
     
     headers = {"Content-type": "application/x-www-form-urlencoded",\
                "Accept": "text/plain"}
@@ -89,25 +90,25 @@ def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn
     else:
         http = get_http_conn(domain_name)
         
-        
+    contents = ""    
     while(not is_response and t < trials): 
         
-        contents = ""
         try:
             if post:
                 encoded = urllib.urlencode(post)
                 http.request("POST", file_path,body=encoded,headers=headers)
             else:
-                http.request("GET", file_path)
+                http.request("GET", file_path,headers=headers)
             
             r = http.getresponse()
 
             if r.status == 200:
                 contents = r.read()
             elif r.status in [301,302,303,307,308]:
+                r.read()
                 new_loc = r.getheader('Location')
                 new_host,_ = split_url(new_loc)
-                
+
                 _conn = None
                 if http.host == new_host:
                     _conn = http

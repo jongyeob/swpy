@@ -47,26 +47,30 @@ def get_files(path_exp):
         
     return file_list
    
-def request_files(path_format,start_datetime,end_datetime='',cadence=0):
+def request_files(path_format,start_datetime,end_datetime='',sample_rate=0,cadence=0):
     '''
     request files
     
     parameters:
         path_format - string 
         start_datetime - string
-    optional:
         end_datetime   - string
-        cadence        - number, seconds
+    optionals:
+        sample_rate    - number[seconds]
+        cadence        - deprecated, same as sample_rate
     returns:
         (list) filepath
     '''
+    if cadence and not sample_rate:
+        sample_rate = cadence
         
     start   = dt.parse(start_datetime)
-    end     = start 
+    end     = start
+    if end_datetime:
+        end     = dt.parse(end_datetime)
+    
+    path_format = path_format.replace('\\','/')
     dir_format,file_format = path.split(path_format)
-        
-    if end_datetime != '':
-        end = dt.parse(end_datetime)
               
     files = []
     
@@ -80,7 +84,7 @@ def request_files(path_format,start_datetime,end_datetime='',cadence=0):
     files.sort()
     time_parser = lambda p:dt.parse_string(path_format,p)
     index = map(time_parser,files)
-    ret = dt.filter(zip(index,files),start_datetime,end_datetime,cadence)
+    ret = dt.filter(zip(index,files),start_datetime,end_datetime,sample_rate)
         
     return ret
 

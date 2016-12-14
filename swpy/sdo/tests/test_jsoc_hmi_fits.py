@@ -18,6 +18,8 @@ test_cadence = 7*86400 # seconds
 
 @pytest.mark.online
 def test_download():
-    hmi_fits.download(test_start,test_end,test_cadence)    
+
+    hmi_fits.download(test_start,test_end,test_cadence)
+
 
 os.removedirs(hmi.DATA_DIR)

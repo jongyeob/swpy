@@ -79,6 +79,3 @@ def request(instrument,type,start_datetime,end_datetime='',cadence=0,**kwargs):
         client.get(res,downloader=downloader,overwrite=True)
         
     return downloader.urls
-
-def download():
-    pass

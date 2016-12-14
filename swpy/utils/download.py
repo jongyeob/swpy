@@ -11,8 +11,6 @@ __status__ = "Production"
 from __future__ import absolute_import 
 
 import datetime
-import ftplib
-import httplib
 import os
 import socket
 import ftplib
@@ -26,6 +24,8 @@ import urllib
 import urllib2
 
 import cStringIO as StringIO
+import tempfile
+import subprocess
 
 
 from . import filepath
@@ -76,7 +76,6 @@ def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn
    
     
     domain_name,file_path = split_url(src_url)
-    
     headers = {"Content-type": "application/x-www-form-urlencoded",\
                "Accept": "text/plain"}
    
@@ -89,25 +88,24 @@ def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn
     else:
         http = get_http_conn(domain_name)
         
-        
+    contents = ""    
     while(not is_response and t < trials): 
-        
-        contents = ""
         try:
             if post:
                 encoded = urllib.urlencode(post)
                 http.request("POST", file_path,body=encoded,headers=headers)
             else:
-                http.request("GET", file_path)
+                http.request("GET", file_path,headers=headers)
             
             r = http.getresponse()
 
             if r.status == 200:
                 contents = r.read()
             elif r.status in [301,302,303,307,308]:
+                r.read()
                 new_loc = r.getheader('Location')
                 new_host,_ = split_url(new_loc)
-                
+
                 _conn = None
                 if http.host == new_host:
                     _conn = http
@@ -306,7 +304,7 @@ def split_url(url):
     return remote_domain_name,remote_file_path
 
 def get_http_conn(domain,*args,**kwargs):
-    http = httplib.HTTPConnection(domain,timeout=75,*args,**kwargs)
+    http = httplib.HTTPConnection(domain,timeout=10,*args,**kwargs)
     return http
 def get_ftp_conn(domain,*args,**kwargs):
     login_id = kwargs.pop('login_id','anonymous')
@@ -314,4 +312,27 @@ def get_ftp_conn(domain,*args,**kwargs):
     ftp = ftplib.FTP(domain,*args,**kwargs)
     ftp.login(login_id, login_pw)
     return ftp
+
+def download_by_wget(url,dst_path='',overwrite=False):
     
+    if dst_path:
+        file_exist = os.path.exists(dst_path)
+    
+        if not overwrite and file_exist:
+            LOG.debug("File already exists!: {}".format(dst_path))
+            return
+    
+    download_path = '-'
+    if dst_path:
+        download_path = dst_path
+
+    output = subprocess.check_output(['wget','-qO',download_path,url])
+   
+    if dst_path:
+        LOG.debug("Download complete! {}".format(dst_path))
+        return 
+
+ 
+    return output
+
+

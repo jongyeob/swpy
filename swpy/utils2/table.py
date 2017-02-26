@@ -3,7 +3,7 @@ Created on 2016. 10. 15.
 
 @author: jongyeob
 '''
-    
+
 class TableIO():
     def __init__(self,style,tab=' '):
         '''

@@ -7,16 +7,16 @@ import os
 import swpy
 from swpy.utils2 import filepath 
 from swpy import dscovr
-TEST_MAG_FILE = swpy.RESOURCE_DIR +'/test/discovr-mag-sample.json'
-TEST_PLASMA_FILE = swpy.RESOURCE_DIR +'/test/discovr-plasma-sample.json'
+TEST_MAG_FILE = swpy.RESOURCE_DIR +'/test/dscovr-mag-sample.json'
+TEST_PLASMA_FILE = swpy.RESOURCE_DIR +'/test/dscovr-plasma-sample.json'
 
 dscovr.clients.PATH_PATTERN = swpy.TEMP_DIR + dscovr.clients.PATH_PATTERN
 
 def test():
     print "Test()"
     
-    testClient = dscovr.DscovrRTClient()
-    print testClient.get(data_series='mag-1-day')
+    testClient = dscovr.DscovrRTClient('mag-1-day')
+    print testClient.get('2017-01-01')
 
     fp = open(TEST_MAG_FILE)
     mag_data = testClient.load(fp)

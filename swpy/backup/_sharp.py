@@ -6,15 +6,9 @@ Created on 2015. 10. 13.
 
 import logging
 
-from swpy import utils
-from swpy.utils import download as dl
-from swpy.utils import datetime as dt
-from swpy.utils import filepath as fp
-from swpy.utils import data as da
+from swpy.utils2 import FilePath, DateTime 
 import json
 import urllib
-
-
 
 
 LOG    = logging.getLogger(__name__)

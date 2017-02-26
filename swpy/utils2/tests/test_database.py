@@ -12,7 +12,7 @@ DB_TESTFILE = swpy.TEMP_DIR + '/dbTest.pkl'
 class TestClient():
     data = {}
     def get(self,time):
-        time_str = time.strftime("%Y%m%d_%H%M%s")
+        time_str = time.strftime("%Y%m%d_%H%M%S")
         return time_str
     
     def load(self,time):

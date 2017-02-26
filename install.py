@@ -11,8 +11,10 @@ if sys.platform.startswith("win"):
     os_type = 'win'
 elif sys.platform.startswith("linux"):
     os_type = 'linux'
+elif sys.platform.startswith("darwin"):
+    os_type = 'linux'
 else:
-    sys.stderr.write("Unknown platform")
+    sys.stderr.write("{} unknown platform\n".format(sys.platform))
     sys.exit(-1)
 print os_type
 

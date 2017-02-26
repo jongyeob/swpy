@@ -13,7 +13,7 @@ import logging
 
 from swpy.utils2 import date_time as swdt
 from swpy.utils2 import TableIO
-LOG= logging.getLogger('discovr')
+LOG= logging.getLogger('dscovr')
 
 
 DATASERIES = [

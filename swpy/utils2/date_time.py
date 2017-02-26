@@ -228,8 +228,8 @@ def iseries(start_datetime,end_datetime,weeks=0,days=0,hours=0,minutes=0,seconds
     while 1:
         
         yield t 
-         
-        if move(t,period) < end_datetime:
+        t = move(t,period) 
+        if t > end_datetime:
             break
         
         
@@ -457,3 +457,10 @@ def sample(datetime_list,sample_rate,ref_time=''):
     LOG.debug("Number of filtered records : %d"%(len(ret)))
     
     return ret
+
+
+time_iseries = iseries
+time_series = series
+time_parse = parse
+time_move = move
+time_to_tuple = to_tuple

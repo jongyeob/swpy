@@ -62,10 +62,12 @@ class DataBase():
         
         return data
     
-    def update(self,time,data):
+    def update(self,time):
         '''
         Block based
         '''
+        data = self.request(time)
+        
         parsed_time = swdt.parse(time)
         index_str = self.client.get(parsed_time)
         
@@ -81,10 +83,11 @@ class DataBase():
             LOG.debug("DB update: {}".format(index_str))
         
     
-    def search(self,block_data,time):
+    def search(self,time):
         '''
         Line based
         '''
+        block_data = self.request(time)
         parsed_time = swdt.parse(time)  
         
         time_diff = [
@@ -94,24 +97,26 @@ class DataBase():
         
         time_diff.sort()
         _, index = time_diff[0]
-        diff = block_data['__id__'][index] - parsed_time
-        diff = diff.total_seconds()
-        
-        return index,diff
+                
+        return index
     
             
-    def insert(self,block_data,data):
+    def insert(self,data):
         '''
         Line based
         '''
-    
+
         parsed_time = swdt.parse(data[self.index_key])
         insert_data = {'__id__':parsed_time}
         insert_data.update(data)
         
+        block_data = self.request(parsed_time)
         
         if block_data:
-            index,diff = self.search(block_data,parsed_time)
+            index = self.search(block_data,parsed_time)
+            
+            diff = block_data['__id__'][index] - parsed_time
+            diff = diff.total_seconds()
             
             for key in ['__id__'] + self.client.key:
                 if diff > 0:
@@ -126,15 +131,20 @@ class DataBase():
                 block_data[key] = [insert_data[key]]
             
         
-    def delete(self,block_data,data):
+    def delete(self,data):
         '''
         Line based
         '''
         parsed_time = swdt.parse(data[self.index_key])
         
+        block_data = self.request(parsed_time)
+        
         
         if block_data:
-            index,diff = self.search(parsed_time)
+            index = self.search(parsed_time)
+            
+            diff = block_data['__id__'][index] - parsed_time
+            diff = diff.total_seconds()
             
             if diff == 0:
                 for key in ['__id__'] + self.client.key:

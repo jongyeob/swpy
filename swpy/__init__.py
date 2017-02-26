@@ -22,6 +22,7 @@ LOG_FORMAT = "%(asctime)s %(name)s [%(levelname)s] %(message)s"
 ## Initialize 
 LOG = logging.getLogger('swpy')
 LOG.setLevel(LOG_LEVEL)
+LOG.addHandler(logging.NullHandler())
 
 
 LOG.debug("# SWPY_ROOT = {}".format(SWPY_ROOT))

@@ -17,13 +17,14 @@ def load(file):
         items[sec] = dict(config.items(sec))
         
     return items
-def set(items,**kwargs):
+def set(ns,**kwargs):
     '''
     parameters:
         ns - dict : namespace
     '''
     for key in kwargs:     
-        items[key] = kwargs[key]
+        option_type = type(ns[key])
+        ns[key] = option_type(kwargs[key])
         
-def get(items,key):
-    return dict([ (itemkey,items[itemkey]) for itemkey in items if itemkey.startswith(key)] )
+def get(items,start):
+    return dict([ (key,items[key]) for key in items if key.startswith(start)] )

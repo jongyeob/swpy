@@ -2,41 +2,23 @@ from __future__ import absolute_import
 
 ## standard library
 import os
-from os import path
 import sys
-import logging
+from swpy.swpy import *
+## Global setting
 
-from swpy.swpy import  get_logger
-
-
-SWPY_ROOT,_ = path.split(__path__[0])
+SWPY_ROOT,_ = os.path.split(__path__[0])
 SWPY_ROOT = SWPY_ROOT.replace('\\','/')
 RESOURCE_DIR = SWPY_ROOT + '/res'
 SCRIPT_DIR = SWPY_ROOT +'/scripts'
 DOCUMENT_DIR = SWPY_ROOT + '/doc'
 DATA_DIR = SWPY_ROOT +'/data'
 TEMP_DIR = SWPY_ROOT +'/temp'
+CONFIG_FILE = SWPY_ROOT + '/swpy.ini'
 
-## User configuration
-LOG_FILE  = 'swpy.log'
-LOG_FILE_MODE = 'w' # w, a if LOG_FILE exists
-LOG_LEVEL = 10
-LOG_FORMAT = "%(asctime)s %(name)s [%(levelname)s] %(message)s"
+## Default configuration
+CFG = {
+'log-level':10,
+'log-format':"[%(levelname)s:%(name)s] %(message)s" }
+CFG = get_config(CONFIG_FILE,CFG)
 
-## Initialize 
-_log_handle = logging.StreamHandler(sys.stderr)
-if LOG_FILE:
-    _log_handle = logging.FileHandler(LOG_FILE,LOG_FILE_MODE)
-    
-_log_format = logging.Formatter(LOG_FORMAT)
-_log_handle.setFormatter(_log_format)
-
-LOG = logging.getLogger('swpy')
-LOG.addHandler(_log_handle)
-LOG.setLevel(LOG_LEVEL)
-
-
-LOG.debug("# SWPY_ROOT = {}".format(SWPY_ROOT))
-
-
-
+LOG = get_logger('swpy')

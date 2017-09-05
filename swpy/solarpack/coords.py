@@ -3,7 +3,7 @@ from __future__ import division
 import numpy as np
 
 import sun
-from swpy.utils import datetime as swdt
+from swpy import utils2 as swut
 import constants
 import math
 
@@ -87,7 +87,7 @@ def get_pb0sd(date):
         http://hesperia.gsfc.nasa.gov/ssw/gen/idl/solar/pb0r.pro
     """
     # number of Julian days since 2415020.0
-    de = swdt.julian_day(swdt.parse(date)) - 2415020.0
+    de = swut.julian_day(swut.time_parse(date)) - 2415020.0
 
     # get the longitude of the sun etc.
     sun_position = get_solar_position(date)
@@ -176,7 +176,7 @@ def get_solar_position(date):
     >>> sp = _sun_pos('2013-03-27')
     """
     # Fractional Julian day with correct offset
-    dd = swdt.julian_day(date) - 2415020.0
+    dd = swut.julian_day(date) - 2415020.0
 
     # form time in Julian centuries from 1900.0
     t = dd / 36525.0

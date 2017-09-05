@@ -11,14 +11,14 @@ it is based on sunpy.sun
 
 import numpy as np
 import math
-from swpy.utils import datetime as swdt
+from swpy import utils2 as swut
 from constants import *
 
 D2R = math.pi/180.
 
 def solar_cycle_number(t):
     """Return the solar cycle number."""
-    time = swdt.parse(t)
+    time = swut.time_parse(t)
     result = (time.year + 8) % 28 + 1
     return result
 
@@ -54,13 +54,13 @@ def position(t):
 
 def eccentricity_SunEarth_orbit(t):
     """Returns the eccentricity of the Sun Earth Orbit."""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     result = 0.016751040 - 0.00004180 * T - 0.0000001260 * T ** 2
     return result
 
 def mean_ecliptic_longitude(t):
     """Returns the mean ecliptic longitude."""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     result = 279.696680 + 36000.76892 * T + 0.0003025 * T ** 2
     
     return result
@@ -69,27 +69,27 @@ def mean_ecliptic_longitude(t):
 def mean_anomaly(t):
     """Returns the mean anomaly (the angle through which the Sun has moved
     assuming a circular orbit) as a function of time."""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     result = 358.475830 + 35999.049750 * T - 0.0001500 * T ** 2 - 0.00000330 * T ** 3
     
     return result
 
 def carrington_rotation_number(t):
     """Return the Carrington Rotation number"""
-    jd = swdt.julian_day(t)
+    jd = swut.julian_day(t)
     result = (1. / 27.2753) * (jd - 2398167.0) + 1.0
     return result
 
 def geometric_mean_longitude(t):
     """Returns the geometric mean longitude (in degrees)"""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     result = 279.696680 + 36000.76892 * T + 0.0003025 * T ** 2
     result = result%360.0
     return result
 
 def equation_of_center(t):
     """Returns the Sun's equation of center (in degrees)"""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     mna = mean_anomaly(t)*D2R
     result = ((1.9194600 - 0.0047890 * T - 0.0000140 * T ** 2) * np.sin(mna)
     + (0.0200940 - 0.0001000 * T) *
@@ -119,7 +119,7 @@ def sunearth_distance(t):
 
 def apparent_longitude(t):
     """Returns the apparent longitude of the Sun."""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     omega = (259.18 - 1934.142 * T) 
     true_long = true_longitude(t)
     result = true_long - (0.00569 - 0.00479 * np.sin(omega*D2R))
@@ -127,7 +127,7 @@ def apparent_longitude(t):
 
 def true_obliquity_of_ecliptic(t):
     """Returns the true obliquity of the ecliptic."""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     result = 23.452294 - 0.0130125 * T - 0.00000164 * T ** 2 + 0.000000503 * T ** 3
     return result
 
@@ -171,7 +171,7 @@ def apparent_declination(t):
 
 def solar_north(t):
     """Returns the position of the Solar north pole in degrees."""
-    T = swdt.julian_centuries(t)
+    T = swut.julian_centuries(t)
     ob1 = true_obliquity_of_ecliptic(t)
     # in degrees
     i = 7.25 #deg
@@ -187,8 +187,8 @@ def solar_north(t):
 
 def heliographic_solar_center(t):
     """Returns the position of the solar center in heliographic coordinates."""
-    jd = swdt.julian_day(t)
-    T = swdt.julian_centuries(t)
+    jd = swut.julian_day(t)
+    T = swut.julian_centuries(t)
     # Heliographic coordinates in degrees
     theta = ((jd - 2398220)*360/25.38)
     i = 7.25

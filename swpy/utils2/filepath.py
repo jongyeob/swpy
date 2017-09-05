@@ -9,6 +9,7 @@ import glob as _glob
 
 from os.path import normpath,exists,split
 
+
 def mkdirs(pathstr):
     pathstr = normpath(pathstr+'/')
     if exists(pathstr) == False:

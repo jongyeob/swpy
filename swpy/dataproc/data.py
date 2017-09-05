@@ -4,8 +4,6 @@ Created on 2016. 5. 27.
 @author: jongyeob
 '''
 import math
-import numpy as np
-from scipy.interpolate import Rbf
 
 def great_circle_distance(loc,loc2):
     lon,lat = loc
@@ -71,5 +69,3 @@ class IDWEstimator():
         
         return val
         
-    def __call__(self,loc):
-        return self.select(loc)

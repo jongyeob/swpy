@@ -1,82 +1,139 @@
 '''
-Created on 2016. 5. 11.
+Created on 2017. 4. 5.
 
 @author: jongyeob
 '''
-import logging
-from collections import deque
-from swpy.utils import datetime as swdt
-from swpy.utils import filepath as swfp
 
+import os
+import logging
+from datetime import datetime,timedelta
+from collections import deque
+from cStringIO  import StringIO
+from . import utils2 as swut
 
 LOG = logging.getLogger(__name__)
 
-class ClientBase():
-    pass
-
-class TimedCache():
-    def __init__(self,size=100):
-        self.datalist = deque(maxlen=size)
-        
-    def request(self,time,margin=0):
-        
-        input_time  = swdt.parse(time)
-        
-        tx = self.datalist
-        if not tx:
-            return None
+class TimeFormattedPath():
+    def __init__(self,time_format,header={}):
+        self.format = time_format.format(**header)
+         
+    def get(self,time):
+        time_in = swut.time_parse(time)
+        path = time_in.strftime(self.format)
+        return path
     
-        diff_t = [abs((ty[0]-input_time).total_seconds()) for ty in tx]
-        dtx = zip(diff_t,tx)
-        dtx.sort()
-        min_diff,best_tx = dtx[0]
+class PathRequest():
+    def __init__(self,path,cache_size=10,margin=0):
+        self.path  = path
+        self._margin = margin
+        self._cache = {}
+        self._cache_size = cache_size
+        self._cache_index = []
         
-        if min_diff <= (margin/2.):
-            return best_tx
-        
-    def update(self,datalist):
-        self.datalist.extend(datalist)
-        
-
-                
-class TimedClientBase(ClientBase):
-    def __init__(self,format):
-        self.format = format
-        
-    def get_url(self,time=''):
-        if not time:
-            return self.format
-        
-        return swdt.replace(self.format,time)
-    
     def request(self,time):
-        ti = swdt.parse(time)
-        path = self.get_url(ti)
+        raise NotImplemented
+            
+    def get(self,time):
         
-        return (ti,path)
+        time_in  = swut.time_parse(time)
+        dir_format,file_format = os.path.split(self.path.format)
+        dir_path,file_name = os.path.split(self.path.get(time_in))
+        
+        dir_time = swut.parse_string(dir_format,dir_path)
+        
+        request_time = [] 
+        
+        try:
+            request_time = self._cache[dir_time]
+            self._cache_index.remove(dir_time)
+            self._cache_index.append(dir_time)
+        except KeyError:
+            request_time = self.request(time_in)
+            self._cache[dir_time] = request_time
+            self._cache_index.append(dir_time)
+        finally:
+            if len(self._cache_index) > self._cache_size:
+                delete_time = self._cache_index.pop(0)
+                self._cache.pop(delete_time)
+        
+        if not request_time:
+            return
+        
+        diff_time = [abs((rt-time_in).total_seconds()) for rt in request_time]
+        zip_diff_time = zip(diff_time,request_time)
+        zip_diff_time.sort()
+        min_diff,best_time = zip_diff_time[0]
+        
+        if min_diff <= (self._margin/2.):
+            return self.path.get(best_time)
+                        
+class FilePathRequest(PathRequest):
+    def request(self,time):
+        
+        input_time = swut.time_parse(time)
+        
+        path = self.path.get(input_time)
+        dir_path, file_name = os.path.split(path)
+        dir_format, file_format = os.path.split(self.path.format)
+                    
+        files = swut.get_files(dir_path + '/*')
+        file_time_list = []
+        for f in files:
+            sub_dir,file_name = os.path.split(f)
+            try:
+                file_time = datetime.strptime(file_name,file_format)
+                file_time_list.append(file_time)
+            except:
+                pass
+            
+        file_time_list.sort()
+        
+        return file_time_list
     
-class LocalTimedClient(TimedClientBase):
-    def __init__(self,format,margin=0,cache_size=100):
-        TimedClientBase.__init__(self, format)
-        self.cache  = TimedCache(size=cache_size)
-        self.margin = margin
+class UrlPathRequest(PathRequest):
+    def request(self,time):
+        
+        input_time = swut.time_parse(time)
+    
+        path = self.path.get(input_time)
+        dir_path, file_name = os.path.split(path)
+        dir_format, file_format = os.path.split(self.path.format)
+        
+        buf = StringIO()
 
-    def request(self,time,margin=None):
+        swut.download_by_url(dir_path, buf)
+        file_time_list = []   
         
-        input_margin = self.margin
-        if margin is not None:
-            input_margin = margin
-        
-        input_time = swdt.parse(time)
-        
-        ret = self.cache.request(input_time,margin=input_margin)
-        if ret:  return ret
+        contents = buf.getvalue()
+        buf.close()
                 
-        format = self.get_url()
-        tdel  = swdt.timedelta(seconds=input_margin/2)
-        res = swfp.request_files(format,input_time-tdel,input_time+tdel)
+        start_index = 0
+        end_index = 0
         
-        if not res: return None          
-        self.cache.update(res)
+        while True:
+            start_index = contents.find("<a href=\"", end_index)
+            start_index += 9
+            if (start_index == -1 or start_index < end_index):
+                break
+            
+            end_index = contents.find("\"", start_index)
+            if (end_index == -1):
+                break
+            
+            url_path = contents[start_index:end_index]
+            sub_dir,file_name = os.path.split(url_path)
+            
+            try:
+                file_time = datetime.strptime(file_name,file_format)
+                file_time_list.append(file_time)
+            except:
+                pass
+            
+        file_time_list.sort()
         
-        return res[0]
+        return file_time_list
+    
+class DataUnit():
+    def __init__(self,header={},data=[]):
+        self.header = header
+        self.data = data

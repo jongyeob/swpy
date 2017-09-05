@@ -4,7 +4,7 @@ Created on 2016. 6. 1.
 @author: jongyeob
 '''
 
-from swpy.dataproc.solarpack import sun
+from swpy.solarpack import sun
 from swpy.utils import datetime as swdt
 from sunpy import time as sunt
 from sunpy import sun as ssun

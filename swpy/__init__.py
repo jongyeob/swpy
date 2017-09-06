@@ -2,34 +2,23 @@
 
 ## standard library
 import os
-from os import path
 import sys
-import logging
+from swpy.swpy import *
+## Global setting
 
-
-SWPY_ROOT,_ = path.split(__path__[0])
+SWPY_ROOT,_ = os.path.split(__path__[0])
 SWPY_ROOT = SWPY_ROOT.replace('\\','/')
-RESOURCE_DIR = SWPY_ROOT + '/res/'
-SCRIPT_DIR = SWPY_ROOT +'/scripts/'
-DOCUMENT_DIR = SWPY_ROOT + '/doc/'
-DATA_DIR = SWPY_ROOT +'/data/'
-TEMP_DIR = SWPY_ROOT +'/temp/'
+RESOURCE_DIR = SWPY_ROOT + '/res'
+SCRIPT_DIR = SWPY_ROOT +'/scripts'
+DOCUMENT_DIR = SWPY_ROOT + '/doc'
+DATA_DIR = SWPY_ROOT +'/data'
+TEMP_DIR = SWPY_ROOT +'/temp'
+CONFIG_FILE = SWPY_ROOT + '/swpy.ini'
 
-## User configuration
-LOG_LEVEL = 10
-LOG_FORMAT = "%(asctime)s %(name)s [%(levelname)s] %(message)s"
+## Default configuration
+CFG = {
+'log-level':10,
+'log-format':"[%(levelname)s:%(name)s] %(message)s" }
+CFG = get_config(CONFIG_FILE,CFG)
 
-## Initialize 
-LOG = logging.getLogger('swpy')
-LOG.setLevel(LOG_LEVEL)
-LOG.addHandler(logging.NullHandler())
-
-
-LOG.debug("# SWPY_ROOT = {}".format(SWPY_ROOT))
-
-
-from .swpy import *
-
-from . import base
-from . import utils2
-from . import solarpack
+LOG = get_logger('swpy')

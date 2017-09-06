@@ -56,104 +56,103 @@ class DownloadThread(threading.Thread):
         self.rval = download_http_file(self.src, self.dst, self.post_args, self.overwrite, self.trials)
 
 
-def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn=None):
+def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn=None,data=bytearray()):
     '''
     Download a file on internet. return when a file saved to loacl is existed.
     
-    :param string src_url: URL
-    :param string dst_path: local path
-    :param string post: arguments for POST method
-    :param bool overwrite: if ture, local file will be overwritten.
-    :param int trials: method will be terminated in trails number
-
-    :return: bool
+    Parameters:
+        src_url: URL
+        dst_path: local path
+        post: arguments for POST method
+        overwrite: if ture, local file will be overwritten.
+        trials: method will be work in trial number positive.
+    
+    Returns:
+        bool
     '''
-    # Check existing file
+
+    LOG.debug("URL : {}".format(src_url))
+    if trials < 1:
+        LOG.debug("Over trials")
+        return False
+
+    i = src_url.index("://")    
+    if src_url[:i] != 'http':
+        LOG.error('Not supported protocol! : {}'.format(src_url[:i]))
+        return False
+
     if dst_path:
+        LOG.debug("Save to : {}".format(dst_path))
         if  os.path.exists(dst_path) and not overwrite:
-            print('Already exist, %s'%(dst_path))
+            LOG.info('Already exist, %s'%(dst_path))
             return True
    
     
     domain_name,file_path = split_url(src_url)
 
-    
-    headers = {"Content-type": "application/x-www-form-urlencoded",\
-               "Accept": "text/plain"}
-   
-    t = 0
-    is_response = False
-    
     http = None
     if conn:
         http = conn
     else:
         http = get_http_conn(domain_name)
         
-    contents = ""    
-    while(not is_response and t < trials): 
-        
-        try:
-            if post:
-                encoded = urllib.urlencode(post)
-                http.request("POST", file_path,body=encoded,headers=headers)
-            else:
-                http.request("GET", file_path,headers=headers)
-            
-            r = http.getresponse()
-
-            if r.status == 200:
-                contents = r.read()
-            elif r.status in [301,302,303,307,308]:
-                r.read()
-                new_loc = r.getheader('Location')
-                new_host,_ = split_url(new_loc)
-
-                _conn = None
-                if http.host == new_host:
-                    _conn = http
-                
-                contents = download_http_file(new_loc,
-                                              post=post,
-                                              overwrite=overwrite,
-                                              trials=trials-1,
-                                              conn=_conn)
-            else:
-                LOG.error("%d, %s - %s"%(r.status, r.reason,file_path))
-                
-
-            is_response = True
-            r.close()
- 
-        except Exception as err:               
-            LOG.error("Error : {} {}".format(repr(err),file_path))
-            http.close()
-            t += 1
+    contents = ''
+   
+    if post:
+        encoded = urllib.urlencode(post)
+        headers = {"Content-type": "application/x-www-form-urlencoded",\
+                   "Accept": "text/plain"}
+        http.request("POST", file_path,body=encoded,headers=headers)
+    else:
+        http.request("GET", file_path)
     
+    r = http.getresponse()
+
+    if r.status == 200:
+        contents = r.read()
+        data.extend(contents)
+
+    elif r.status in [301,302,303,307,308]:
+        r.read()
+        new_loc = r.getheader('Location')
+        new_host,_ = split_url(new_loc)
+        LOG.debug("Redirect : {}".format(new_loc))
+        _conn = None
+        if http.host == new_host:
+            _conn = http
         
-        if not is_response:
-            print("Re-trying...(%d/%d)"%(t,trials))
-            time.sleep(5)
+        success = download_http_file(new_loc,
+                           dst_path=dst_path,
+                           post=post,
+                           overwrite=overwrite,
+                           trials=trials-1,
+                           conn=_conn,
+                           data=data)
+        
+    else:
+        LOG.error("Resonse [%d] : %s"%(r.status, r.reason))
+        return False
             
     if http and not conn:
         http.close()
+        http = None   
    
+    if not data:
+        LOG.error("Contents empty")
+        return False
+    
     # File saving... 
     if dst_path:
-        if contents == '':
-            return False
-
         dst_path2 = filepath.make_path(dst_path) + '.down'
-        
+    
         with open(dst_path2, "wb") as f:
             f.write(contents)
         if os.path.exists(dst_path):
             os.remove(dst_path)              
         os.rename(dst_path2, dst_path)
 
-        return True
+    return True
 
-    return contents
 
 def get_list_from_html(contents, ext_list = None):
     strList = []
@@ -188,15 +187,6 @@ def get_list_from_html(contents, ext_list = None):
                     strList.append(strLink)
         else:
             strList.append(strLink)
-    
-    #print strList[0]
-    
-    
-    #iBegin = iEnd = iEnd + 1
-    
-    #        i = i+1
-    #        if (i > 80000):
-    #break;
     
     
     return strList
@@ -307,7 +297,8 @@ def split_url(url):
     return remote_domain_name,remote_file_path
 
 def get_http_conn(domain,*args,**kwargs):
-    http = httplib.HTTPConnection(domain,timeout=10,*args,**kwargs)
+    LOG.debug("HTTP Connection : {}".format(domain))
+    http = httplib.HTTPConnection(domain,timeout=75,*args,**kwargs)
     return http
 def get_ftp_conn(domain,*args,**kwargs):
     login_id = kwargs.pop('login_id','anonymous')
@@ -316,28 +307,35 @@ def get_ftp_conn(domain,*args,**kwargs):
     ftp.login(login_id, login_pw)
     return ftp
 
-def download_by_wget(url,dst_path='',overwrite=False):
+def download_by_wget(url,dst_path='',overwrite=False,data=bytearray()):
     
     if dst_path:
         file_exist = os.path.exists(dst_path)
     
         if not overwrite and file_exist:
             LOG.debug("File already exists!: {}".format(dst_path))
-            return
+            return True
     
     download_path = '-'
     if dst_path:
-        download_path = dst_path
-
-    output = subprocess.check_output(['wget','-qO',download_path,url])
+        download_path = dst_path + '.down'
+        filepath.make_path(download_path)
+      
+    try:
+        output = subprocess.check_output(['wget','-qO',download_path,url])
+    except subprocess.CalledProcessError as err:
+        LOG.error("Process Call Failed!: {} {}".format(err.returncode,err.cmd))
+        return False
    
     if dst_path:
-        LOG.debug("Download complete! {}".format(dst_path))
-        return 
-
- 
-    return output
-
-
-       
+        if os.path.exists(dst_path):
+            os.remove(dst_path)
         
+        os.rename(download_path,dst_path)
+        LOG.debug("Download complete! {}".format(dst_path))
+
+    data.extend(output)
+ 
+    return True
+
+

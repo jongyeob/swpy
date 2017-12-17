@@ -5,11 +5,13 @@ Created on 2016. 10. 17.
 '''
 
 from __future__ import absolute_import
+
 import os
-import logging
-from swpy.utils import config
-import swpy
 import sys
+import logging
+
+import swpy
+from swpy.utils import config
 
 def get_logger(name):
     if not name:

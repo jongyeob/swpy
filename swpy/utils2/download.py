@@ -17,7 +17,7 @@ import urlparse
 import logging
 from random import choice
 
-from swpy.utils2 import filepath as swfp
+import filepath as swfp
 
 LOG = logging.getLogger(__name__)
 

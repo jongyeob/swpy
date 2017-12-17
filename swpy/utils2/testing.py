@@ -3,33 +3,36 @@ Created on 2015. 11. 19.
 
 @author: jongyeob
 '''
+
 import sys
 import os
 import logging
 import cPickle as Pickle
-import traceback
+import random
+from datetime import timedelta
+import math
 
-import swpy
-from swpy.utils2  import date_time as dt
-from swpy.utils2 import filepath as fp
+import date_time as swdt
+import filepath as swfp
+
 
 LOG = logging.getLogger(__name__)
 
-TEST_CACHE_FILE = swpy.TEMP_DIR + '/test_cache.pkl'
+TEST_CACHE_FILE = 'test_cache.pkl'
 
 def create_timed_dummies(timed_path,start,end,**kwargs):
     total = 0
     
     delta = {}
-    delta['days'] = kwargs.pop('seconds',0)
-    delta['hours'] = kwargs.pop('seconds',0)
-    delta['minutes'] = kwargs.pop('seconds',0)
+    delta['days'] = kwargs.pop('days',0)
+    delta['hours'] = kwargs.pop('hours',0)
+    delta['minutes'] = kwargs.pop('minutes',0)
     delta['seconds'] = kwargs.pop('seconds',0)
         
-    for _t in dt.series(start,end,**delta):
+    for _t in swdt.series(start,end,**delta):
         filepath = _t.strftime(timed_path)
         
-        fp.mkpath(filepath)
+        swfp.mkpath(filepath)
                 
         if not os.path.exists(filepath):
             with open(filepath,"wb"): pass
@@ -37,6 +40,9 @@ def create_timed_dummies(timed_path,start,end,**kwargs):
         total += 1
         
     LOG.debug("The number of created files : %d"%(total))
+    
+    
+    
     
 def run_test(test_functions):
     '''

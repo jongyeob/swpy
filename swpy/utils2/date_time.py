@@ -11,6 +11,10 @@ import logging
 import re
 import threading
 
+import base as swbs
+import random 
+import math
+
 locking_in_re = threading.Lock()
 
 LOG = logging.getLogger('date_time')
@@ -214,36 +218,51 @@ def parse_datetime(datetime_string,prior='date',index=[]):
     
     return parsed
 
-def iseries(start_datetime,end_datetime,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
-    '''
-    @param - start_datetime
-    @param - end_datetime
-    '''
-    start_datetime = parse(start_datetime)
-    end_datetime = parse(end_datetime)
-    
-        
-    t = start_datetime
-    period = timedelta(weeks=weeks,days=days,hours=hours,minutes=minutes,seconds=seconds,milliseconds=milliseconds,microseconds=microseconds)
-    while 1:
-        
-        yield t 
-        t = move(t,period) 
-        if t > end_datetime:
-            break
-        
-        
-                     
-def series(start_datetime,end_datetime,weeks=0,days=0,hours=0,minutes=0,seconds=0,milliseconds=0,microseconds=0):
+def series(start,end,step, jitter=0, drop_rate=0.0):
     '''
     @param - start_datetime
     @param - end_datetime
     @param - time frequency
     '''
-    return [t for t in iseries(start_datetime,end_datetime,
-                               weeks=weeks,days=days,
-                               hours=hours,minutes=minutes,seconds=seconds,
-                               milliseconds=milliseconds,microseconds=microseconds)]
+    
+    start_in = parse(start)
+    end_in = parse(end)
+        
+    t = start_in
+    if not step:
+        raise ValueError('Time step must be positive')
+    
+    jitter_sum = 0
+    jitter_sqsum = 0
+    
+    t_list = []
+    while t <= end_in:
+        random_jitter = random.uniform( -jitter,jitter )
+        
+        t_list.append( t + timedelta( seconds=random_jitter ) )
+                
+        jitter_sum += random_jitter
+        jitter_sqsum += random_jitter**2
+        
+        t = move(t,step)
+        
+    t_sample = t_list    
+    sample_num = int( len(t_list)*(1-drop_rate) )
+        
+    if sample_num < len(t_list):
+        t_sample = random.sample(t_list, sample_num)
+        
+        
+    jitter_me = jitter_sum / sample_num
+    jitter_rmse = math.sqrt( jitter_sqsum/sample_num )
+        
+    LOG.debug( "Total: {}, Select: {}, Jitter ME: {:.1f}, RMSE: {:.1f}".format(
+        len(t_list),
+        sample_num,
+        jitter_me,
+        jitter_rmse))
+        
+    return t_sample 
     
 def parse(*args,**kargs):
     '''
@@ -287,7 +306,7 @@ def parse(*args,**kargs):
 
     return ret
 
-def move(current,period,start=''):
+def move(current,step,start=''):
     '''
     return move datetime from current with the period
     :param current: current datetime
@@ -301,9 +320,9 @@ def move(current,period,start=''):
     if start:
         next_datetime = parse(start)
         
-    
+    delta = timedelta(seconds=step)
     while next_datetime <= current_datetime:
-        next_datetime += period
+        next_datetime += delta
     
     return next_datetime
     
@@ -402,33 +421,6 @@ def _jd2gc(jd):
 
 
 
-def filter(datetime_list,start_datetime,end_datetime):
-    '''
-    filter list containing datetime.
-    
-    parameters:
-        datetime_list - iterable object, but 0th elements are date time string or object. 
-        start_datetime - string
-        end_datetime   - string
-    returns:
-        list
-    '''
-    
-    ret = []
-
-    start   = parse(start_datetime)
-    end     = parse(end_datetime) 
-        
-    
-    LOG.debug("Time filter : %s, %s, %d"%(str(start),str(end)))
-    
-    records = [rec for rec in datetime_list if rec[0] and start <= rec[0] < end]
-    records.sort()
-    
-        
-    return records
-       
-
 def sample(datetime_list,sample_rate,ref_time=''):  
     
     datetime_list.sort()
@@ -437,30 +429,58 @@ def sample(datetime_list,sample_rate,ref_time=''):
     if ref_time: 
         input_ref_time = parse(ref_time)
          
-    margin = timedelta(seconds=sample_rate/2.)
+    margin = sample_rate/2.
     tx = datetime_list
     
-    diff_tx = [(ty[0]-input_ref_time).total_seconds() for ty in tx]
+    diff_tx = [(ty-input_ref_time).total_seconds() for ty in tx]
     dtx = zip(diff_tx,tx)
        
     
-    ret = []
-    iter_num = 0  
-    while dtx:
-        diff_ty,ty = dtx.pop(0)
+    t_list = []
+    iter_num = 0
+    for diff_time in dtx:
+        diff,time = diff_time
         
-        if 0<= diff_ty - iter_num*sample_rate + margin <= sample_rate:
-            ret.append(ty)
+        if -margin < (diff - iter_num*sample_rate) < margin:
+            t_list.append(time)
+            iter_num += 1
 
-        iter_num += 1      
                 
-    LOG.debug("Number of filtered records : %d"%(len(ret)))
+    LOG.debug("Number of filtered records : %d"%(len(t_list)))
     
-    return ret
+    return t_list
 
+def random_time(t1, t2):
+    t1_in = parse(t1)
+    t2_in = parse(t2)
+    
+    total_seconds = (t1_in - t2_in).total_seconds()
+    
+    random_t = t1_in - timedelta( seconds = random.random()*total_seconds )
+    
+    return random_t
+    
 
-time_iseries = iseries
-time_series = series
-time_parse = parse
-time_move = move
-time_to_tuple = to_tuple
+class Time(swbs.TimeUnit):
+    def __init__(self,t1,t2=None,step=0):
+        self.t1  = parse(t1)
+        
+        self.t2  = None
+        if t2:
+            self.t2 = parse(t2)
+        
+        self.td  = 0
+        if step:
+            self.td = step
+        
+    def get_start(self):
+        
+        return self.t1
+
+    def get_end(self):
+        
+        return self.t2
+    
+    def get_delta(self):
+        
+        return timedelta(seconds=self.td)

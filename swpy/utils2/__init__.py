@@ -4,4 +4,5 @@ from swpy.utils2.config import Config
 from swpy.utils2.filepath import *
 from swpy.utils2.date_time  import *
 from swpy.utils2.download import  *
-from swpy.utils2 import testing
+from swpy.utils2.testing import *
+from swpy.utils2.base import  *

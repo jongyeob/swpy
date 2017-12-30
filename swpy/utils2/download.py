@@ -16,10 +16,17 @@ import urllib2
 import urlparse
 import logging
 from random import choice
+from cStringIO import StringIO
+from datetime import datetime
 
 import filepath as swfp
+import date_time as swdt
+
 
 LOG = logging.getLogger(__name__)
+CFG = {
+    'temp-dir':'temp/'
+    }
 
 user_agents = [
     'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
@@ -31,21 +38,14 @@ user_agents = [
 ]
 
 
-def download_by_url(src,dst,overwrite=False):
+def download_by_url(src,dst,overwrite=False,post=None):
     '''
-    src: string or dict[url]
+    src: string
     dst: string or file
     
-    if src and dst are string, it assuems url and filepWath
     '''
     url = src
     dst_file = dst
-    post = None
-    
-    if isinstance(src,dict):
-        url = src['url']
-        post = src.get('post')
-        
     
     if isinstance(dst,str):
         if os.path.exists(dst) and not overwrite:
@@ -80,3 +80,5 @@ def download_by_url(src,dst,overwrite=False):
 
 
     return True
+
+    

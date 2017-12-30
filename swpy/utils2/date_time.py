@@ -7,13 +7,13 @@ Created on 2016. 10. 20.
 from calendar import monthrange
 from datetime import datetime, timedelta, date, time
 
+
 import logging
 import re
 import threading
-
-import base as swbs
 import random 
 import math
+
 
 locking_in_re = threading.Lock()
 
@@ -459,28 +459,3 @@ def random_time(t1, t2):
     random_t = t1_in - timedelta( seconds = random.random()*total_seconds )
     
     return random_t
-    
-
-class Time(swbs.TimeUnit):
-    def __init__(self,t1,t2=None,step=0):
-        self.t1  = parse(t1)
-        
-        self.t2  = None
-        if t2:
-            self.t2 = parse(t2)
-        
-        self.td  = 0
-        if step:
-            self.td = step
-        
-    def get_start(self):
-        
-        return self.t1
-
-    def get_end(self):
-        
-        return self.t2
-    
-    def get_delta(self):
-        
-        return timedelta(seconds=self.td)

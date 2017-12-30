@@ -11,16 +11,20 @@ import cPickle as Pickle
 import random
 from datetime import timedelta
 import math
+import traceback
+
+import SimpleHTTPServer
+import SocketServer
+import threading
 
 import date_time as swdt
 import filepath as swfp
-
 
 LOG = logging.getLogger(__name__)
 
 TEST_CACHE_FILE = 'test_cache.pkl'
 
-def create_timed_dummies(timed_path,start,end,**kwargs):
+def create_dummy_file(timed_path,start,end,**kwargs):
     total = 0
     
     delta = {}
@@ -40,8 +44,29 @@ def create_timed_dummies(timed_path,start,end,**kwargs):
         total += 1
         
     LOG.debug("The number of created files : %d"%(total))
+
+class HttpServer():
+    def __init__(self,base_dir,port):
+        self.httpd = None
+        self.base_dir = base_dir
+        self.port = port
+        
+    def start(self):
+        handler = SimpleHTTPServer.SimpleHTTPRequestHandler
     
-    
+        os.chdir(self.base_dir)
+        
+        self.httpd = SocketServer.TCPServer(("",self.port),handler) 
+        
+        server_thread = threading.Thread(target=self.httpd.serve_forever)       
+        server_thread.start()
+        
+        
+    def stop(self):
+        self.httpd.shutdown()
+        self.httpd.server_close()        
+        self.httpd = None
+        self.server_thread = None    
     
     
 def run_test(test_functions):

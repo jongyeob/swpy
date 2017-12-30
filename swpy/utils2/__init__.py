@@ -1,8 +1,17 @@
-from swpy.utils2.table import *
-from swpy.utils2.database import DataBase
-from swpy.utils2.config import Config
-from swpy.utils2.filepath import *
-from swpy.utils2.date_time  import *
-from swpy.utils2.download import  *
-from swpy.utils2.testing import *
-from swpy.utils2.base import  *
+from table import *
+from database import DataBase
+from config import Config
+from filepath import *
+from date_time import \
+parse as time_parse,\
+series as time_series,\
+move as time_move,\
+to_tuple as time_to_tuple,\
+julian_day,\
+julian_centuries,\
+random_time as time_random,\
+sample as time_sample,\
+parse_string as time_string
+  
+from download import  *
+from testing import *

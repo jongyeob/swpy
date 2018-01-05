@@ -19,9 +19,6 @@ LOG = logging.getLogger()
 CFG = {'temp-dir':'temp/'}
 
 class DownloaderUnit(RequestUnit):
-    def __init__(self,path,*args,**kwargs):       
-        self.path = TimeFormat(path)
-        
     def request(self,time):
         raise NotImplemented
     
@@ -30,8 +27,7 @@ class DownloaderUnit(RequestUnit):
         src_url = self.path.get(time)
         src_url_item = urlparse.urlparse(src_url)
         
-        dst_path =  CFG['temp-dir'] + '{netloc}/{path}'.format(netloc=src_url_item.netloc,
-                                                               path=src_url_item.path)
+        dst_path =  CFG['temp-dir'] + src_url_item.hostname + src_url_item.path
                
         if dst:
             dst_path = dst
@@ -52,7 +48,7 @@ class DownloaderUnit(RequestUnit):
 
         return dst_path
 
-class HttpDownloader(RequestUnit):
+class HttpDownloader(DownloaderUnit):
     def request(self,time):
         
         input_time = utils.time_parse(time)
@@ -105,12 +101,9 @@ class HttpDownloader(RequestUnit):
                 
 
             utils.download_by_url(path,wfile)
+             
             
-
-        
-            
-            
-class FtpDownloader(RequestUnit):
+class FtpDownloader(DownloaderUnit):
     ftp = None
     def connect(self,user='',passwd=''):
         
@@ -175,7 +168,7 @@ class FtpDownloader(RequestUnit):
                 continue
             
         
-            file_size = line.split()[4]
+            file_size = line.split()[-2]
             file_name = line.split()[-1]
             
             file_time = utils.time_string(file_format,file_name)

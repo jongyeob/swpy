@@ -4,11 +4,7 @@ Created on 2017. 4. 5.
 @author: jongyeob
 '''
 
-import os
 import logging
-from datetime import datetime
-
-from swpy import utils2 as swut
 
 LOG = logging.getLogger(__name__)
 
@@ -18,7 +14,6 @@ class DataUnit():
         self.header = header
         self.body = body
         
-class FitsData(DataUnit): pass
         
 class PathUnit():
     def __init__(self,path,*args,**kwargs):
@@ -31,3 +26,9 @@ class TimeUnit():
         self.t1 = None
         self.t2   = None
         self.td = 0    # Seconds 
+
+class PlotUnit():
+    def draw(self,data):
+        raise NotImplementedError()
+    def save(self,path,data):
+        raise NotImplementedError()

@@ -11,8 +11,6 @@ from request import RequestUnit
 from timepath import TimeFormat
 
 class ClientUnit(RequestUnit):
-    def __init__(self,path,*args,**kwargs):
-        self.path = TimeFormat(path)
     
     def request(self,time):
         

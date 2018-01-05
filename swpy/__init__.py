@@ -1,6 +1,3 @@
-
-
-
 ## standard library
 import os
 import sys
@@ -17,20 +14,37 @@ DATA_DIR = SWPY_ROOT +'/data'
 TEMP_DIR = SWPY_ROOT +'/temp'
 CONFIG_FILE = SWPY_ROOT + '/swpy.ini'
 
-from utils2 import testing
+import utils2
 
 from downloader import HttpDownloader, FtpDownloader
 from timepath import TimeFormat, Time
+from base import TimeUnit, DataUnit, PathUnit, PlotUnit
+from data import FitsData
+from client import ClientUnit
+
+## Default configuration
+CFG = {
+'log-level':10,
+'log-format':"[%(levelname)s:%(name)s] %(message)s" }
+
+LOG = None
 
 
-def get_logger(name):
+def get_logger(name,log_format='',log_level=0):
     if not name:
         name = 'swpy'
     elif not name.startswith('swpy.'):
         name = 'swpy.' + name
     
+    
     logger = logging.getLogger(name)
-    logger.setLevel(0)
+    
+    log_handle = logging.StreamHandler(sys.stderr)
+    log_format = logging.Formatter(log_format)
+    log_handle.setFormatter(log_format)
+    
+    logger.addHandler(log_handle)
+    logger.setLevel(log_level)
     
     return logger
 
@@ -40,22 +54,16 @@ def get_config(filepath,cfg):
     num = utils.config.get_config(filepath,'swpy',cfg)
     return num
 
-def init(log_level=20,config_file=''):
+def init(log_level=0,config_file=''):
+    global LOG
+    
     if config_file:
-        get_config(config_file,CFG)
-
-    log_handle = logging.StreamHandler(sys.stderr)
-    log_format = logging.Formatter(CFG['log-format'])
-    log_handle.setFormatter(log_format)
+        get_config(CONFIG_FILE,CFG)
+        
+    LOG = get_logger('swpy')
     
-    LOG.addHandler(log_handle)
-    LOG.setLevel(CFG['log-level'])
-    
-## Default configuration
-CFG = {
-'log-level':10,
-'log-format':"[%(levelname)s:%(name)s] %(message)s" }
-CFG = get_config(CONFIG_FILE,CFG)
-LOG = get_logger('swpy')
+    utils2.testing.TEST_CACHE_FILE = os.path.join(TEMP_DIR, utils2.testing.TEST_CACHE_FILE)
 
-testing.TEST_CACHE_FILE = os.path.join(TEMP_DIR, testing.TEST_CACHE_FILE)
+
+    
+init(CFG['log-level'],CFG['log-format'])

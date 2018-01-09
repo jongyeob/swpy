@@ -16,10 +16,16 @@ class DataUnit():
         
         
 class PathUnit():
-    def __init__(self,path,*args,**kwargs):
-        self.path = path
-    def get(self,*args,**kwargs):
-        return self.path
+    def __init__(self,style,substr={},*args,**kwargs):
+        self.style = style.format(**substr)
+        
+    def get(self,substr={},*args,**kwargs):
+        path_string = self.stlye.format(**substr)
+        
+        return path_string
+    
+    def get_style(self):
+        return self.style
     
 class TimeUnit():
     def __init__(self,*args,**kwargs):

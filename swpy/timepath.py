@@ -33,17 +33,17 @@ class Time(swbs.TimeUnit):
         return utils.timedelta(seconds=self.td)
 
 class TimeFormat(swbs.PathUnit):
-    def __init__(self,time_format,header={}):
-        self.format = time_format.format(**header)
+    def __init__(self,style,substr={}):
+        self.style = style.format(**substr)
          
-    def get(self,time,header={}):
+    def get(self,time,substr={}):
         
-        format_string = self.format.format(**header)
+        style_string = self.style.format(**substr)
         
         time_in = utils.time_parse(time)
-        time_string = time_in.strftime(format_string)
+        time_string = time_in.strftime(style_string)
         
         return time_string
     
-    def get_format(self):
-        return self.format
+    def get_style(self):
+        return self.style

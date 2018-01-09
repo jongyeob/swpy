@@ -54,7 +54,7 @@ class HttpDownloader(DownloaderUnit):
         input_time = utils.time_parse(time)
     
         path = self.path.get(input_time)
-        path_format = self.path.get_format()
+        path_format = self.path.get_style()
         
         dir_path, file_name = os.path.split(path)
         dir_format, file_format = os.path.split(path_format)
@@ -116,14 +116,14 @@ class FtpDownloader(DownloaderUnit):
             passwd_in = passwd
             
             
-        ftp_url = self.path.get_format()
+        ftp_url = self.path.get_style()
         parse_ftp_url = urlparse.urlparse(ftp_url)
         ftp_domain = parse_ftp_url.hostname
         ftp_port   = parse_ftp_url.port
         
         
         if self.ftp:
-            raise RuntimeError("Already FTP server connected. Connect again after closing the last connection.")
+            raise RuntimeError("Already FTP server connected. Disconnect first")
         
         self.ftp = ftplib.FTP()
         self.ftp.connect(ftp_domain,ftp_port)
@@ -134,6 +134,20 @@ class FtpDownloader(DownloaderUnit):
             self.ftp.quit()
             
             self.ftp = None
+            
+    def set_conection(self,ftp):
+        
+        if self.ftp:
+            raise RuntimeError("Already FTP server connected. Disconnect first")
+        
+        self.ftp = ftp
+        
+    def get_connection(self):
+        
+        if not self.ftp:
+            raise RuntimeError("No connection. Connect first")
+        
+        return self.ftp          
     
     def request(self,time):
         li = []
@@ -155,7 +169,7 @@ class FtpDownloader(DownloaderUnit):
     
             return []
         
-        ftp_format = self.path.get_format()
+        ftp_format = self.path.get_style()
         parse_ftp_format = urlparse.urlparse(ftp_format)
         path_format = parse_ftp_format.path
         _, file_format = os.path.split(path_format)

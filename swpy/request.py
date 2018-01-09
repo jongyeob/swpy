@@ -23,7 +23,7 @@ class RequestUnit():
     def search(self,time):
         
         time_in  = swut.time_parse(time)
-        path_format = self.path.get_format()
+        path_format = self.path.get_style()
         
         dir_format,file_format = os.path.split(path_format)
         dir_path = time_in.strftime(dir_format)

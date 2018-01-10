@@ -21,6 +21,7 @@ from timepath import TimeFormat, Time
 from base import TimeUnit, DataUnit, PathUnit, PlotUnit
 from data import FitsData
 from client import ClientUnit
+from request import RequestUnit
 
 ## Default configuration
 CFG = {

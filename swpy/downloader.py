@@ -31,20 +31,31 @@ class DownloaderUnit(RequestUnit):
                
         if dst:
             dst_path = dst
-            
+           
+        LOG.debug("Retrieve file at {}, save to {}, overwrite={}".format(time, 
+            dst_path, 
+            ['False','True'][overwrite] ))
+
         if os.path.exists(dst_path) and not overwrite:
-            LOG.info('Already exist, %s'%(dst))
+            LOG.info('Already exists')
             return dst_path
         
         utils.mkpath(dst_path)
         dst_file = open(dst_path + '.down', 'wb')
-            
-        self.fetch(time,dst_file)
         
-        dst_file.close()
         if os.path.exists(dst_path):
-            os.remove(dst_path)              
-        os.rename(dst_path + '.down', dst_path)
+            os.remove(dst_path)
+
+        try:
+            self.fetch(time,dst_file)
+            os.rename(dst_path + '.down', dst_path)
+
+        except IOError as e:
+            LOG.error("File download not compledted")
+        
+        finally:     
+            dst_file.close()
+
 
         return dst_path
 
@@ -161,8 +172,7 @@ class FtpDownloader(DownloaderUnit):
         ftp_dir, _ = os.path.split(ftp_path)
         
         try:
-            self.ftp.cwd(ftp_dir)
-            self.ftp.retrlines("LIST", li.append) #, list.append)
+            li = self.ftp.nlst(ftp_dir)
         except ftplib.all_errors, e:
             err_string = str(e).split(None, 1)
             LOG.error(err_string)
@@ -177,14 +187,9 @@ class FtpDownloader(DownloaderUnit):
         
         file_time_list = []
 
-        for line in li:
-            if line[0] == "d" :
-                continue
-            
-        
-            file_size = line.split()[-2]
-            file_name = line.split()[-1]
-            
+        for file_name in li:
+       
+
             file_time = utils.time_string(file_format,file_name)
             
             if file_time:
@@ -204,7 +209,16 @@ class FtpDownloader(DownloaderUnit):
         ftp_url = self.path.get(time_in)
         parse_ftp_url = urlparse.urlparse(ftp_url)
         ftp_path = parse_ftp_url.path
+        ftp_dir, ftp_file = os.path.split(ftp_path)
+        
+        self.ftp.cwd(ftp_dir)
 
-        self.ftp.retrbinary("RETR " + ftp_path, wfile.write)
+        self.ftp.sendcmd('TYPE I') 
+        file_size = self.ftp.size(ftp_file)
+
+        self.ftp.retrbinary('RETR {}'.format(ftp_file), wfile.write)
         
+        download_size = wfile.tell()
         
+        if download_size != file_size:
+            raise IOError("FTP file download not completed") 

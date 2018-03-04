@@ -9,6 +9,7 @@ from datetime import datetime
 import ftplib
 import logging
 import urlparse
+import shutil
 
 
 from swpy import utils2 as utils
@@ -48,10 +49,11 @@ class DownloaderUnit(RequestUnit):
 
         try:
             self.fetch(time,dst_file)
-            os.rename(dst_path + '.down', dst_path)
+            shutil.move(dst_path + '.down', dst_path)
 
         except IOError as e:
-            LOG.error("File download not compledted")
+            LOG.error("File download not completed: {}".format(e))
+            dst_path = ''
         
         finally:     
             dst_file.close()

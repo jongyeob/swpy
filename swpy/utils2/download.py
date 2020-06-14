@@ -12,15 +12,28 @@ downClinet.stop()
 '''
 
 import os
-import urllib2
-import urlparse
+try:
+    from urllib2 import build_opener as url_build_opener
+except:
+    from urllib.request import build_opener as url_build_opener
+    
+try:
+    import urlparse
+except:
+    from urllib import parse as urlparse
+
 import logging
 from random import choice
-from cStringIO import StringIO
+
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO
+
 from datetime import datetime
 
-import filepath as swfp
-import date_time as swdt
+from . import filepath as swfp
+from . import date_time as swdt
 
 
 LOG = logging.getLogger(__name__)
@@ -58,7 +71,7 @@ def download_by_url(src,dst,overwrite=False,post=None):
     parsed_url = urlparse.urlsplit(url)
      
     chosen_user_agent = choice(user_agents)
-    opener = urllib2.build_opener()
+    opener = url_build_opener()
     opener.addheaders = [('User-Agent',chosen_user_agent)]
         
     

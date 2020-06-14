@@ -7,18 +7,28 @@ Created on 2015. 11. 19.
 import sys
 import os
 import logging
-import cPickle as Pickle
+try:
+    import cPickle as Pickle
+except:
+    import pickle as Pickle
 import random
 from datetime import timedelta
 import math
 import traceback
 
-import SimpleHTTPServer
-import SocketServer
+try:
+    import SimpleHTTPServer
+except:
+    import http.server as SimpleHTTPServer
+
+try:
+    import SocketServer
+except:
+    import socketserver as SocketServer
 import threading
 
-import date_time as swdt
-import filepath as swfp
+from . import date_time as swdt
+from . import filepath as swfp
 
 LOG = logging.getLogger(__name__)
 

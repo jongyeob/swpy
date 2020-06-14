@@ -4,17 +4,25 @@ Created on 2017. 12. 21.
 @author: jongyeob
 '''
 import os
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO
+
 from datetime import datetime
 import ftplib
 import logging
-import urlparse
+
+try:
+    import urlparse
+except:
+    from urllib import parse as urlparse
 import shutil
 
 
-from swpy import utils2 as utils
-from request import RequestUnit
-from timepath import TimeFormat
+from . import utils2 as utils
+from .request import RequestUnit
+from .timepath import TimeFormat
 
 LOG = logging.getLogger()
 CFG = {'temp-dir':'temp/'}
@@ -175,7 +183,7 @@ class FtpDownloader(DownloaderUnit):
         
         try:
             li = self.ftp.nlst(ftp_dir)
-        except ftplib.all_errors, e:
+        except ftplib.all_errors as e:
             err_string = str(e).split(None, 1)
             LOG.error(err_string)
     

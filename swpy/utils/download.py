@@ -14,16 +14,26 @@ import datetime
 import os
 import socket
 import ftplib
-import httplib
+try:
+    import httplib
+except:
+    from http import client as httplib
 
 import string
 import sys
 import threading
 import time
-import urllib
-import urllib2
 
-import cStringIO as StringIO
+try:
+    from urllib import urlencode
+except:
+    from urllib.parse import urlencode
+
+try:
+    import cStringIO as StringIO
+except:
+    from io import StringIO
+
 import tempfile
 import subprocess
 
@@ -99,7 +109,7 @@ def download_http_file(src_url,dst_path='',post={},overwrite=False,trials=3,conn
     contents = ''
    
     if post:
-        encoded = urllib.urlencode(post)
+        encoded = urlencode(post)
         headers = {"Content-type": "application/x-www-form-urlencoded",\
                    "Accept": "text/plain"}
         http.request("POST", file_path,body=encoded,headers=headers)
@@ -217,7 +227,7 @@ def download_ftp_file(src_url, dst_path='', overwrite=False, trials=5, login_id=
         out.close()
             
     except Exception as e:
-        print e
+        print(e)
         
     
     if ftp and not conn:
@@ -261,9 +271,9 @@ def get_list_from_ftp(ftp_url,login_id='',login_pw='',mode=MODE_ALL,conn=None):
     try:
         ftp.cwd(ftp_dir)
         ftp.retrlines("LIST", li.append) #, list.append)
-    except ftplib.all_errors, e:
+    except ftplib.all_errors as e:
         err_string = str(e).split(None, 1)
-        print err_string
+        print(err_string)
 
         return [], []
     

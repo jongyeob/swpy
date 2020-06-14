@@ -9,8 +9,8 @@ except: import pickle
 from os import path
 import logging
 
-import date_time as swdt
-import filepath as swfp
+from . import date_time as swdt
+from . import filepath as swfp
 
 LOG = logging.getLogger("DataBase")
 

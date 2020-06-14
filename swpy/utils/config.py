@@ -6,14 +6,17 @@ Created on 2015. 6. 15.
 from __future__ import absolute_import
 
 import os
-from ConfigParser import RawConfigParser,SafeConfigParser
+try:
+    from ConfigParser import RawConfigParser,SafeConfigParser
+except:
+    from configparser import RawConfigParser,SafeConfigParser
 import logging
 LOG = logging.getLogger(__name__)
 LOG.setLevel(0)
 
 def get_config(filepath,name,cfg):
     items = load(filepath)
-    if items.has_key(name):
+    if name in items:
         item = items[name]
         num = update(item,cfg)
     else:
@@ -58,7 +61,7 @@ def save(filepath,items):
 def update(src_item,dst_item):
     num_updated = 0
     for key in src_item:
-        if not dst_item.has_key(key):
+        if key not in dst_item:
             LOG.debug("Not matching key : %s"%(key))
             continue
         type_item = type(dst_item[key])

@@ -14,14 +14,14 @@ DATA_DIR = SWPY_ROOT +'/data'
 TEMP_DIR = SWPY_ROOT +'/temp'
 CONFIG_FILE = SWPY_ROOT + '/swpy.ini'
 
-import utils2
+from . import utils2
 
-from downloader import HttpDownloader, FtpDownloader
-from timepath import TimeFormat, Time
-from base import TimeUnit, DataUnit, PathUnit, PlotUnit
-from data import FitsData
-from client import ClientUnit
-from request import RequestUnit
+from .downloader import HttpDownloader, FtpDownloader
+from .timepath import TimeFormat, Time
+from .base import TimeUnit, DataUnit, PathUnit, PlotUnit
+from .data import FitsData
+from .client import ClientUnit
+from .request import RequestUnit
 
 ## Default configuration
 CFG = {
@@ -50,7 +50,7 @@ def get_logger(name,log_format='',log_level=0):
     return logger
 
 def get_config(filepath,cfg):
-    import utils
+    from . import utils
     
     num = utils.config.get_config(filepath,'swpy',cfg)
     return num

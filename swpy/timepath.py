@@ -3,9 +3,9 @@ Created on 2017. 12. 21.
 
 @author: jongyeob
 '''
-import base as swbs
+from . import base as swbs
 
-from swpy import utils2 as utils
+from . import utils2 as utils
 
 
 class Time(swbs.TimeUnit):

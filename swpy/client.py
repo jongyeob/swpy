@@ -6,9 +6,9 @@ Created on 2017. 12. 21.
 import os
 from datetime import datetime
 
-from swpy import utils2 as swut
-from request import RequestUnit
-from timepath import TimeFormat
+from . import utils2 as swut
+from .request import RequestUnit
+from .timepath import TimeFormat
 
 import logging
 

@@ -386,7 +386,7 @@ def parse(*args,**kargs):
         try:
             ret = init.replace(*buf)
         except Exception as err:
-            print err
+            print(err)
     
 
     return ret

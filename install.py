@@ -6,7 +6,7 @@ import sys
 file_path = None
 os_type = None
 
-print "# Check platform = ",
+
 if sys.platform.startswith("win"):
     os_type = 'win'
 elif sys.platform.startswith("linux"):
@@ -16,10 +16,11 @@ elif sys.platform.startswith("darwin"):
 else:
     sys.stderr.write("{} unknown platform\n".format(sys.platform))
     sys.exit(-1)
-print os_type
+
+print("Platform= {}".format(os_type))
 
 if 'doc' in sys.argv[1:]:
-    print "# build document"
+    print("Build document")
 
     ret = None
     old = os.getcwd()
@@ -32,7 +33,7 @@ if 'doc' in sys.argv[1:]:
     os.chdir(old)
 
 file_path = os.getcwd() + os.path.split(sys.argv[0])[0]
-print "# Write package path in python directory = %s"%(file_path)
+print( "Write package path in python directory = %s"%(file_path) )
 
 if os_type == 'win':
     file_path = "%s/lib/site-packages/swpy.pth"%(sys.prefix)

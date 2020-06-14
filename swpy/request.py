@@ -5,8 +5,8 @@ Created on 2017. 12. 22.
 '''
 import os
 
-from swpy import utils2 as swut
-from timepath import TimeFormat
+from . import utils2 as swut
+from .timepath import TimeFormat
 
 
 class RequestUnit():

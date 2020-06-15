@@ -67,7 +67,7 @@ def parse_string(format_string,datetime_string,index=[]):
     
     f = format_string
     
-    for k in RE_FORMATS.iterkeys():
+    for k in iter(RE_FORMATS.keys()):
             
         i = f.find(k) # i : index
         
@@ -88,13 +88,13 @@ def parse_string(format_string,datetime_string,index=[]):
     if not rd :
         return None
     
-    if rd.has_key('y'):
+    if 'y' in rd:
         rd['Y'] = 1900 + int(rd['y'])
         
-    if rd.has_key('b'):
+    if 'b' in rd:
         rd['m'] = MONTH_NUMBERS[rd['b'].title()]
     
-    if rd.has_key('f'):
+    if 'f' in rd:
         rd['f'] = int(rd['f'].ljust(6,'0'))
     
     year  = int(rd.setdefault('Y',1))
@@ -283,7 +283,7 @@ def parse(*args,**kargs):
     if num == 1:
         if(isinstance(args[0],datetime)):
             ret = args[0]
-        elif(isinstance(args[0],basestring)):
+        elif(isinstance(args[0],str)):
             ret = parse_datetime(args[0])
         elif(isinstance(args[0],tuple) or isinstance(args[0],list)):
             buf.extend(args[0])

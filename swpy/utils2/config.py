@@ -28,8 +28,8 @@ class Config():
                 self.parser.write(fp)
                     
         for key in cfg.keys():
-            val  = self.parser.get(section_name,key,cfg[key])
-            if format.has_key(key):
+            val  = self.parser.get(section_name,key)
+            if key in format:
                 val = format[key](val)
                         
             cfg[key] = val

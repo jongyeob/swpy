@@ -10,6 +10,7 @@ import ftplib
 import logging
 import urlparse
 import shutil
+import glob
 
 
 from swpy import utils2 as utils
@@ -28,7 +29,11 @@ class DownloaderUnit(RequestUnit):
         src_url = self.path.get(time)
         src_url_item = urlparse.urlparse(src_url)
         
-        dst_path =  CFG['temp-dir'] + src_url_item.hostname + src_url_item.path
+        dst_path =  CFG['temp-dir']
+        if src_url_item.hostname:
+            dst_path += src_url_item.hostname
+        if src_url_item.path:
+            dst_path += src_url_item.path
                
         if dst:
             dst_path = dst
@@ -224,3 +229,52 @@ class FtpDownloader(DownloaderUnit):
         
         if download_size != file_size:
             raise IOError("FTP file download not completed") 
+
+
+
+class FileSystemDownloader(DownloaderUnit):
+        
+    def request(self,time):
+        li = []
+        
+        time_in = utils.time_parse(time)
+        
+        url = self.path.get(time_in)
+        parse_url = urlparse.urlparse(url)
+        url_path = parse_url.path
+        
+        path_dir, _ = os.path.split(url_path)
+
+        li = [ os.path.split(glob_path)[1] for glob_path in glob.glob(path_dir + '/*') ] 
+        
+        ftp_format = self.path.get_style()
+        parse_ftp_format = urlparse.urlparse(ftp_format)
+        path_format = parse_ftp_format.path
+        _, file_format = os.path.split(path_format)
+                
+        file_time_list = []
+
+        for file_name in li:
+       
+            file_time = utils.time_string(file_format,file_name)
+            
+            if file_time:
+                file_time_list.append(file_time)
+            else:
+                LOG.debug("Not match time format {} for file name: {}".format(file_format, file_name))
+            
+        
+        return file_time_list
+    
+            
+    def fetch(self,time,wfile):
+                   
+        time_in = utils.time_parse(time)
+        
+        url = self.path.get(time_in)
+        parse_url = urlparse.urlparse(url)
+        path = parse_url.path
+        path_dir, path_file = os.path.split(path)
+
+        with open(url) as fr:
+            wfile.write(fr.read())

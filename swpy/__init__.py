@@ -16,7 +16,7 @@ CONFIG_FILE = SWPY_ROOT + '/swpy.ini'
 
 import utils2
 
-from downloader import HttpDownloader, FtpDownloader
+from downloader import HttpDownloader, FtpDownloader, FileSystemDownloader
 from timepath import TimeFormat, Time
 from base import TimeUnit, DataUnit, PathUnit, PlotUnit
 from data import FitsData
